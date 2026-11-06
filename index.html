@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Proteína Gym — Gestión de Horarios y Profesores</title>
+  <link rel="icon" type="image/png" href="LOGO_GYM_PROTEINA.PNG" />
+  <style>
+    :root {
+      --bg: #f4f4f5;
+      --surface: #ffffff;
+      --black: #0a0a0a;
+      --charcoal: #18181b;
+      --slate: #27272a;
+      --muted: #52525b;
+      --border: #d4d4d8;
+      --yellow: #f5e600;
+      --yellow-hover: #fde047;
+      --yellow-soft: #fefce8;
+      --yellow-border: #eab308;
+      --gym: #18181b;
+      --box: #065f46;
+      --boxeo: #7c2d12;
+      --edit-green: #f0fdf4;
+      --double-red: #fee2e2;
+      --double-text: #991b1b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--black);
+      line-height: 1.5;
+      font-size: 16px;
+    }
+    header {
+      background: linear-gradient(135deg, #0a0a0a 0%, #1f1f23 100%);
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 4px solid var(--yellow);
+      box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .brand-logo {
+      width: 66px;
+      height: 66px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+      flex-shrink: 0;
+    }
+    .brand h1 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      color: var(--yellow);
+      text-transform: uppercase;
+    }
+    .brand p {
+      font-size: 0.95rem;
+      color: #e4e4e7;
+      font-weight: 500;
+    }
+    .unit-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+    .unit-pill {
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      border: 2px solid var(--yellow);
+      background: #18181b;
+      color: var(--yellow);
+    }
+
+    nav.tabs {
+      background: var(--charcoal);
+      display: flex;
+      overflow-x: auto;
+      padding: 0 16px;
+      gap: 6px;
+      border-bottom: 2px solid #000;
+    }
+    nav.tabs button {
+      background: transparent;
+      color: #e4e4e7;
+      border: none;
+      padding: 13px 18px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      border-bottom: 4px solid transparent;
+      transition: all 0.15s;
+    }
+    nav.tabs button:hover {
+      color: var(--yellow);
+      background: rgba(245, 230, 0, 0.08);
+    }
+    nav.tabs button.active {
+      color: var(--black);
+      background: var(--yellow);
+      border-bottom-color: #ca8a04;
+    }
+
+    main { max-width: 1600px; margin: 0 auto; padding: 22px; }
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .kpi-card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-top: 5px solid var(--black);
+      border-radius: 10px;
+      padding: 16px 18px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .kpi-card .lbl { font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: var(--muted); }
+    .kpi-card .val { font-size: 1.55rem; font-weight: 800; margin-top: 4px; color: var(--black); }
+    .kpi-card .sub { font-size: 0.85rem; color: var(--muted); margin-top: 3px; }
+
+    .card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .card-hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e4e4e7;
+    }
+    .card-hdr h2 { font-size: 1.2rem; font-weight: 800; color: var(--black); }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    select, input[type="text"], input[type="number"], input[type="date"] {
+      padding: 9px 13px;
+      border: 2px solid #71717a;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: #fff;
+      color: var(--black);
+      font-weight: 700;
+    }
+    select:focus, input:focus {
+      outline: 3px solid var(--yellow-border);
+      border-color: var(--black);
+    }
+    button.btn {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      font-size: 0.92rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn-primary {
+      background: var(--black);
+      color: var(--yellow);
+      border-color: var(--black);
+    }
+    .btn-primary:hover {
+      background: #27272a;
+    }
+    .btn-success {
+      background: var(--yellow);
+      color: var(--black);
+      border-color: #ca8a04;
+    }
+    .btn-success:hover {
+      background: var(--yellow-hover);
+    }
+    .btn-amber {
+      background: #d97706;
+      color: #fff;
+    }
+    .btn-outline {
+      background: #fff;
+      border-color: #71717a;
+      color: var(--black);
+    }
+    .btn-outline:hover {
+      background: #f4f4f5;
+    }
+
+    .table-wrap { overflow-x: auto; border: 2px solid var(--border); border-radius: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    th, td { padding: 9px 11px; border: 1px solid #d4d4d8; text-align: left; }
+    th {
+      background: var(--charcoal);
+      color: var(--yellow);
+      font-weight: 800;
+      text-align: center;
+      white-space: nowrap;
+    }
+    tr.tot-row td {
+      background: var(--yellow-soft);
+      font-weight: 800;
+      border-top: 3px solid var(--black);
+      font-size: 0.96rem;
+    }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .center { text-align: center; }
+
+    /* Chips de Profesores */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      margin: 2px;
+      white-space: nowrap;
+      border: 1px solid rgba(0,0,0,0.18);
+    }
+    .sched-cell {
+      min-width: 130px;
+      cursor: pointer;
+      background: #ffffff;
+      transition: background 0.12s;
+      vertical-align: middle;
+      text-align: center;
+    }
+    .sched-cell:hover {
+      outline: 3px solid var(--black);
+      background: var(--yellow-soft);
+    }
+    .sched-cell.double-day { background: #fff1f2; }
+    .sched-cell.double-day:hover { background: #ffe4e6; }
+    .badge-double {
+      background: #fee2e2;
+      color: #991b1b;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .badge-normal {
+      background: #3f3f46;
+      color: #fff;
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    /* Modal de Multiselección y Reemplazos */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #fff;
+      border: 3px solid var(--black);
+      border-radius: 14px;
+      max-width: 560px;
+      width: 100%;
+      padding: 22px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+    }
+    .modal h3 { font-size: 1.15rem; margin-bottom: 6px; color: var(--black); }
+    .prof-picker {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .prof-opt {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 11px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .prof-opt.selected {
+      border: 2px solid var(--black);
+      box-shadow: 0 0 0 3px var(--yellow);
+    }
+
+    @media print {
+      header, nav.tabs, .no-print { display: none !important; }
+      main { padding: 0; }
+      .card { box-shadow: none; border: 1px solid #000; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <img src="LOGO_GYM_PROTEINA.PNG" alt="Logo Proteína Gym" class="brand-logo" />
+    <div>
+      <h1>PROTEÍNA GYM</h1>
+      <p>Sistema de Horarios, Profesores y Liquidaciones</p>
+    </div>
+  </div>
+  <div class="unit-pills">
+    <span class="unit-pill">1. Proteína Gym</span>
+    <span class="unit-pill">2. Proteína Box</span>
+    <span class="unit-pill">3. Boxeo</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="active" onclick="showTab('inicio', this)">🏠 INICIO</button>
+  <button onclick="showTab('cronogramas', this)">📅 CRONOGRAMAS</button>
+  <button onclick="showTab('resumen-mensual', this)">💰 LIQUIDACIÓN MENSUAL</button>
+  <button onclick="showTab('reportes-unidad', this)">🏢 COSTOS POR UNIDAD</button>
+  <button onclick="showTab('resumen-anual', this)">📊 RESUMEN ANUAL</button>
+  <button onclick="showTab('profes', this)">👥 PROFES</button>
+  <button onclick="showTab('config', this)">⚙️ VALOR HORA Y FERIADOS</button>
+  <button onclick="showTab('reemplazos', this)">🔄 REEMPLAZOS</button>
+</nav>
+
+<main>
+  <!-- ==================================================================== -->
+  <!-- 1. INICIO -->
+  <!-- ==================================================================== -->
+  <section id="view-inicio" class="view active">
+    <div class="kpi-grid" id="home-kpis"></div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Accesos Rápidos</h2>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card" style="cursor:pointer;border-top-color:var(--yellow-border)" onclick="triggerNav(1)">
+          <div class="lbl">1. Cronogramas</div>
+          <div class="val" style="font-size:1.2rem">Ver y Cargar Horarios</div>
+          <div class="sub">Proteína Gym · Proteína Box · Boxeo</div>
+        </div>
+        <div class="kpi-card" style="cursor:pointer;border-top-color:#15803d" onclick="triggerNav(2)">
+          <div class="lbl">2. Liquidación Mensual</div>
+          <div class="val" style="font-size:1.2rem">Ver Pagos y Recibos</div>
+          <div class="sub">Total a pagar por profesor y por unidad</div>
+        </div>
+        <div class="kpi-card" style="cursor:pointer;border-top-color:#b45309" onclick="triggerNav(5)">
+          <div class="lbl">3. Profesores</div>
+          <div class="val" style="font-size:1.2rem">Agregar o Editar Profes</div>
+          <div class="sub">Altas, bajas y cambio de nombre</div>
+        </div>
+        <div class="kpi-card" style="cursor:pointer;border-top-color:#1d4ed8" onclick="triggerNav(6)">
+          <div class="lbl">4. Valor Hora y Feriados</div>
+          <div class="val" style="font-size:1.2rem">Actualizar Precio Hora</div>
+          <div class="sub">Configurar tarifa y días feriados</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Resumen por Unidad</h2>
+      </div>
+      <div class="table-wrap" id="home-unit-summary"></div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 2. CRONOGRAMAS MENSUALES -->
+  <!-- ==================================================================== -->
+  <section id="view-cronogramas" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Gestión de Cronogramas Mensuales</h2>
+        <div class="toolbar" style="margin-bottom:0">
+          <label><strong>Mes:</strong>
+            <select id="sched-month" onchange="syncMonthSelect(this.value)"></select>
+          </label>
+          <label><strong>Unidad:</strong>
+            <select id="sched-unit" onchange="renderSchedule()">
+              <option value="Proteína Gym">1. Proteína Gym</option>
+              <option value="Proteína Box">2. Proteína Box</option>
+              <option value="Boxeo">3. Boxeo</option>
+            </select>
+          </label>
+          <label><strong>Semana:</strong>
+            <select id="sched-week" onchange="renderSchedule()">
+              <option value="0">Días 1 al 7</option>
+              <option value="1">Días 8 al 14</option>
+              <option value="2">Días 15 al 21</option>
+              <option value="3">Días 22 al Fin de Mes</option>
+              <option value="all">Mes Completo (1 al 31)</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <!-- CARGA RÁPIDA DE TURNOS -->
+      <div style="background:var(--yellow-soft);border:2px solid var(--yellow-border);border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <div style="font-size:1rem;font-weight:800;color:var(--black);margin-bottom:10px">
+          Carga Rápida de Turnos
+        </div>
+        <div class="toolbar" style="margin-bottom:0">
+          <label><strong>Profesor:</strong>
+            <select id="bulk-prof"></select>
+          </label>
+          <label><strong>Día:</strong>
+            <select id="bulk-day"></select>
+          </label>
+          <label><strong>Desde:</strong>
+            <select id="bulk-start"></select>
+          </label>
+          <label><strong>Hasta:</strong>
+            <select id="bulk-end"></select>
+          </label>
+          <label><strong>Acción:</strong>
+            <select id="bulk-mode">
+              <option value="add">Sumar profesor</option>
+              <option value="replace">Dejar solo a este profesor</option>
+              <option value="remove">Quitar profesor</option>
+            </select>
+          </label>
+          <button class="btn btn-primary" onclick="applyBulkRange()">✅ Aplicar</button>
+        </div>
+      </div>
+
+      <div class="table-wrap" id="schedule-container"></div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 3. LIQUIDACIÓN MENSUAL -->
+  <!-- ==================================================================== -->
+  <section id="view-resumen-mensual" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Liquidación Mensual</h2>
+        <div class="toolbar no-print" style="margin-bottom:0">
+          <label><strong>Mes:</strong>
+            <select id="res-month" onchange="syncMonthSelect(this.value)"></select>
+          </label>
+          <button class="btn btn-amber" onclick="toggleCloseMonth()">🔒 Cerrar / Reabrir Mes</button>
+          <button class="btn btn-outline" onclick="window.print()">🖨️ Imprimir / PDF</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid" id="res-mensual-kpis"></div>
+
+      <h3 style="font-size:1.05rem;margin:14px 0 8px">1. Liquidación por Profesor</h3>
+      <div class="table-wrap" id="res-mensual-table"></div>
+
+      <h3 style="font-size:1.05rem;margin:20px 0 8px">2. Horas y Costos por Unidad</h3>
+      <div class="table-wrap" id="res-mensual-units"></div>
+
+      <div style="margin-top:22px;padding-top:16px;border-top:2px dashed #d4d4d8">
+        <div class="toolbar">
+          <h3 style="font-size:1.05rem">3. Detalle Individual por Profesor:</h3>
+          <select id="res-prof-select" onchange="renderIndividualDetail()"></select>
+        </div>
+        <div class="table-wrap" id="res-individual-detail"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 4. COSTOS POR UNIDAD -->
+  <!-- ==================================================================== -->
+  <section id="view-reportes-unidad" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Costos por Unidad</h2>
+        <div class="toolbar" style="margin-bottom:0">
+          <label><strong>Mes:</strong>
+            <select id="rep-month" onchange="syncMonthSelect(this.value)"></select>
+          </label>
+        </div>
+      </div>
+      <div class="table-wrap" id="rep-unidad-table"></div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 5. RESUMEN ANUAL -->
+  <!-- ==================================================================== -->
+  <section id="view-resumen-anual" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Resumen Anual</h2>
+      </div>
+      <div class="kpi-grid" id="anual-kpis"></div>
+      <h3 style="font-size:1.05rem;margin:12px 0 8px">1. Acumulado por Profesor</h3>
+      <div class="table-wrap" id="anual-prof-table"></div>
+
+      <h3 style="font-size:1.05rem;margin:20px 0 8px">2. Acumulado por Unidad</h3>
+      <div class="table-wrap" id="anual-unit-table"></div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 6. PROFES -->
+  <!-- ==================================================================== -->
+  <section id="view-profes" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Profesores</h2>
+        <div class="toolbar" style="margin-bottom:0">
+          <input type="text" id="new-prof-name" placeholder="Nombre del profesor..." />
+          <input type="color" id="new-prof-color" value="#fde047" title="Elegir color" style="height:40px;width:54px;padding:2px;cursor:pointer" />
+          <button class="btn btn-primary" onclick="addNewProfesor()">➕ Agregar Profesor</button>
+        </div>
+      </div>
+      <div class="table-wrap" id="profes-table"></div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 7. CONFIGURACIÓN Y FERIADOS -->
+  <!-- ==================================================================== -->
+  <section id="view-config" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Valor de la Hora</h2>
+      </div>
+      <div class="toolbar">
+        <label><strong>Valor de la Hora Normal ($):</strong>
+          <input type="number" id="cfg-rate" value="5000" step="500" onchange="updateHourlyRate(this.value)" />
+        </label>
+        <span style="font-size:0.95rem;font-weight:800;color:#991b1b;background:#fee2e2;padding:9px 14px;border-radius:8px">
+          Valor Hora Doble (Domingos y Feriados ×2): <span id="cfg-double-rate">$10.000</span>
+        </span>
+      </div>
+      <div class="table-wrap" id="cfg-months-table"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Feriados (Pago Doble ×2)</h2>
+        <div class="toolbar" style="margin-bottom:0">
+          <input type="date" id="new-fer-date" min="2026-11-01" max="2027-12-31" />
+          <input type="text" id="new-fer-desc" placeholder="Nombre del feriado..." />
+          <button class="btn btn-primary" onclick="addFeriado()">➕ Agregar Feriado</button>
+        </div>
+      </div>
+      <div class="table-wrap" id="feriados-table"></div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 8. HISTORIAL DE REEMPLAZOS -->
+  <!-- ==================================================================== -->
+  <section id="view-reemplazos" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Historial de Reemplazos</h2>
+      </div>
+      <div class="table-wrap" id="reemplazos-table"></div>
+    </div>
+  </section>
+</main>
+
+<!-- MODAL PARA ASIGNACIÓN DE HORARIO Y REEMPLAZO -->
+<div class="modal-backdrop" id="cell-modal">
+  <div class="modal">
+    <h3 id="modal-title">Asignar Profesor</h3>
+    <p id="modal-subtitle" style="font-size:0.9rem;color:var(--muted);margin-bottom:10px"></p>
+
+    <div style="font-size:0.9rem;font-weight:800;margin-bottom:6px">Seleccione uno o varios profesores:</div>
+    <div class="prof-picker" id="modal-prof-picker"></div>
+
+    <div style="background:var(--yellow-soft);border:2px solid var(--yellow-border);border-radius:8px;padding:10px;margin-top:10px">
+      <label style="font-size:0.9rem;font-weight:800;color:var(--black);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <span>Repetir en este día hasta las:</span>
+        <select id="modal-extend-end" style="background:#fff"></select>
+      </label>
+    </div>
+
+    <div style="background:#f4f4f5;border:2px solid #d4d4d8;border-radius:8px;padding:10px;margin-top:10px">
+      <div style="font-size:0.9rem;font-weight:800;color:var(--black);margin-bottom:8px">🔄 ¿Es un Reemplazo?</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <select id="repl-titular"><option value="">-- Profesor Titular --</option></select>
+        <select id="repl-suplente"><option value="">-- Profesor Reemplazante --</option></select>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">
+      <button class="btn btn-outline" onclick="closeCellModal()">Cancelar</button>
+      <button class="btn btn-success" onclick="saveCellModal()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// DATOS MAESTROS DEL SISTEMA
+// ============================================================================
+const STORAGE_KEY = "proteina_gym_sistema_web_v3";
+const UNITS = ["Proteína Gym", "Proteína Box", "Boxeo"];
+const MONTHS = [
+  { name: "NOVIEMBRE 2026", year: 2026, month: 11, days: 30, status: "ABIERTO", closedRate: 5000 },
+  { name: "DICIEMBRE 2026", year: 2026, month: 12, days: 31, status: "ABIERTO", closedRate: 5000 },
+  { name: "ENERO 2027", year: 2027, month: 1, days: 31, status: "ABIERTO", closedRate: 5000 },
+  { name: "FEBRERO 2027", year: 2027, month: 2, days: 28, status: "ABIERTO", closedRate: 5000 },
+  { name: "MARZO 2027", year: 2027, month: 3, days: 31, status: "ABIERTO", closedRate: 5000 },
+  { name: "ABRIL 2027", year: 2027, month: 4, days: 30, status: "ABIERTO", closedRate: 5000 },
+  { name: "MAYO 2027", year: 2027, month: 5, days: 31, status: "ABIERTO", closedRate: 5000 },
+  { name: "JUNIO 2027", year: 2027, month: 6, days: 30, status: "ABIERTO", closedRate: 5000 },
+  { name: "JULIO 2027", year: 2027, month: 7, days: 31, status: "ABIERTO", closedRate: 5000 },
+  { name: "AGOSTO 2027", year: 2027, month: 8, days: 31, status: "ABIERTO", closedRate: 5000 },
+  { name: "SEPTIEMBRE 2027", year: 2027, month: 9, days: 30, status: "ABIERTO", closedRate: 5000 },
+  { name: "OCTUBRE 2027", year: 2027, month: 10, days: 31, status: "ABIERTO", closedRate: 5000 },
+  { name: "NOVIEMBRE 2027", year: 2027, month: 11, days: 30, status: "ABIERTO", closedRate: 5000 },
+  { name: "DICIEMBRE 2027", year: 2027, month: 12, days: 31, status: "ABIERTO", closedRate: 5000 }
+];
+
+const DAYS_ES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
+
+const TIME_SLOTS = [];
+for (let h = 7; h < 23; h++) {
+  const hh = String(h).padStart(2, "0");
+  const hhNext = String(h + 1).padStart(2, "0");
+  TIME_SLOTS.push(`${hh}:00 a ${hh}:30`);
+  TIME_SLOTS.push(`${hh}:30 a ${hhNext}:00`);
+}
+
+let currentRate = 5000;
+let currentMonthName = "NOVIEMBRE 2026";
+
+let profesores = [
+  { name: "Sil", status: "Activo", bg: "#D9FBFB", fg: "#004D4D" },
+  { name: "Robert", status: "Activo", bg: "#DEFBE6", fg: "#0E6027" },
+  { name: "Ceci", status: "Activo", bg: "#E0E7FF", fg: "#3730A3" },
+  { name: "Jesi", status: "Activo", bg: "#FFF2D6", fg: "#8E5A00" },
+  { name: "Valentin", status: "Activo", bg: "#FFD6E8", fg: "#9F1853" },
+  { name: "Agustin", status: "Activo", bg: "#D0E2FF", fg: "#002D9C" },
+  { name: "Oscar", status: "Activo", bg: "#ECFCCB", fg: "#3F6212" },
+  { name: "Irina", status: "Activo", bg: "#FFD7D9", fg: "#A2191F" },
+  { name: "Luna", status: "Activo", bg: "#E8DAFF", fg: "#491D8B" },
+  { name: "Cande", status: "Activo", bg: "#CFFAFE", fg: "#155E75" },
+  { name: "Agustin Castro", status: "Activo", bg: "#FDE68A", fg: "#78350F" },
+  { name: "Alejandra Stefani", status: "Activo", bg: "#FBCFE8", fg: "#831843" },
+  { name: "Fernanda Firpo", status: "Activo", bg: "#DDD6FE", fg: "#4C1D95" },
+  { name: "Nahuel", status: "Activo", bg: "#CCFBF1", fg: "#115E59" }
+];
+
+let feriados = [
+  { date: "2026-11-23", desc: "Día de la Soberanía Nacional (Trasladado)" },
+  { date: "2026-12-08", desc: "Inmaculada Concepción de María" },
+  { date: "2026-12-25", desc: "Navidad" },
+  { date: "2027-01-01", desc: "Año Nuevo" },
+  { date: "2027-02-08", desc: "Carnaval (Lunes)" },
+  { date: "2027-02-09", desc: "Carnaval (Martes)" },
+  { date: "2027-03-24", desc: "Día de la Memoria" },
+  { date: "2027-03-26", desc: "Viernes Santo" },
+  { date: "2027-04-02", desc: "Día de Malvinas" },
+  { date: "2027-05-01", desc: "Día del Trabajador" },
+  { date: "2027-05-25", desc: "Día de la Revolución de Mayo" },
+  { date: "2027-06-17", desc: "Paso a la Inmortalidad del Gral. Güemes" },
+  { date: "2027-06-20", desc: "Día de la Bandera" },
+  { date: "2027-07-09", desc: "Día de la Independencia" },
+  { date: "2027-08-16", desc: "Paso a la Inmortalidad del Gral. San Martín" },
+  { date: "2027-10-11", desc: "Día del Respeto a la Diversidad Cultural" },
+  { date: "2027-11-22", desc: "Día de la Soberanía Nacional" },
+  { date: "2027-12-08", desc: "Inmaculada Concepción de María" },
+  { date: "2027-12-25", desc: "Navidad" }
+];
+
+let reemplazosLog = [
+  { fecha: "02/11/2026", horario: "18:00 a 19:00", unidad: "Proteína Box", titular: "Robert", suplente: "Agustin" }
+];
+
+function getInitialSlotAssignment(unit, jsDay, slotIdx) {
+  if (unit === "Proteína Gym") {
+    if (jsDay === 1) { // LUNES
+      if (slotIdx <= 9) return ["Robert", "Sil"];
+      if (slotIdx <= 19) return ["Agustin", "Jesi"];
+      if (slotIdx <= 27) return ["Ceci", "Luna", "Valentin"];
+      if (slotIdx <= 29) return ["Ceci", "Oscar", "Valentin"];
+      return ["Oscar"];
+    }
+    if (jsDay === 2) { // MARTES
+      if (slotIdx <= 9) return ["Agustin", "Valentin"];
+      if (slotIdx <= 15) return ["Agustin", "Jesi"];
+      if (slotIdx <= 19) return ["Ceci", "Irina", "Jesi"];
+      if (slotIdx <= 27) return ["Ceci", "Irina", "Robert", "Sil"];
+      if (slotIdx <= 29) return ["Ceci", "Oscar", "Robert", "Sil"];
+      return ["Oscar"];
+    }
+    if (jsDay === 3) { // MIÉRCOLES
+      if (slotIdx <= 9) return ["Robert", "Jesi"];
+      if (slotIdx <= 11) return ["Robert", "Sil"];
+      if (slotIdx <= 19) return ["Agustin", "Robert", "Sil"];
+      if (slotIdx <= 21) return ["Agustin", "Ceci", "Valentin"];
+      if (slotIdx <= 23) return ["Ceci", "Valentin"];
+      if (slotIdx <= 29) return ["Ceci", "Luna", "Valentin"];
+      return ["Luna"];
+    }
+    if (jsDay === 4) { // JUEVES
+      if (slotIdx <= 9) return ["Agustin", "Robert", "Sil"];
+      if (slotIdx <= 15) return ["Agustin", "Jesi"];
+      if (slotIdx <= 18) return ["Irina", "Jesi"];
+      if (slotIdx === 19) return ["Ceci", "Irina", "Jesi"];
+      if (slotIdx <= 21) return ["Ceci", "Irina", "Valentin"];
+      if (slotIdx <= 25) return ["Ceci", "Valentin"];
+      if (slotIdx <= 29) return ["Ceci", "Irina", "Valentin"];
+      return ["Irina"];
+    }
+    if (jsDay === 5) { // VIERNES
+      if (slotIdx <= 9) return ["Robert", "Valentin"];
+      if (slotIdx <= 11) return ["Robert", "Jesi"];
+      if (slotIdx <= 19) return ["Agustin", "Jesi"];
+      if (slotIdx <= 21) return ["Agustin", "Ceci", "Irina"];
+      if (slotIdx <= 29) return ["Ceci", "Luna", "Irina"];
+      return ["Luna"];
+    }
+    if (jsDay === 6) { // SÁBADO
+      if (slotIdx >= 6 && slotIdx <= 17) return ["Luna", "Irina"];
+    }
+    if (jsDay === 0) { // DOMINGO
+      if (slotIdx >= 6 && slotIdx <= 11) return ["Luna"];
+    }
+  } else if (unit === "Proteína Box") {
+    if (jsDay === 1 && slotIdx >= 22 && slotIdx <= 27) return ["Cande"];
+    if ((jsDay === 2 || jsDay === 4)) {
+      if (slotIdx >= 1 && slotIdx <= 4) return ["Cande"];
+      if (slotIdx >= 17 && slotIdx <= 18) return ["Agustin Castro"];
+      if (slotIdx >= 22 && slotIdx <= 27) return ["Alejandra Stefani"];
+    }
+    if ((jsDay === 3 || jsDay === 5)) {
+      if (slotIdx >= 1 && slotIdx <= 4) return ["Cande"];
+      if (slotIdx >= 17 && slotIdx <= 18) return ["Fernanda Firpo"];
+      if (slotIdx >= 22 && slotIdx <= 27) return ["Cande"];
+    }
+  } else if (unit === "Boxeo") {
+    if (jsDay === 1 || jsDay === 3 || jsDay === 5) {
+      if (slotIdx >= 5 && slotIdx <= 7) return ["Valentin"];
+      if (slotIdx >= 24 && slotIdx <= 27) return ["Nahuel"];
+    }
+    if (jsDay === 2 || jsDay === 4) {
+      if (slotIdx >= 6 && slotIdx <= 8) return ["Nahuel"];
+      if (slotIdx >= 25 && slotIdx <= 28) return ["Fernanda Firpo"];
+    }
+    if (jsDay === 6 && slotIdx >= 8 && slotIdx <= 11) return ["Nahuel"];
+  }
+  return [];
+}
+
+const scheduleData = {};
+
+function initScheduleData() {
+  MONTHS.forEach(m => {
+    scheduleData[m.name] = {};
+    UNITS.forEach(u => {
+      scheduleData[m.name][u] = {};
+      for (let d = 1; d <= m.days; d++) {
+        scheduleData[m.name][u][d] = {};
+        const dt = new Date(m.year, m.month - 1, d);
+        const jsDay = dt.getDay();
+        const preload = (m.name === "NOVIEMBRE 2026" || m.name === "DICIEMBRE 2026");
+        for (let s = 0; s < 32; s++) {
+          let arr = preload ? [...getInitialSlotAssignment(u, jsDay, s)] : [];
+          if (m.name === "NOVIEMBRE 2026" && d === 2 && u === "Proteína Box" && (s === 22 || s === 23)) {
+            arr = ["Robert", "Agustin"];
+          }
+          scheduleData[m.name][u][d][s] = arr;
+        }
+      }
+    });
+  });
+}
+
+function saveState() {
+  try {
+    const payload = {
+      currentRate,
+      profesores,
+      feriados,
+      reemplazosLog,
+      monthsStatus: MONTHS.map(m => ({ name: m.name, status: m.status, closedRate: m.closedRate })),
+      scheduleData
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch (e) {
+    console.warn("No se pudo guardar en localStorage:", e);
+  }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data.currentRate) {
+      currentRate = data.currentRate;
+      const rateEl = document.getElementById("cfg-rate");
+      if (rateEl) rateEl.value = currentRate;
+      const dblEl = document.getElementById("cfg-double-rate");
+      if (dblEl) dblEl.textContent = formatMoney(currentRate * 2);
+    }
+    if (Array.isArray(data.profesores) && data.profesores.length > 0) profesores = data.profesores;
+    if (Array.isArray(data.feriados) && data.feriados.length > 0) feriados = data.feriados;
+    if (Array.isArray(data.reemplazosLog)) reemplazosLog = data.reemplazosLog;
+    if (Array.isArray(data.monthsStatus)) {
+      data.monthsStatus.forEach(ms => {
+        const m = MONTHS.find(x => x.name === ms.name);
+        if (m) {
+          m.status = ms.status;
+          m.closedRate = ms.closedRate;
+        }
+      });
+    }
+    if (data.scheduleData) {
+      Object.keys(data.scheduleData).forEach(mName => {
+        if (scheduleData[mName]) scheduleData[mName] = data.scheduleData[mName];
+      });
+    }
+  } catch (e) {
+    console.warn("No se pudo cargar estado guardado:", e);
+  }
+}
+
+function isDoubleDay(year, month, day) {
+  const dt = new Date(year, month - 1, day);
+  if (dt.getDay() === 0) return true; // Domingo
+  const iso = `${year}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+  return feriados.some(f => f.date === iso);
+}
+
+function getEffectiveRate(monthName) {
+  const m = MONTHS.find(x => x.name === monthName);
+  if (!m) return currentRate;
+  return m.status === "LIQUIDADO" ? m.closedRate : currentRate;
+}
+
+function formatMoney(n) {
+  return "$" + Math.round(n).toLocaleString("es-AR");
+}
+
+function renderChip(profName) {
+  const p = profesores.find(x => x.name === profName) || { bg: "#e4e4e7", fg: "#0a0a0a" };
+  return `<span class="chip" style="background:${p.bg};color:${p.fg}">${profName}</span>`;
+}
+
+// ============================================================================
+// MOTOR DE CÁLCULO
+// ============================================================================
+function calculateMonthData(monthName) {
+  const m = MONTHS.find(x => x.name === monthName);
+  const rate = getEffectiveRate(monthName);
+  const byProf = {};
+  const byUnit = {};
+
+  profesores.forEach(p => {
+    byProf[p.name] = {
+      name: p.name, status: p.status,
+      gymNorm: 0, gymDob: 0,
+      boxNorm: 0, boxDob: 0,
+      boxeoNorm: 0, boxeoDob: 0
+    };
+  });
+  UNITS.forEach(u => {
+    byUnit[u] = { norm: 0, dob: 0 };
+  });
+
+  UNITS.forEach(u => {
+    for (let d = 1; d <= m.days; d++) {
+      const dbl = isDoubleDay(m.year, m.month, d);
+      for (let s = 0; s < 32; s++) {
+        const list = scheduleData[monthName][u][d][s] || [];
+        const uniqueProfs = [...new Set(list)];
+        uniqueProfs.forEach(pName => {
+          if (!byProf[pName]) {
+            byProf[pName] = { name: pName, status: "Activo", gymNorm:0, gymDob:0, boxNorm:0, boxDob:0, boxeoNorm:0, boxeoDob:0 };
+          }
+          if (u === "Proteína Gym") {
+            if (dbl) byProf[pName].gymDob += 0.5; else byProf[pName].gymNorm += 0.5;
+          } else if (u === "Proteína Box") {
+            if (dbl) byProf[pName].boxDob += 0.5; else byProf[pName].boxNorm += 0.5;
+          } else {
+            if (dbl) byProf[pName].boxeoDob += 0.5; else byProf[pName].boxeoNorm += 0.5;
+          }
+          if (dbl) byUnit[u].dob += 0.5; else byUnit[u].norm += 0.5;
+        });
+      }
+    }
+  });
+
+  return { m, rate, byProf, byUnit };
+}
+
+// ============================================================================
+// RENDERIZADO DE VISTAS
+// ============================================================================
+function populateSelects() {
+  const monthSelectors = ["sched-month", "res-month", "rep-month"];
+  monthSelectors.forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = MONTHS.map(m => `<option value="${m.name}" ${m.name===currentMonthName?'selected':''}>${m.name} (${m.status})</option>`).join("");
+  });
+
+  const profSel = document.getElementById("res-prof-select");
+  const curProf = profSel.value || (profesores[0] ? profesores[0].name : "");
+  profSel.innerHTML = profesores.map(p => `<option value="${p.name}" ${p.name===curProf?'selected':''}>${p.name}</option>`).join("");
+
+  const bulkProfEl = document.getElementById("bulk-prof");
+  if (bulkProfEl) {
+    const curBulkProf = bulkProfEl.value;
+    const activeProfs = profesores.filter(p => p.status === "Activo");
+    bulkProfEl.innerHTML = activeProfs.map(p => `<option value="${p.name}" ${p.name===curBulkProf?'selected':''}>${p.name}</option>`).join("");
+  }
+
+  const bulkStartEl = document.getElementById("bulk-start");
+  const bulkEndEl = document.getElementById("bulk-end");
+  if (bulkStartEl && bulkEndEl && bulkStartEl.options.length === 0) {
+    const startTimes = TIME_SLOTS.map((s, idx) => ({ idx, t: s.split(" a ")[0] }));
+    const endTimes = TIME_SLOTS.map((s, idx) => ({ idx, t: s.split(" a ")[1] }));
+    bulkStartEl.innerHTML = startTimes.map(x => `<option value="${x.idx}" ${x.t==='08:00'?'selected':''}>${x.t}</option>`).join("");
+    bulkEndEl.innerHTML = endTimes.map(x => `<option value="${x.idx}" ${x.t==='22:00'?'selected':''}>${x.t}</option>`).join("");
+  }
+
+  populateBulkDayOptions();
+}
+
+function populateBulkDayOptions() {
+  const bulkDayEl = document.getElementById("bulk-day");
+  if (!bulkDayEl) return;
+  const m = MONTHS.find(x => x.name === currentMonthName);
+  if (!m) return;
+
+  let html = `
+    <optgroup label="Repetir en el mes">
+      <option value="dow-1">Todos los LUNES</option>
+      <option value="dow-2">Todos los MARTES</option>
+      <option value="dow-3">Todos los MIÉRCOLES</option>
+      <option value="dow-4">Todos los JUEVES</option>
+      <option value="dow-5">Todos los VIERNES</option>
+      <option value="dow-6">Todos los SÁBADOS</option>
+      <option value="dow-0">Todos los DOMINGOS</option>
+      <option value="dow-lv">Lunes a Viernes</option>
+    </optgroup>
+    <optgroup label="Día específico">
+  `;
+  for (let d = 1; d <= m.days; d++) {
+    const dt = new Date(m.year, m.month - 1, d);
+    const dayName = DAYS_ES[dt.getDay()];
+    const ddStr = `${String(d).padStart(2,"0")}/${String(m.month).padStart(2,"0")}`;
+    html += `<option value="day-${d}" ${d===1?'selected':''}>${dayName} ${ddStr}</option>`;
+  }
+  html += `</optgroup>`;
+  bulkDayEl.innerHTML = html;
+}
+
+function applyBulkRange() {
+  const m = MONTHS.find(x => x.name === currentMonthName);
+  if (m.status === "LIQUIDADO") {
+    alert(`⚠️ El mes ${currentMonthName} está cerrado (LIQUIDADO). Reábralo primero para editar.`);
+    return;
+  }
+  const uName = document.getElementById("sched-unit").value;
+  const profName = document.getElementById("bulk-prof").value;
+  const dayTarget = document.getElementById("bulk-day").value;
+  const startIdx = parseInt(document.getElementById("bulk-start").value, 10);
+  const endIdx = parseInt(document.getElementById("bulk-end").value, 10);
+  const mode = document.getElementById("bulk-mode").value;
+
+  if (!profName) { alert("Seleccione un profesor."); return; }
+  if (endIdx < startIdx) {
+    alert("La hora 'Hasta' debe ser mayor a la hora 'Desde'.");
+    return;
+  }
+
+  const targetDays = [];
+  if (dayTarget.startsWith("day-")) {
+    targetDays.push(parseInt(dayTarget.split("-")[1], 10));
+  } else if (dayTarget === "dow-lv") {
+    for (let d = 1; d <= m.days; d++) {
+      const jsDay = new Date(m.year, m.month - 1, d).getDay();
+      if (jsDay >= 1 && jsDay <= 5) targetDays.push(d);
+    }
+  } else if (dayTarget.startsWith("dow-")) {
+    const targetDow = parseInt(dayTarget.split("-")[1], 10);
+    for (let d = 1; d <= m.days; d++) {
+      const jsDay = new Date(m.year, m.month - 1, d).getDay();
+      if (jsDay === targetDow) targetDays.push(d);
+    }
+  }
+
+  targetDays.forEach(d => {
+    for (let s = startIdx; s <= endIdx; s++) {
+      let cur = scheduleData[currentMonthName][uName][d][s] || [];
+      if (mode === "add") {
+        if (!cur.includes(profName)) cur.push(profName);
+      } else if (mode === "replace") {
+        cur = [profName];
+      } else if (mode === "remove") {
+        cur = cur.filter(x => x !== profName);
+      }
+      scheduleData[currentMonthName][uName][d][s] = [...new Set(cur)];
+    }
+  });
+
+  saveState();
+  refreshAll();
+}
+
+function syncMonthSelect(val) {
+  currentMonthName = val;
+  document.getElementById("sched-month").value = val;
+  document.getElementById("res-month").value = val;
+  document.getElementById("rep-month").value = val;
+  populateBulkDayOptions();
+  refreshAll();
+}
+
+function renderHome() {
+  const calc = calculateMonthData(currentMonthName);
+  let totNorm = 0, totDob = 0, activeWithHours = 0;
+  Object.values(calc.byProf).forEach(p => {
+    const n = p.gymNorm + p.boxNorm + p.boxeoNorm;
+    const d = p.gymDob + p.boxDob + p.boxeoDob;
+    totNorm += n; totDob += d;
+    if (n + d > 0) activeWithHours++;
+  });
+  const totHs = totNorm + totDob;
+  const totCost = (totNorm * calc.rate) + (totDob * calc.rate * 2);
+  const activeCount = profesores.filter(p => p.status === "Activo").length;
+
+  document.getElementById("home-kpis").innerHTML = `
+    <div class="kpi-card"><div class="lbl">Mes Actual</div><div class="val">${currentMonthName}</div><div class="sub">Estado: <strong>${calc.m.status}</strong></div></div>
+    <div class="kpi-card"><div class="lbl">Valor Hora</div><div class="val">${formatMoney(calc.rate)}</div><div class="sub">Doble (Dom/Feriados): ${formatMoney(calc.rate*2)}</div></div>
+    <div class="kpi-card"><div class="lbl">Profes Activos</div><div class="val">${activeCount}</div><div class="sub">${activeWithHours} con horas este mes</div></div>
+    <div class="kpi-card"><div class="lbl">Total Horas del Mes</div><div class="val">${totHs.toFixed(1)} hs</div><div class="sub">${totNorm.toFixed(1)}h Normales · ${totDob.toFixed(1)}h Dobles</div></div>
+    <div class="kpi-card"><div class="lbl">Total a Pagar</div><div class="val" style="color:#15803d">${formatMoney(totCost)}</div><div class="sub">Suma de las 3 unidades</div></div>
+  `;
+
+  let rowsHtml = "";
+  UNITS.forEach((u, i) => {
+    const un = calc.byUnit[u].norm;
+    const ud = calc.byUnit[u].dob;
+    const ut = un + ud;
+    const uCost = (un * calc.rate) + (ud * calc.rate * 2);
+    const pct = totCost > 0 ? ((uCost / totCost) * 100).toFixed(1) + "%" : "0.0%";
+    rowsHtml += `<tr>
+      <td><strong>${i+1}. ${u}</strong></td>
+      <td class="num">${un.toFixed(1)} hs</td>
+      <td class="num">${ud.toFixed(1)} hs</td>
+      <td class="num"><strong>${ut.toFixed(1)} hs</strong></td>
+      <td class="num">${formatMoney(un * calc.rate)}</td>
+      <td class="num">${formatMoney(ud * calc.rate * 2)}</td>
+      <td class="num"><strong>${formatMoney(uCost)}</strong></td>
+      <td class="center">${pct}</td>
+    </tr>`;
+  });
+
+  document.getElementById("home-unit-summary").innerHTML = `
+    <table>
+      <thead><tr><th>Unidad</th><th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Importe Normal</th><th>Importe Doble</th><th>Costo Total</th><th>%</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot><tr class="tot-row">
+        <td>TOTAL GENERAL</td>
+        <td class="num">${totNorm.toFixed(1)} hs</td>
+        <td class="num">${totDob.toFixed(1)} hs</td>
+        <td class="num">${totHs.toFixed(1)} hs</td>
+        <td class="num">${formatMoney(totNorm * calc.rate)}</td>
+        <td class="num">${formatMoney(totDob * calc.rate * 2)}</td>
+        <td class="num">${formatMoney(totCost)}</td>
+        <td class="center">100.0%</td>
+      </tr></tfoot>
+    </table>
+  `;
+}
+
+function renderSchedule() {
+  const mName = document.getElementById("sched-month").value;
+  currentMonthName = mName;
+  const uName = document.getElementById("sched-unit").value;
+  const weekVal = document.getElementById("sched-week").value;
+  const m = MONTHS.find(x => x.name === mName);
+
+  let startDay = 1, endDay = m.days;
+  if (weekVal !== "all") {
+    const w = parseInt(weekVal, 10);
+    startDay = w * 7 + 1;
+    endDay = w === 3 ? m.days : Math.min(m.days, (w + 1) * 7);
+  }
+
+  let thDays = `<th>HORARIO</th>`;
+  for (let d = startDay; d <= endDay; d++) {
+    const dt = new Date(m.year, m.month - 1, d);
+    const dayName = DAYS_ES[dt.getDay()];
+    const dbl = isDoubleDay(m.year, m.month, d);
+    const ddStr = `${String(d).padStart(2,"0")}/${String(m.month).padStart(2,"0")}`;
+    thDays += `<th style="background:${dbl?'#7c2d12':'#18181b'}">
+      <div>${dayName}</div>
+      <div style="font-size:0.95rem;margin:2px 0;color:#fff">${ddStr}</div>
+      <span class="${dbl?'badge-double':'badge-normal'}">${dbl?'DOBLE ×2':'NORMAL'}</span>
+    </th>`;
+  }
+
+  let bodyRows = "";
+  TIME_SLOTS.forEach((slotStr, sIdx) => {
+    let tds = `<td class="center" style="background:#f4f4f5;font-weight:800;white-space:nowrap">${slotStr}</td>`;
+    for (let d = startDay; d <= endDay; d++) {
+      const dbl = isDoubleDay(m.year, m.month, d);
+      const assigned = scheduleData[mName][uName][d][sIdx] || [];
+      const chipsHtml = assigned.length > 0
+        ? assigned.map(p => renderChip(p)).join(" ")
+        : `<span style="color:#a1a1aa;font-size:0.78rem">+ Asignar</span>`;
+      tds += `<td class="sched-cell ${dbl?'double-day':''}" onclick="openCellModal('${mName}','${uName}',${d},${sIdx})">${chipsHtml}</td>`;
+    }
+    bodyRows += `<tr>${tds}</tr>`;
+  });
+
+  document.getElementById("schedule-container").innerHTML = `
+    <table>
+      <thead><tr>${thDays}</tr></thead>
+      <tbody>${bodyRows}</tbody>
+    </table>
+  `;
+}
+
+// Modal de edición de celda
+let editingContext = null;
+let modalSelectedProfs = [];
+
+function openCellModal(mName, uName, day, slotIdx) {
+  const m = MONTHS.find(x => x.name === mName);
+  if (m.status === "LIQUIDADO") {
+    alert(`⚠️ El mes ${mName} está cerrado (LIQUIDADO). Reábralo primero para hacer cambios.`);
+    return;
+  }
+  editingContext = { mName, uName, day, slotIdx };
+  modalSelectedProfs = [...(scheduleData[mName][uName][day][slotIdx] || [])];
+
+  const ddStr = `${String(day).padStart(2,"0")}/${String(m.month).padStart(2,"0")}/${m.year}`;
+  document.getElementById("modal-title").textContent = `${uName} — ${ddStr}`;
+  document.getElementById("modal-subtitle").textContent = `Horario: ${TIME_SLOTS[slotIdx]}`;
+
+  renderModalPicker();
+
+  const extEl = document.getElementById("modal-extend-end");
+  if (extEl) {
+    let extHtml = "";
+    for (let s = slotIdx; s < 32; s++) {
+      const endHour = TIME_SLOTS[s].split(" a ")[1];
+      const countHs = ((s - slotIdx + 1) * 0.5).toFixed(1);
+      extHtml += `<option value="${s}" ${s===slotIdx?'selected':''}>${s===slotIdx ? `Solo este bloque (${endHour})` : `Hasta las ${endHour} (${countHs} hs)`}</option>`;
+    }
+    extEl.innerHTML = extHtml;
+  }
+
+  const activeProfs = profesores.filter(p => p.status === "Activo");
+  document.getElementById("repl-titular").innerHTML = `<option value="">-- Profesor Titular --</option>` + activeProfs.map(p => `<option value="${p.name}" ${modalSelectedProfs[0]===p.name?'selected':''}>${p.name}</option>`).join("");
+  document.getElementById("repl-suplente").innerHTML = `<option value="">-- Profesor Reemplazante --</option>` + activeProfs.map(p => `<option value="${p.name}">${p.name}</option>`).join("");
+
+  document.getElementById("cell-modal").classList.add("open");
+}
+
+function renderModalPicker() {
+  const picker = document.getElementById("modal-prof-picker");
+  const list = profesores.filter(p => p.status === "Activo" || modalSelectedProfs.includes(p.name));
+  picker.innerHTML = list.map(p => {
+    const sel = modalSelectedProfs.includes(p.name);
+    return `<div class="prof-opt ${sel?'selected':''}" style="background:${sel?p.bg:'#fff'}" onclick="toggleModalProf('${p.name}')">
+      <input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();toggleModalProf('${p.name}')" />
+      <span style="font-weight:800;color:${p.fg};font-size:0.9rem">${p.name}</span>
+    </div>`;
+  }).join("");
+}
+
+function toggleModalProf(name) {
+  const idx = modalSelectedProfs.indexOf(name);
+  if (idx === -1) modalSelectedProfs.push(name);
+  else modalSelectedProfs.splice(idx, 1);
+  renderModalPicker();
+}
+
+function closeCellModal() {
+  document.getElementById("cell-modal").classList.remove("open");
+}
+
+function saveCellModal() {
+  if (!editingContext) return;
+  const { mName, uName, day, slotIdx } = editingContext;
+  const tit = document.getElementById("repl-titular").value;
+  const sup = document.getElementById("repl-suplente").value;
+  const extEl = document.getElementById("modal-extend-end");
+  const endSlotIdx = extEl ? parseInt(extEl.value, 10) : slotIdx;
+
+  if (tit && sup) {
+    if (!modalSelectedProfs.includes(tit)) modalSelectedProfs.push(tit);
+    if (!modalSelectedProfs.includes(sup)) modalSelectedProfs.push(sup);
+    const m = MONTHS.find(x => x.name === mName);
+    const ddStr = `${String(day).padStart(2,"0")}/${String(m.month).padStart(2,"0")}/${m.year}`;
+    const hIni = TIME_SLOTS[slotIdx].split(" a ")[0];
+    const hFin = TIME_SLOTS[endSlotIdx].split(" a ")[1];
+    reemplazosLog.unshift({
+      fecha: ddStr,
+      horario: `${hIni} a ${hFin}`,
+      unidad: uName,
+      titular: tit,
+      suplente: sup
+    });
+  }
+
+  for (let s = slotIdx; s <= endSlotIdx; s++) {
+    scheduleData[mName][uName][day][s] = [...new Set(modalSelectedProfs)];
+  }
+  saveState();
+  closeCellModal();
+  refreshAll();
+}
+
+function renderResumenMensual() {
+  const calc = calculateMonthData(currentMonthName);
+  let totGym = 0, totBox = 0, totBoxeo = 0, totNorm = 0, totDob = 0, totPay = 0, workedCount = 0;
+
+  let rowsHtml = "";
+  Object.values(calc.byProf).forEach(p => {
+    const gHs = p.gymNorm + p.gymDob;
+    const bHs = p.boxNorm + p.boxDob;
+    const xHs = p.boxeoNorm + p.boxeoDob;
+    const nHs = p.gymNorm + p.boxNorm + p.boxeoNorm;
+    const dHs = p.gymDob + p.boxDob + p.boxeoDob;
+    const tHs = nHs + dHs;
+    if (p.status !== "Activo" && tHs === 0) return;
+    if (tHs > 0) workedCount++;
+
+    const impNorm = nHs * calc.rate;
+    const impDob = dHs * calc.rate * 2;
+    const impTot = impNorm + impDob;
+
+    totGym += gHs; totBox += bHs; totBoxeo += xHs;
+    totNorm += nHs; totDob += dHs; totPay += impTot;
+
+    rowsHtml += `<tr>
+      <td>${renderChip(p.name)}</td>
+      <td class="center">${p.status}</td>
+      <td class="num">${gHs.toFixed(1)}</td>
+      <td class="num">${bHs.toFixed(1)}</td>
+      <td class="num">${xHs.toFixed(1)}</td>
+      <td class="num">${nHs.toFixed(1)}</td>
+      <td class="num">${dHs.toFixed(1)}</td>
+      <td class="num"><strong>${tHs.toFixed(1)}</strong></td>
+      <td class="num">${formatMoney(calc.rate)}</td>
+      <td class="num">${formatMoney(impNorm)}</td>
+      <td class="num">${formatMoney(impDob)}</td>
+      <td class="num" style="background:var(--yellow-soft)"><strong>${formatMoney(impTot)}</strong></td>
+    </tr>`;
+  });
+
+  document.getElementById("res-mensual-kpis").innerHTML = `
+    <div class="kpi-card"><div class="lbl">Mes</div><div class="val">${currentMonthName}</div><div class="sub">Estado: <strong>${calc.m.status}</strong></div></div>
+    <div class="kpi-card"><div class="lbl">Profes con Horas</div><div class="val">${workedCount}</div><div class="sub">Valor hora: ${formatMoney(calc.rate)}</div></div>
+    <div class="kpi-card"><div class="lbl">Horas Normales / Dobles</div><div class="val">${totNorm.toFixed(1)}h / ${totDob.toFixed(1)}h</div><div class="sub">Total: ${(totNorm+totDob).toFixed(1)} hs</div></div>
+    <div class="kpi-card"><div class="lbl">Total a Pagar</div><div class="val" style="color:#15803d">${formatMoney(totPay)}</div><div class="sub">Suma de las 3 unidades</div></div>
+  `;
+
+  document.getElementById("res-mensual-table").innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Profesor</th><th>Estado</th><th>1. Proteína Gym</th><th>2. Proteína Box</th><th>3. Boxeo</th>
+        <th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Valor Hora</th>
+        <th>Importe Normal</th><th>Importe Doble</th><th>Total a Pagar ($)</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot><tr class="tot-row">
+        <td>TOTAL GENERAL</td>
+        <td class="center">${workedCount} profes</td>
+        <td class="num">${totGym.toFixed(1)}</td>
+        <td class="num">${totBox.toFixed(1)}</td>
+        <td class="num">${totBoxeo.toFixed(1)}</td>
+        <td class="num">${totNorm.toFixed(1)}</td>
+        <td class="num">${totDob.toFixed(1)}</td>
+        <td class="num">${(totNorm+totDob).toFixed(1)}</td>
+        <td class="num">${formatMoney(calc.rate)}</td>
+        <td class="num">${formatMoney(totNorm * calc.rate)}</td>
+        <td class="num">${formatMoney(totDob * calc.rate * 2)}</td>
+        <td class="num">${formatMoney(totPay)}</td>
+      </tr></tfoot>
+    </table>
+  `;
+
+  document.getElementById("res-mensual-units").innerHTML = document.getElementById("home-unit-summary").innerHTML;
+  renderIndividualDetail();
+}
+
+function renderIndividualDetail() {
+  const profName = document.getElementById("res-prof-select").value || (profesores[0] ? profesores[0].name : "");
+  const calc = calculateMonthData(currentMonthName);
+  const p = calc.byProf[profName] || { gymNorm:0, gymDob:0, boxNorm:0, boxDob:0, boxeoNorm:0, boxeoDob:0 };
+  const rows = [
+    { u: "1. Proteína Gym", n: p.gymNorm, d: p.gymDob },
+    { u: "2. Proteína Box", n: p.boxNorm, d: p.boxDob },
+    { u: "3. Boxeo", n: p.boxeoNorm, d: p.boxeoDob }
+  ];
+  let tn = 0, td = 0;
+  const body = rows.map(r => {
+    tn += r.n; td += r.d;
+    const t = r.n + r.d;
+    const inorm = r.n * calc.rate;
+    const idob = r.d * calc.rate * 2;
+    return `<tr>
+      <td><strong>${r.u}</strong></td>
+      <td class="num">${r.n.toFixed(1)} hs</td>
+      <td class="num">${r.d.toFixed(1)} hs</td>
+      <td class="num"><strong>${t.toFixed(1)} hs</strong></td>
+      <td class="num">${formatMoney(inorm)}</td>
+      <td class="num">${formatMoney(idob)}</td>
+      <td class="num"><strong>${formatMoney(inorm + idob)}</strong></td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("res-individual-detail").innerHTML = `
+    <table>
+      <thead><tr><th>Unidad (${profName} — ${currentMonthName})</th><th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Importe Normal</th><th>Importe Doble</th><th>Total a Pagar ($)</th></tr></thead>
+      <tbody>${body}</tbody>
+      <tfoot><tr class="tot-row">
+        <td>TOTAL A COBRAR POR ${profName.toUpperCase()}</td>
+        <td class="num">${tn.toFixed(1)} hs</td>
+        <td class="num">${td.toFixed(1)} hs</td>
+        <td class="num">${(tn+td).toFixed(1)} hs</td>
+        <td class="num">${formatMoney(tn * calc.rate)}</td>
+        <td class="num">${formatMoney(td * calc.rate * 2)}</td>
+        <td class="num">${formatMoney((tn * calc.rate) + (td * calc.rate * 2))}</td>
+      </tr></tfoot>
+    </table>
+  `;
+}
+
+function renderReportesPorUnidad() {
+  const calc = calculateMonthData(currentMonthName);
+  let rows = "";
+  let gN=0, gD=0, gC=0, bN=0, bD=0, bC=0, xN=0, xD=0, xC=0;
+
+  Object.values(calc.byProf).forEach(p => {
+    const cGym = (p.gymNorm + p.gymDob * 2) * calc.rate;
+    const cBox = (p.boxNorm + p.boxDob * 2) * calc.rate;
+    const cBoxeo = (p.boxeoNorm + p.boxeoDob * 2) * calc.rate;
+    const cTot = cGym + cBox + cBoxeo;
+    gN += p.gymNorm; gD += p.gymDob; gC += cGym;
+    bN += p.boxNorm; bD += p.boxDob; bC += cBox;
+    xN += p.boxeoNorm; xD += p.boxeoDob; xC += cBoxeo;
+
+    rows += `<tr>
+      <td>${renderChip(p.name)}</td>
+      <td class="num">${p.gymNorm.toFixed(1)}</td><td class="num">${p.gymDob.toFixed(1)}</td><td class="num"><strong>${(p.gymNorm+p.gymDob).toFixed(1)}</strong></td><td class="num">${formatMoney(cGym)}</td>
+      <td class="num">${p.boxNorm.toFixed(1)}</td><td class="num">${p.boxDob.toFixed(1)}</td><td class="num"><strong>${(p.boxNorm+p.boxDob).toFixed(1)}</strong></td><td class="num">${formatMoney(cBox)}</td>
+      <td class="num">${p.boxeoNorm.toFixed(1)}</td><td class="num">${p.boxeoDob.toFixed(1)}</td><td class="num"><strong>${(p.boxeoNorm+p.boxeoDob).toFixed(1)}</strong></td><td class="num">${formatMoney(cBoxeo)}</td>
+      <td class="num" style="background:var(--yellow-soft)"><strong>${formatMoney(cTot)}</strong></td>
+    </tr>`;
+  });
+
+  document.getElementById("rep-unidad-table").innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2">Profesor</th>
+          <th colspan="4" style="background:#18181b">1. PROTEÍNA GYM</th>
+          <th colspan="4" style="background:#065f46">2. PROTEÍNA BOX</th>
+          <th colspan="4" style="background:#7c2d12">3. BOXEO</th>
+          <th rowspan="2">TOTAL ($)</th>
+        </tr>
+        <tr>
+          <th>Norm</th><th>Dob</th><th>Tot Hs</th><th>Costo</th>
+          <th>Norm</th><th>Dob</th><th>Tot Hs</th><th>Costo</th>
+          <th>Norm</th><th>Dob</th><th>Tot Hs</th><th>Costo</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr class="tot-row">
+        <td>TOTALES</td>
+        <td class="num">${gN.toFixed(1)}</td><td class="num">${gD.toFixed(1)}</td><td class="num">${(gN+gD).toFixed(1)}</td><td class="num">${formatMoney(gC)}</td>
+        <td class="num">${bN.toFixed(1)}</td><td class="num">${bD.toFixed(1)}</td><td class="num">${(bN+bD).toFixed(1)}</td><td class="num">${formatMoney(bC)}</td>
+        <td class="num">${xN.toFixed(1)}</td><td class="num">${xD.toFixed(1)}</td><td class="num">${(xN+xD).toFixed(1)}</td><td class="num">${formatMoney(xC)}</td>
+        <td class="num">${formatMoney(gC+bC+xC)}</td>
+      </tr></tfoot>
+    </table>
+  `;
+}
+
+function renderResumenAnual() {
+  const allCalcs = MONTHS.map(m => calculateMonthData(m.name));
+  const profAcc = {};
+  profesores.forEach(p => {
+    profAcc[p.name] = { name: p.name, status: p.status, norm: 0, dob: 0, pay: 0, perMonth: [] };
+  });
+
+  const unitAcc = {
+    "Proteína Gym": { norm: 0, dob: 0, cost: 0 },
+    "Proteína Box": { norm: 0, dob: 0, cost: 0 },
+    "Boxeo": { norm: 0, dob: 0, cost: 0 }
+  };
+
+  allCalcs.forEach(c => {
+    profesores.forEach(p => {
+      const bp = c.byProf[p.name] || { gymNorm:0, gymDob:0, boxNorm:0, boxDob:0, boxeoNorm:0, boxeoDob:0 };
+      const n = bp.gymNorm + bp.boxNorm + bp.boxeoNorm;
+      const d = bp.gymDob + bp.boxDob + bp.boxeoDob;
+      const pay = (n + d * 2) * c.rate;
+      profAcc[p.name].norm += n;
+      profAcc[p.name].dob += d;
+      profAcc[p.name].pay += pay;
+      profAcc[p.name].perMonth.push(n + d);
+    });
+    UNITS.forEach(u => {
+      const un = c.byUnit[u].norm;
+      const ud = c.byUnit[u].dob;
+      unitAcc[u].norm += un;
+      unitAcc[u].dob += ud;
+      unitAcc[u].cost += (un + ud * 2) * c.rate;
+    });
+  });
+
+  let topProf = { name: "-", hs: 0 };
+  let totAnualNorm = 0, totAnualDob = 0, totAnualPay = 0;
+
+  let pRows = "";
+  Object.values(profAcc).forEach(pa => {
+    const ths = pa.norm + pa.dob;
+    if (ths > topProf.hs) topProf = { name: pa.name, hs: ths };
+    totAnualNorm += pa.norm; totAnualDob += pa.dob; totAnualPay += pa.pay;
+    const mCells = pa.perMonth.map(v => `<td class="num">${v > 0 ? v.toFixed(1) : '-'}</td>`).join("");
+    pRows += `<tr>
+      <td>${renderChip(pa.name)}</td>
+      <td class="num">${pa.norm.toFixed(1)}</td>
+      <td class="num">${pa.dob.toFixed(1)}</td>
+      <td class="num"><strong>${ths.toFixed(1)}</strong></td>
+      <td class="num" style="background:var(--yellow-soft)"><strong>${formatMoney(pa.pay)}</strong></td>
+      ${mCells}
+    </tr>`;
+  });
+
+  document.getElementById("anual-kpis").innerHTML = `
+    <div class="kpi-card"><div class="lbl">Total Acumulado</div><div class="val" style="color:#15803d">${formatMoney(totAnualPay)}</div><div class="sub">Nov 2026 – Dic 2027</div></div>
+    <div class="kpi-card"><div class="lbl">Total Horas</div><div class="val">${(totAnualNorm+totAnualDob).toFixed(1)} hs</div><div class="sub">${totAnualNorm.toFixed(1)}h Norm · ${totAnualDob.toFixed(1)}h Dobles</div></div>
+    <div class="kpi-card"><div class="lbl">Mayor Carga Horaria</div><div class="val">${topProf.name}</div><div class="sub">${topProf.hs.toFixed(1)} horas</div></div>
+  `;
+
+  const mHeaders = MONTHS.map(m => `<th>${m.name.slice(0,3)} ${String(m.year).slice(2)}</th>`).join("");
+  document.getElementById("anual-prof-table").innerHTML = `
+    <table>
+      <thead><tr><th>Profesor</th><th>Hs Normales</th><th>Hs Dobles</th><th>Total Horas</th><th>Total Cobrado ($)</th>${mHeaders}</tr></thead>
+      <tbody>${pRows}</tbody>
+    </table>
+  `;
+
+  let uRows = "";
+  UNITS.forEach((u, i) => {
+    const ua = unitAcc[u];
+    const ut = ua.norm + ua.dob;
+    const pct = totAnualPay > 0 ? ((ua.cost / totAnualPay)*100).toFixed(1)+"%" : "0.0%";
+    uRows += `<tr>
+      <td><strong>${i+1}. ${u}</strong></td>
+      <td class="num">${ua.norm.toFixed(1)} hs</td>
+      <td class="num">${ua.dob.toFixed(1)} hs</td>
+      <td class="num"><strong>${ut.toFixed(1)} hs</strong></td>
+      <td class="num"><strong>${formatMoney(ua.cost)}</strong></td>
+      <td class="center">${pct}</td>
+    </tr>`;
+  });
+
+  document.getElementById("anual-unit-table").innerHTML = `
+    <table>
+      <thead><tr><th>Unidad</th><th>Horas Normales</th><th>Horas Dobles</th><th>Total Horas</th><th>Costo Acumulado ($)</th><th>%</th></tr></thead>
+      <tbody>${uRows}</tbody>
+      <tfoot><tr class="tot-row">
+        <td>TOTAL GENERAL</td>
+        <td class="num">${totAnualNorm.toFixed(1)} hs</td>
+        <td class="num">${totAnualDob.toFixed(1)} hs</td>
+        <td class="num">${(totAnualNorm+totAnualDob).toFixed(1)} hs</td>
+        <td class="num">${formatMoney(totAnualPay)}</td>
+        <td class="center">100.0%</td>
+      </tr></tfoot>
+    </table>
+  `;
+}
+
+function renderProfes() {
+  const calc = calculateMonthData(currentMonthName);
+  const rows = profesores.map((p, idx) => {
+    const bp = calc.byProf[p.name] || { gymNorm:0, gymDob:0, boxNorm:0, boxDob:0, boxeoNorm:0, boxeoDob:0 };
+    const mHs = bp.gymNorm + bp.gymDob + bp.boxNorm + bp.boxDob + bp.boxeoNorm + bp.boxeoDob;
+    const mPay = ((bp.gymNorm + bp.boxNorm + bp.boxeoNorm) + (bp.gymDob + bp.boxDob + bp.boxeoDob)*2) * calc.rate;
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <strong>${p.name}</strong>
+          <button class="btn btn-outline" style="padding:5px 10px;font-size:0.82rem" onclick="renameProfesor(${idx})">✏️ Cambiar Nombre</button>
+        </div>
+      </td>
+      <td class="center">${renderChip(p.name)}</td>
+      <td class="center">
+        <button class="btn ${p.status==='Activo'?'btn-success':'btn-outline'}" style="padding:5px 12px;font-size:0.84rem" onclick="toggleProfStatus(${idx})">
+          ${p.status}
+        </button>
+      </td>
+      <td class="num">${mHs.toFixed(1)} hs</td>
+      <td class="num"><strong>${formatMoney(mPay)}</strong></td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("profes-table").innerHTML = `
+    <table>
+      <thead><tr><th>Nombre del Profesor</th><th>Color</th><th>Estado</th><th>Horas (${currentMonthName})</th><th>Liquidación (${currentMonthName})</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function renameProfesor(idx) {
+  const oldName = profesores[idx].name;
+  const newNameRaw = prompt(`Cambiar nombre del profesor "${oldName}":`, oldName);
+  if (!newNameRaw) return;
+  const newName = newNameRaw.trim();
+  if (!newName || newName === oldName) return;
+
+  if (profesores.some((p, i) => i !== idx && p.name.toLowerCase() === newName.toLowerCase())) {
+    alert("⚠️ Ya existe otro profesor con ese nombre.");
+    return;
+  }
+
+  profesores[idx].name = newName;
+
+  MONTHS.forEach(m => {
+    UNITS.forEach(u => {
+      for (let d = 1; d <= m.days; d++) {
+        for (let s = 0; s < 32; s++) {
+          const arr = scheduleData[m.name][u][d][s] || [];
+          const pos = arr.indexOf(oldName);
+          if (pos !== -1) arr[pos] = newName;
+        }
+      }
+    });
+  });
+
+  reemplazosLog.forEach(r => {
+    if (r.titular === oldName) r.titular = newName;
+    if (r.suplente === oldName) r.suplente = newName;
+  });
+
+  saveState();
+  populateSelects();
+  refreshAll();
+}
+
+function addNewProfesor() {
+  const nameInput = document.getElementById("new-prof-name");
+  const colorInput = document.getElementById("new-prof-color");
+  const name = nameInput.value.trim();
+  if (!name) { alert("Ingrese el nombre del profesor."); return; }
+  if (profesores.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+    alert("⚠️ Ya existe un profesor con ese nombre.");
+    return;
+  }
+  profesores.push({
+    name,
+    status: "Activo",
+    bg: colorInput.value,
+    fg: "#0a0a0a"
+  });
+  nameInput.value = "";
+  saveState();
+  populateSelects();
+  refreshAll();
+}
+
+function toggleProfStatus(idx) {
+  profesores[idx].status = profesores[idx].status === "Activo" ? "Inactivo" : "Activo";
+  saveState();
+  populateSelects();
+  refreshAll();
+}
+
+function updateHourlyRate(val) {
+  const num = Number(val);
+  if (num > 0) {
+    currentRate = num;
+    document.getElementById("cfg-double-rate").textContent = formatMoney(currentRate * 2);
+    saveState();
+    refreshAll();
+  }
+}
+
+function toggleCloseMonth() {
+  const m = MONTHS.find(x => x.name === currentMonthName);
+  if (!m) return;
+  if (m.status === "ABIERTO") {
+    m.status = "LIQUIDADO";
+    m.closedRate = currentRate;
+  } else {
+    m.status = "ABIERTO";
+  }
+  saveState();
+  populateSelects();
+  refreshAll();
+}
+
+function renderConfigAndFeriados() {
+  const mRows = MONTHS.map((m, idx) => {
+    const c = calculateMonthData(m.name);
+    let n = 0, d = 0;
+    UNITS.forEach(u => { n += c.byUnit[u].norm; d += c.byUnit[u].dob; });
+    const cost = (n + d * 2) * c.rate;
+    return `<tr>
+      <td><strong>${m.name}</strong></td>
+      <td class="center"><span class="chip" style="background:${m.status==='LIQUIDADO'?'#fee2e2':'#dcfce7'};color:${m.status==='LIQUIDADO'?'#991b1b':'#166534'}">${m.status}</span></td>
+      <td class="num">${formatMoney(c.rate)}</td>
+      <td class="num">${formatMoney(c.rate * 2)}</td>
+      <td class="num">${(n+d).toFixed(1)} hs</td>
+      <td class="num"><strong>${formatMoney(cost)}</strong></td>
+      <td class="center"><button class="btn btn-outline" style="padding:4px 10px;font-size:0.8rem" onclick="toggleCloseMonthByIndex(${idx})">${m.status==='ABIERTO'?'🔒 Cerrar Mes':'🔓 Reabrir'}</button></td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("cfg-months-table").innerHTML = `
+    <table>
+      <thead><tr><th>Mes</th><th>Estado</th><th>Valor Hora</th><th>Valor Doble (×2)</th><th>Total Horas</th><th>Total ($)</th><th>Acción</th></tr></thead>
+      <tbody>${mRows}</tbody>
+    </table>
+  `;
+
+  const fRows = feriados.map(f => `<tr>
+    <td class="center"><strong>${f.date.split("-").reverse().join("/")}</strong></td>
+    <td>${f.desc}</td>
+    <td class="center"><span class="badge-double">Doble ×2</span></td>
+  </tr>`).join("");
+
+  document.getElementById("feriados-table").innerHTML = `
+    <table>
+      <thead><tr><th>Fecha</th><th>Feriado</th><th>Pago</th></tr></thead>
+      <tbody>${fRows}</tbody>
+    </table>
+  `;
+}
+
+function toggleCloseMonthByIndex(idx) {
+  const m = MONTHS[idx];
+  if (m.status === "ABIERTO") { m.status = "LIQUIDADO"; m.closedRate = currentRate; }
+  else { m.status = "ABIERTO"; }
+  saveState();
+  populateSelects();
+  refreshAll();
+}
+
+function addFeriado() {
+  const dt = document.getElementById("new-fer-date").value;
+  const desc = document.getElementById("new-fer-desc").value.trim();
+  if (!dt || !desc) { alert("Complete la fecha y el nombre del feriado."); return; }
+  if (!feriados.some(f => f.date === dt)) {
+    feriados.push({ date: dt, desc });
+    feriados.sort((a,b) => a.date.localeCompare(b.date));
+  }
+  document.getElementById("new-fer-desc").value = "";
+  saveState();
+  refreshAll();
+}
+
+function renderReemplazos() {
+  document.getElementById("reemplazos-table").innerHTML = `
+    <table>
+      <thead><tr><th>Fecha</th><th>Horario</th><th>Unidad</th><th>Profesor Titular</th><th>Profesor Reemplazante</th></tr></thead>
+      <tbody>${reemplazosLog.map(r => `<tr><td class="center">${r.fecha}</td><td class="center">${r.horario}</td><td><strong>${r.unidad}</strong></td><td>${renderChip(r.titular)}</td><td>${renderChip(r.suplente)}</td></tr>`).join("")}</tbody>
+    </table>
+  `;
+}
+
+function showTab(tabId, btnEl) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById("view-" + tabId).classList.add("active");
+  document.querySelectorAll("nav.tabs button").forEach(b => b.classList.remove("active"));
+  if (btnEl) btnEl.classList.add("active");
+}
+
+function triggerNav(btnIndex) {
+  const btns = document.querySelectorAll("nav.tabs button");
+  if (btns[btnIndex]) btns[btnIndex].click();
+}
+
+function refreshAll() {
+  renderHome();
+  renderSchedule();
+  renderResumenMensual();
+  renderReportesPorUnidad();
+  renderResumenAnual();
+  renderProfes();
+  renderConfigAndFeriados();
+  renderReemplazos();
+}
+
+initScheduleData();
+loadState();
+populateSelects();
+refreshAll();
+</script>
+</body>
+</html>
