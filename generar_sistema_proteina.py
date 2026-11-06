@@ -6,8 +6,7 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
-OUTPUT_DIR = r"C:\Users\Usuario\.gemini\antigravity\scratch\sistema_proteina_staff"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_XLSX = os.path.join(OUTPUT_DIR, "SISTEMA_GESTION_STAFF_PROTEINA_v2.xlsx")
 
 # ==============================================================================
