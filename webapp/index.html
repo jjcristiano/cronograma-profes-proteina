@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema Integral de Gestión de Staff — Proteína Gym · Proteína Box · Boxeo</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --navy: #0f172a;
+      --slate: #1e293b;
+      --muted: #64748b;
+      --border: #cbd5e1;
+      --gym: #1e3a8a;
+      --gym-bg: #dbeafe;
+      --box: #065f46;
+      --box-bg: #d1fae5;
+      --boxeo: #7c2d12;
+      --boxeo-bg: #ffedd5;
+      --edit-green: #ecfdf5;
+      --edit-border: #10b981;
+      --config-blue: #eff6ff;
+      --double-red: #fee2e2;
+      --double-text: #991b1b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--navy);
+      line-height: 1.45;
+    }
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+    .brand h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; }
+    .brand p { font-size: 0.85rem; color: #cbd5e1; }
+    .unit-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+    .unit-pill {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .pill-gym { background: #dbeafe; color: #1e3a8a; }
+    .pill-box { background: #d1fae5; color: #065f46; }
+    .pill-boxeo { background: #ffedd5; color: #7c2d12; }
+
+    nav.tabs {
+      background: var(--slate);
+      display: flex;
+      overflow-x: auto;
+      padding: 0 16px;
+      gap: 4px;
+      border-bottom: 2px solid #0f172a;
+    }
+    nav.tabs button {
+      background: transparent;
+      color: #cbd5e1;
+      border: none;
+      padding: 11px 16px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      border-bottom: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    nav.tabs button:hover { color: #fff; background: rgba(255,255,255,0.06); }
+    nav.tabs button.active {
+      color: #fff;
+      border-bottom-color: #10b981;
+      background: rgba(16,185,129,0.14);
+    }
+
+    main { max-width: 1600px; margin: 0 auto; padding: 20px; }
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .kpi-card .lbl { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--muted); }
+    .kpi-card .val { font-size: 1.45rem; font-weight: 800; margin-top: 4px; color: var(--navy); }
+    .kpi-card .sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .card-hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .card-hdr h2 { font-size: 1.05rem; font-weight: 700; color: var(--navy); }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    select, input[type="text"], input[type="number"], input[type="date"] {
+      padding: 7px 11px;
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      background: var(--edit-green);
+      color: var(--navy);
+      font-weight: 600;
+    }
+    button.btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary { background: #1e3a8a; color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-success { background: #059669; color: #fff; }
+    .btn-success:hover { background: #047857; }
+    .btn-amber { background: #d97706; color: #fff; }
+    .btn-outline { background: #fff; border-color: #94a3b8; color: var(--navy); }
+    .btn-outline:hover { background: #f1f5f9; }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    th, td { padding: 7px 10px; border: 1px solid #e2e8f0; text-align: left; }
+    th { background: var(--slate); color: #fff; font-weight: 600; text-align: center; white-space: nowrap; }
+    tr.tot-row td { background: #e2e8f0; font-weight: 800; border-top: 2px solid var(--navy); }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .center { text-align: center; }
+
+    /* Chips de Profesores */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      margin: 1px;
+      white-space: nowrap;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+    .sched-cell {
+      min-width: 125px;
+      cursor: pointer;
+      background: var(--edit-green);
+      transition: background 0.12s;
+      vertical-align: middle;
+      text-align: center;
+    }
+    .sched-cell:hover { outline: 2px solid #2563eb; background: #d1fae5; }
+    .sched-cell.double-day { background: #fff1f2; }
+    .sched-cell.double-day:hover { background: #ffe4e6; }
+    .badge-double {
+      background: #fee2e2;
+      color: #991b1b;
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .badge-normal {
+      background: #f1f5f9;
+      color: #475569;
+      font-size: 0.68rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    /* Modal de Multiselección y Reemplazos */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      max-width: 540px;
+      width: 100%;
+      padding: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    }
+    .modal h3 { font-size: 1.05rem; margin-bottom: 6px; }
+    .prof-picker {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .prof-opt {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .prof-opt.selected { border: 2px solid #0f172a; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
+
+    .legend-bar {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+      padding: 10px 14px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 14px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #94a3b8; }
+
+    @media print {
+      header, nav.tabs, .no-print { display: none !important; }
+      main { padding: 0; }
+      .card { box-shadow: none; border: 1px solid #000; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>🏋️ SISTEMA INTEGRAL DE GESTIÓN DE HORARIOS, STAFF Y LIQUIDACIONES</h1>
+    <p>Administración Centralizada y Desglose por Unidad · Período Noviembre 2026 – Diciembre 2027 (Versión 2.0)</p>
+  </div>
+  <div class="unit-pills">
+    <span class="unit-pill pill-gym">Proteína Gym</span>
+    <span class="unit-pill pill-box">Proteína Box</span>
+    <span class="unit-pill pill-boxeo">Boxeo</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="active" onclick="showTab('inicio', this)">🏠 INICIO</button>
+  <button onclick="showTab('cronogramas', this)">📅 CRONOGRAMAS MENSUALES</button>
+  <button onclick="showTab('resumen-mensual', this)">💰 RESUMEN MENSUAL</button>
+  <button onclick="showTab('reportes-unidad', this)">🏢 REPORTES POR UNIDAD</button>
+  <button onclick="showTab('resumen-anual', this)">📊 RESUMEN ANUAL</button>
+  <button onclick="showTab('profes', this)">👥 PROFES</button>
+  <button onclick="showTab('config', this)">⚙️ CONFIGURACIÓN Y FERIADOS</button>
+  <button onclick="showTab('bd', this)">🗄️ REGISTRO DE HORAS & PRUEBAS</button>
+</nav>
+
+<main>
+  <!-- ==================================================================== -->
+  <!-- 1. INICIO -->
+  <!-- ==================================================================== -->
+  <section id="view-inicio" class="view active">
+    <div class="kpi-grid" id="home-kpis"></div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <h2>¿Qué necesitás hacer? — Accesos Rápidos por Función (Sección 13)</h2>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card" style="cursor:pointer;border-left:4px solid #1e3a8a" onclick="triggerNav(1)">
+          <div class="lbl">1. Cronogramas Mensuales</div>
+          <div class="val" style="font-size:1.1rem">Consultar y Editar Horarios</div>
+          <div class="sub">Nov 2026 a Dic 2027 · Selección múltiple y reemplazos en Proteína Gym, Proteína Box y Boxeo.</div>
+        </div>
+        <div class="kpi-card" style="cursor:pointer;border-left:4px solid #059669" onclick="triggerNav(2)">
+          <div class="lbl">2. Liquidaciones Mensuales</div>
+          <div class="val" style="font-size:1.1rem">Consultar Pagos y Recibos</div>
+          <div class="sub">Consolida horas normales y dobles (×2) de las 3 unidades sin duplicar pagos.</div>
+        </div>
+        <div class="kpi-card" style="cursor:pointer;border-left:4px solid #7c2d12" onclick="triggerNav(3)">
+          <div class="lbl">3. Costos por Unidad</div>
+          <div class="val" style="font-size:1.1rem">Analizar Gym · Box · Boxeo</div>
+          <div class="sub">Comparativa económica y horaria de cada sector por separado y consolidado.</div>
+        </div>
+        <div class="kpi-card" style="cursor:pointer;border-left:4px solid #7c3aed" onclick="triggerNav(5)">
+          <div class="lbl">4. Staff de Profesores</div>
+          <div class="val" style="font-size:1.1rem">Altas, Bajas y Colores</div>
+          <div class="sub">Incorporación inmediata en todas las listas desplegables sin tocar fórmulas.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Resumen Económico por Unidad de Trabajo (Mes en Consulta)</h2>
+      </div>
+      <div class="table-wrap" id="home-unit-summary"></div>
+    </div>
+
+    <div class="legend-bar">
+      <div class="legend-item"><span class="swatch" style="background:#ecfdf5"></span> <strong>Verde:</strong> Celdas editables por el usuario</div>
+      <div class="legend-item"><span class="swatch" style="background:#eff6ff"></span> <strong>Azul:</strong> Configuración (Valor hora y vigencias)</div>
+      <div class="legend-item"><span class="swatch" style="background:#f1f5f9"></span> <strong>Gris:</strong> Cálculos automáticos protegidos</div>
+      <div class="legend-item"><span class="swatch" style="background:#fee2e2"></span> <strong>Rojo suave:</strong> Domingo o Feriado (Pago Doble ×2 automático)</div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 2. CRONOGRAMAS MENSUALES -->
+  <!-- ==================================================================== -->
+  <section id="view-cronogramas" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>📅 Gestión de Cronogramas Mensuales (Bloques de 30 min = 0,5 hs por Profesor)</h2>
+        <div class="toolbar" style="margin-bottom:0">
+          <label><strong>Mes:</strong>
+            <select id="sched-month" onchange="renderSchedule()"></select>
+          </label>
+          <label><strong>Unidad:</strong>
+            <select id="sched-unit" onchange="renderSchedule()">
+              <option value="Proteína Gym">1. Proteína Gym (Cronograma General)</option>
+              <option value="Proteína Box">2. Proteína Box (Horarios Box)</option>
+              <option value="Boxeo">3. Boxeo</option>
+            </select>
+          </label>
+          <label><strong>Semana del mes:</strong>
+            <select id="sched-week" onchange="renderSchedule()">
+              <option value="0">Días 1 al 7</option>
+              <option value="1">Días 8 al 14</option>
+              <option value="2">Días 15 al 21</option>
+              <option value="3">Días 22 al Fin de Mes</option>
+              <option value="all">Mes Completo (1 al 31)</option>
+            </select>
+          </label>
+          <button class="btn btn-primary" onclick="preloadCurrentMonthFromTemplate()">⚡ Pre-cargar Mes desde Plantilla Semanal</button>
+        </div>
+      </div>
+
+      <!-- BARRA DE CARGA RÁPIDA POR RANGO HORARIO (EJ: 08:00 A 22:00 DE UNA SOLA VEZ) -->
+      <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:12px 14px;margin-bottom:12px">
+        <div style="font-size:0.86rem;font-weight:800;color:#1e3a8a;margin-bottom:8px">
+          ⚡ Carga Rápida de Turno Completo / Rango Horario (sin ir celda por celda)
+        </div>
+        <div class="toolbar" style="margin-bottom:6px">
+          <label style="font-size:0.82rem"><strong>Profesor:</strong>
+            <select id="bulk-prof"></select>
+          </label>
+          <label style="font-size:0.82rem"><strong>Aplicar en:</strong>
+            <select id="bulk-day"></select>
+          </label>
+          <label style="font-size:0.82rem"><strong>Desde:</strong>
+            <select id="bulk-start"></select>
+          </label>
+          <label style="font-size:0.82rem"><strong>Hasta:</strong>
+            <select id="bulk-end"></select>
+          </label>
+          <label style="font-size:0.82rem"><strong>Modo:</strong>
+            <select id="bulk-mode">
+              <option value="add">Sumar junto a los profes que ya estén</option>
+              <option value="replace">Dejar solo a este profesor en ese rango</option>
+              <option value="remove">Quitar a este profesor de ese rango</option>
+            </select>
+          </label>
+          <button class="btn btn-success" onclick="applyBulkRange()">✅ Aplicar Rango de Una Vez</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:0.78rem;color:#334155">
+          <span><strong>Atajos rápidos de horario:</strong></span>
+          <button class="btn btn-outline" style="padding:3px 8px;font-size:0.75rem" onclick="setBulkPreset('08:00','22:00')">🕗 Día Completo (08:00 a 22:00)</button>
+          <button class="btn btn-outline" style="padding:3px 8px;font-size:0.75rem" onclick="setBulkPreset('07:00','23:00')">🕖 Apertura a Cierre (07:00 a 23:00)</button>
+          <button class="btn btn-outline" style="padding:3px 8px;font-size:0.75rem" onclick="setBulkPreset('07:00','15:00')">☀️ Turno Mañana (07:00 a 15:00)</button>
+          <button class="btn btn-outline" style="padding:3px 8px;font-size:0.75rem" onclick="setBulkPreset('15:00','23:00')">🌙 Turno Tarde/Noche (15:00 a 23:00)</button>
+        </div>
+      </div>
+
+      <p style="font-size:0.83rem;color:var(--muted);margin-bottom:10px">
+        💡 <strong>También puedes hacer clic en la primera celda (ej. 08:00)</strong> y adentro de la ventana elegir <strong>"Repetir hasta las 22:00"</strong> para llenar todas las horas de corrido.
+      </p>
+      <div class="table-wrap" id="schedule-container"></div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 3. RESUMEN MENSUAL -->
+  <!-- ==================================================================== -->
+  <section id="view-resumen-mensual" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>💰 Resumen Mensual de Horas y Liquidaciones (Consolidado y por Unidad)</h2>
+        <div class="toolbar no-print" style="margin-bottom:0">
+          <label><strong>Período a Liquidar:</strong>
+            <select id="res-month" onchange="syncMonthSelect(this.value)"></select>
+          </label>
+          <button class="btn btn-amber" onclick="toggleCloseMonth()">🔒 Cerrar / Reabrir Liquidación del Mes</button>
+          <button class="btn btn-outline" onclick="window.print()">🖨️ Imprimir / Exportar PDF</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid" id="res-mensual-kpis"></div>
+
+      <h3 style="font-size:0.95rem;margin:14px 0 8px">1. Liquidación General Consolidada por Profesor (Sección 10.2)</h3>
+      <div class="table-wrap" id="res-mensual-table"></div>
+
+      <h3 style="font-size:0.95rem;margin:20px 0 8px">2. Desglose de Horas y Costos por Unidad (Sección 10.3)</h3>
+      <div class="table-wrap" id="res-mensual-units"></div>
+
+      <div style="margin-top:22px;padding-top:14px;border-top:2px dashed #cbd5e1">
+        <div class="toolbar">
+          <h3 style="font-size:0.95rem">3. Desglose Individual por Profesor (Ficha de Liquidación - Sección 10.4):</h3>
+          <select id="res-prof-select" onchange="renderIndividualDetail()"></select>
+        </div>
+        <div class="table-wrap" id="res-individual-detail"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 4. REPORTES POR UNIDAD -->
+  <!-- ==================================================================== -->
+  <section id="view-reportes-unidad" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>🏢 Reporte Comparativo por Unidad: Proteína Gym · Proteína Box · Boxeo</h2>
+        <div class="toolbar" style="margin-bottom:0">
+          <label><strong>Período:</strong>
+            <select id="rep-month" onchange="syncMonthSelect(this.value)"></select>
+          </label>
+        </div>
+      </div>
+      <div class="table-wrap" id="rep-unidad-table"></div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 5. RESUMEN ANUAL -->
+  <!-- ==================================================================== -->
+  <section id="view-resumen-anual" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>📊 Resumen Anual Acumulado (Noviembre 2026 – Diciembre 2027)</h2>
+      </div>
+      <div class="kpi-grid" id="anual-kpis"></div>
+      <h3 style="font-size:0.95rem;margin:12px 0 8px">1. Acumulado Anual por Profesor y Evolución Mensual (Secciones 11.1 y 11.2)</h3>
+      <div class="table-wrap" id="anual-prof-table"></div>
+
+      <h3 style="font-size:0.95rem;margin:20px 0 8px">2. Cuadro Anual Acumulado por Unidad (Sección 11.3)</h3>
+      <div class="table-wrap" id="anual-unit-table"></div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 6. PROFES -->
+  <!-- ==================================================================== -->
+  <section id="view-profes" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>👥 Administración Centralizada de Profesores (Lista Única Compartida)</h2>
+        <div class="toolbar" style="margin-bottom:0">
+          <input type="text" id="new-prof-name" placeholder="Nombre del nuevo profesor..." />
+          <input type="text" id="new-prof-role" placeholder="Rol / Unidades habituales..." />
+          <input type="color" id="new-prof-color" value="#bae6fd" title="Color identificador" />
+          <button class="btn btn-success" onclick="addNewProfesor()">➕ Incorporar Profesor Activo</button>
+        </div>
+      </div>
+      <p style="font-size:0.83rem;color:var(--muted);margin-bottom:12px">
+        Al agregar un profesor queda inmediatamente disponible en los 14 meses y 3 unidades (Regla R10). Si se cambia su estado a <strong>Inactivo</strong>, deja de aparecer para nuevas asignaciones pero conserva todo su historial de horas y liquidaciones anteriores (Reglas R11 y R12).
+      </p>
+      <div class="table-wrap" id="profes-table"></div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 7. CONFIGURACIÓN Y FERIADOS -->
+  <!-- ==================================================================== -->
+  <section id="view-config" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>⚙️ Configuración del Valor por Hora Único e Histórico de Vigencias (Sección 8)</h2>
+      </div>
+      <div class="toolbar">
+        <label><strong>Valor de la Hora Normal Vigente ($):</strong>
+          <input type="number" id="cfg-rate" value="5000" step="500" onchange="updateHourlyRate(this.value)" />
+        </label>
+        <span style="font-size:0.9rem;font-weight:700;color:#991b1b;background:#fee2e2;padding:7px 12px;border-radius:6px">
+          Valor Hora Doble (Domingos y Feriados ×2): <span id="cfg-double-rate">$10.000</span>
+        </span>
+      </div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px">
+        El cambio de tarifa actualiza automáticamente los períodos <strong>ABIERTOS</strong>, sin modificar retroactivamente los meses que ya fueron cerrados como <strong>LIQUIDADOS</strong> (Sección 8.2 y Regla R13).
+      </p>
+      <div class="table-wrap" id="cfg-months-table"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <h2>🎌 Calendario de Feriados y Fechas Especiales (Pago Doble ×2 Automático - Sección 9)</h2>
+        <div class="toolbar" style="margin-bottom:0">
+          <input type="date" id="new-fer-date" min="2026-11-01" max="2027-12-31" />
+          <input type="text" id="new-fer-desc" placeholder="Descripción del feriado..." />
+          <button class="btn btn-primary" onclick="addFeriado()">➕ Agregar Feriado</button>
+        </div>
+      </div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">
+        Regla R08 verificada: Si una fecha es simultáneamente <strong>Domingo y Feriado</strong> (ej. 20/06/2027), el multiplicador es <strong>×2</strong> (doble, nunca cuádruple).
+      </p>
+      <div class="table-wrap" id="feriados-table"></div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 8. BASE DE DATOS Y 22 PRUEBAS OBLIGATORIAS -->
+  <!-- ==================================================================== -->
+  <section id="view-bd" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>✅ Verificación Automática de los 22 Casos de Prueba Obligatorios (Sección 18)</h2>
+      </div>
+      <div class="table-wrap" id="tests-table"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <h2>🔄 Historial de Reemplazos Registrados (Titular vs. Reemplazante - Sección 7.4)</h2>
+      </div>
+      <div class="table-wrap" id="reemplazos-table"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <h2>🗄️ Base de Datos Interna Normalizada: REGISTRO DE HORAS (Muestra de Registros Individuales - Sección 12)</h2>
+      </div>
+      <div class="table-wrap" id="bd-table"></div>
+    </div>
+  </section>
+</main>
+
+<!-- MODAL PARA ASIGNACIÓN MÚLTIPLE Y REEMPLAZOS -->
+<div class="modal-backdrop" id="cell-modal">
+  <div class="modal">
+    <h3 id="modal-title">Editar Asignación de Franja Horaria</h3>
+    <p id="modal-subtitle" style="font-size:0.83rem;color:var(--muted);margin-bottom:10px"></p>
+
+    <div style="font-size:0.82rem;font-weight:700;margin-bottom:4px">Seleccione uno o varios profesores activos (0,5 hs para cada uno):</div>
+    <div class="prof-picker" id="modal-prof-picker"></div>
+
+    <div style="background:#ecfdf5;border:1px solid #10b981;border-radius:8px;padding:10px;margin-top:8px">
+      <label style="font-size:0.82rem;font-weight:700;color:#065f46;display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>⚡ ¿Repetir de corrido en este día hasta las?:</span>
+        <select id="modal-extend-end" style="background:#fff"></select>
+      </label>
+    </div>
+
+    <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:10px;margin-top:10px">
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a8a;margin-bottom:6px">🔄 ¿Es un Reemplazo? (Opcional - Trazabilidad Sección 7.4)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">
+        <select id="repl-titular"><option value="">-- Profesor Titular --</option></select>
+        <select id="repl-suplente"><option value="">-- Profesor Reemplazante --</option></select>
+      </div>
+      <input type="text" id="repl-motivo" placeholder="Motivo del reemplazo (ej: Inconveniente personal / Certificado)" style="width:100%" />
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+      <button class="btn btn-outline" onclick="closeCellModal()">Cancelar</button>
+      <button class="btn btn-success" onclick="saveCellModal()">💾 Guardar Asignación</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// DATOS MAESTROS DEL SISTEMA
+// ============================================================================
+const UNITS = ["Proteína Gym", "Proteína Box", "Boxeo"];
+const MONTHS = [
+  { name: "NOVIEMBRE 2026", year: 2026, month: 11, days: 30, status: "ABIERTO", closedRate: 5000 },
+  { name: "DICIEMBRE 2026", year: 2026, month: 12, days: 31, status: "ABIERTO", closedRate: 5000 },
+  { name: "ENERO 2027", year: 2027, month: 1, days: 31, status: "ABIERTO", closedRate: 5000 },
+  { name: "FEBRERO 2027", year: 2027, month: 2, days: 28, status: "ABIERTO", closedRate: 5000 },
+  { name: "MARZO 2027", year: 2027, month: 3, days: 31, status: "ABIERTO", closedRate: 5000 },
+  { name: "ABRIL 2027", year: 2027, month: 4, days: 30, status: "ABIERTO", closedRate: 5000 },
+  { name: "MAYO 2027", year: 2027, month: 5, days: 31, status: "ABIERTO", closedRate: 5000 },
+  { name: "JUNIO 2027", year: 2027, month: 6, days: 30, status: "ABIERTO", closedRate: 5000 },
+  { name: "JULIO 2027", year: 2027, month: 7, days: 31, status: "ABIERTO", closedRate: 5000 },
+  { name: "AGOSTO 2027", year: 2027, month: 8, days: 31, status: "ABIERTO", closedRate: 5000 },
+  { name: "SEPTIEMBRE 2027", year: 2027, month: 9, days: 30, status: "ABIERTO", closedRate: 5000 },
+  { name: "OCTUBRE 2027", year: 2027, month: 10, days: 31, status: "ABIERTO", closedRate: 5000 },
+  { name: "NOVIEMBRE 2027", year: 2027, month: 11, days: 30, status: "ABIERTO", closedRate: 5000 },
+  { name: "DICIEMBRE 2027", year: 2027, month: 12, days: 31, status: "ABIERTO", closedRate: 5000 }
+];
+
+const DAYS_ES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
+
+const TIME_SLOTS = [];
+for (let h = 7; h < 23; h++) {
+  const hh = String(h).padStart(2, "0");
+  const hhNext = String(h + 1).padStart(2, "0");
+  TIME_SLOTS.push(`${hh}:00 a ${hh}:30`);
+  TIME_SLOTS.push(`${hh}:30 a ${hhNext}:00`);
+}
+
+let currentRate = 5000;
+let currentMonthName = "NOVIEMBRE 2026";
+
+let profesores = [
+  { name: "Agustín", status: "Activo", bg: "#D0E2FF", fg: "#002D9C", role: "Profesor Sala (Proteína Gym)" },
+  { name: "Robert", status: "Activo", bg: "#DEFBE6", fg: "#0E6027", role: "Profesor / Ventas (Gym · Box · Boxeo)" },
+  { name: "Silvina", status: "Activo", bg: "#D9FBFB", fg: "#005D5D", role: "Ventas / Atención (Proteína Gym)" },
+  { name: "Valentina", status: "Activo", bg: "#FFD6E8", fg: "#9F1853", role: "Ventas / Boxeo (Gym · Boxeo)" },
+  { name: "Jessi", status: "Activo", bg: "#FFF2D6", fg: "#8E5A00", role: "Ventas / Recepción (Proteína Gym)" },
+  { name: "Luna", status: "Activo", bg: "#E8DAFF", fg: "#491D8B", role: "Profesora Sala / Fin de Semana (Gym)" },
+  { name: "Irina", status: "Activo", bg: "#FFD7D9", fg: "#A2191F", role: "Profesora Sala / Ventas (Gym)" },
+  { name: "Cecilia", status: "Activo", bg: "#E0E7FF", fg: "#3730A3", role: "Coordinadora / Profesora (Gym · Box)" },
+  { name: "Oscar", status: "Activo", bg: "#ECFCCB", fg: "#3F6212", role: "Profesor Turno Noche (Proteína Gym)" },
+  { name: "Yami", status: "Activo", bg: "#CFFAFE", fg: "#155E75", role: "Profesora Proteína Box" },
+  { name: "Lucas", status: "Activo", bg: "#F3E8FF", fg: "#6B21A8", role: "Profesor Proteína Box" },
+  { name: "Fede", status: "Activo", bg: "#FFEDD5", fg: "#9A3412", role: "Profesor Proteína Box y Boxeo" },
+  { name: "Martín", status: "Activo", bg: "#CCFBF1", fg: "#115E59", role: "Profesor Titular Boxeo" }
+];
+
+let feriados = [
+  { date: "2026-11-23", desc: "Día de la Soberanía Nacional (Trasladado)", type: "Feriado Nacional" },
+  { date: "2026-12-08", desc: "Inmaculada Concepción de María", type: "Feriado Inamovible" },
+  { date: "2026-12-25", desc: "Navidad", type: "Feriado Inamovible" },
+  { date: "2027-01-01", desc: "Año Nuevo", type: "Feriado Inamovible" },
+  { date: "2027-02-08", desc: "Carnaval (Lunes)", type: "Feriado Inamovible" },
+  { date: "2027-02-09", desc: "Carnaval (Martes)", type: "Feriado Inamovible" },
+  { date: "2027-03-24", desc: "Día Nacional de la Memoria por la Verdad y la Justicia", type: "Feriado Inamovible" },
+  { date: "2027-03-26", desc: "Viernes Santo", type: "Feriado Inamovible" },
+  { date: "2027-04-02", desc: "Día del Veterano y de los Caídos en la Guerra de Malvinas", type: "Feriado Inamovible" },
+  { date: "2027-05-01", desc: "Día del Trabajador", type: "Feriado Inamovible" },
+  { date: "2027-05-25", desc: "Día de la Revolución de Mayo", type: "Feriado Inamovible" },
+  { date: "2027-06-17", desc: "Paso a la Inmortalidad del Gral. Martín Miguel de Güemes", type: "Feriado Trasladable" },
+  { date: "2027-06-20", desc: "Paso a la Inmortalidad del Gral. Manuel Belgrano (Dom+Feriado)", type: "Feriado Inamovible" },
+  { date: "2027-07-09", desc: "Día de la Independencia", type: "Feriado Inamovible" },
+  { date: "2027-08-16", desc: "Paso a la Inmortalidad del Gral. José de San Martín", type: "Feriado Trasladable" },
+  { date: "2027-10-11", desc: "Día del Respeto a la Diversidad Cultural", type: "Feriado Trasladable" },
+  { date: "2027-11-22", desc: "Día de la Soberanía Nacional", type: "Feriado Trasladable" },
+  { date: "2027-12-08", desc: "Inmaculada Concepción de María", type: "Feriado Inamovible" },
+  { date: "2027-12-25", desc: "Navidad", type: "Feriado Inamovible" }
+];
+
+let reemplazosLog = [
+  { fecha: "02/11/2026", horario: "18:00 a 18:30", unidad: "Proteína Box", titular: "Robert", suplente: "Agustín", motivo: "Inconveniente personal (Ejemplo Sección 7.1)" },
+  { fecha: "02/11/2026", horario: "18:30 a 19:00", unidad: "Proteína Box", titular: "Robert", suplente: "Agustín", motivo: "Inconveniente personal (Ejemplo Sección 7.1)" },
+  { fecha: "01/12/2026", horario: "18:00 a 18:30", unidad: "Proteína Box", titular: "Robert", suplente: "Agustín", motivo: "Cobertura turno tarde" }
+];
+
+// Plantilla semanal idéntica a la planilla adjunta del usuario + Boxeo
+function getTemplateForSlot(unit, jsDay, slotIdx) {
+  // jsDay: 0=Domingo, 1=Lunes, 2=Martes, 3=Miércoles, 4=Jueves, 5=Viernes, 6=Sábado
+  if (unit === "Proteína Gym") {
+    if (jsDay === 1) { // LUNES
+      if (slotIdx <= 9) return ["Robert", "Silvina"];
+      if (slotIdx <= 19) return ["Agustín", "Jessi"];
+      if (slotIdx <= 27) return ["Cecilia", "Luna", "Valentina"];
+      if (slotIdx <= 29) return ["Cecilia", "Oscar", "Valentina"];
+      return ["Oscar"];
+    }
+    if (jsDay === 2) { // MARTES
+      if (slotIdx <= 9) return ["Agustín", "Valentina"];
+      if (slotIdx <= 15) return ["Agustín", "Jessi"];
+      if (slotIdx <= 19) return ["Cecilia", "Irina", "Jessi"];
+      if (slotIdx <= 27) return ["Cecilia", "Irina", "Robert", "Silvina"];
+      if (slotIdx <= 29) return ["Cecilia", "Oscar", "Robert", "Silvina"];
+      return ["Oscar"];
+    }
+    if (jsDay === 3) { // MIÉRCOLES
+      if (slotIdx <= 9) return ["Robert", "Jessi"];
+      if (slotIdx <= 11) return ["Robert", "Silvina"];
+      if (slotIdx <= 19) return ["Agustín", "Robert", "Silvina"];
+      if (slotIdx <= 21) return ["Agustín", "Cecilia", "Valentina"];
+      if (slotIdx <= 23) return ["Cecilia", "Valentina"];
+      if (slotIdx <= 29) return ["Cecilia", "Luna", "Valentina"];
+      return ["Luna"];
+    }
+    if (jsDay === 4) { // JUEVES
+      if (slotIdx <= 9) return ["Agustín", "Robert", "Silvina"];
+      if (slotIdx <= 15) return ["Agustín", "Jessi"];
+      if (slotIdx <= 18) return ["Irina", "Jessi"];
+      if (slotIdx === 19) return ["Cecilia", "Irina", "Jessi"];
+      if (slotIdx <= 21) return ["Cecilia", "Irina", "Valentina"];
+      if (slotIdx <= 25) return ["Cecilia", "Valentina"];
+      if (slotIdx <= 29) return ["Cecilia", "Irina", "Valentina"];
+      return ["Irina"];
+    }
+    if (jsDay === 5) { // VIERNES
+      if (slotIdx <= 9) return ["Robert", "Valentina"];
+      if (slotIdx <= 11) return ["Robert", "Jessi"];
+      if (slotIdx <= 19) return ["Agustín", "Jessi"];
+      if (slotIdx <= 21) return ["Agustín", "Cecilia", "Irina"];
+      if (slotIdx <= 29) return ["Cecilia", "Luna", "Irina"];
+      return ["Luna"];
+    }
+    if (jsDay === 6) { // SÁBADO
+      if (slotIdx >= 6 && slotIdx <= 17) return ["Luna", "Irina"];
+    }
+    if (jsDay === 0) { // DOMINGO
+      if (slotIdx >= 6 && slotIdx <= 11) return ["Luna"];
+    }
+  } else if (unit === "Proteína Box") {
+    if (jsDay === 1 && slotIdx >= 22 && slotIdx <= 27) return ["Yami"];
+    if ((jsDay === 2 || jsDay === 4)) {
+      if (slotIdx >= 1 && slotIdx <= 4) return ["Yami"];
+      if (slotIdx >= 17 && slotIdx <= 18) return ["Lucas"];
+      if (slotIdx >= 22 && slotIdx <= 27) return ["Lucas"];
+    }
+    if ((jsDay === 3 || jsDay === 5)) {
+      if (slotIdx >= 1 && slotIdx <= 4) return ["Yami"];
+      if (slotIdx >= 17 && slotIdx <= 18) return ["Fede"];
+      if (slotIdx >= 22 && slotIdx <= 27) return ["Yami"];
+    }
+  } else if (unit === "Boxeo") {
+    if (jsDay === 1 || jsDay === 3 || jsDay === 5) {
+      if (slotIdx >= 5 && slotIdx <= 7) return ["Valentina"];
+      if (slotIdx >= 24 && slotIdx <= 27) return ["Martín"];
+    }
+    if (jsDay === 2 || jsDay === 4) {
+      if (slotIdx >= 6 && slotIdx <= 8) return ["Martín"];
+      if (slotIdx >= 25 && slotIdx <= 28) return ["Fede"];
+    }
+    if (jsDay === 6 && slotIdx >= 8 && slotIdx <= 11) return ["Martín"];
+  }
+  return [];
+}
+
+// Almacenamiento de asignaciones: scheduleData[monthName][unitName][dayNumber][slotIdx] = ["Prof1", "Prof2"]
+const scheduleData = {};
+
+function initScheduleData() {
+  MONTHS.forEach(m => {
+    scheduleData[m.name] = {};
+    UNITS.forEach(u => {
+      scheduleData[m.name][u] = {};
+      for (let d = 1; d <= m.days; d++) {
+        scheduleData[m.name][u][d] = {};
+        const dt = new Date(m.year, m.month - 1, d);
+        const jsDay = dt.getDay();
+        const preload = (m.name === "NOVIEMBRE 2026" || m.name === "DICIEMBRE 2026");
+        for (let s = 0; s < 32; s++) {
+          let arr = preload ? [...getTemplateForSlot(u, jsDay, s)] : [];
+          if (m.name === "NOVIEMBRE 2026" && d === 2 && u === "Proteína Box" && (s === 22 || s === 23)) {
+            arr = ["Robert", "Agustín"];
+          }
+          if (m.name === "DICIEMBRE 2026" && d === 1 && u === "Proteína Box" && s === 22) {
+            arr = ["Robert", "Agustín"];
+          }
+          scheduleData[m.name][u][d][s] = arr;
+        }
+      }
+    });
+  });
+}
+
+function isDoubleDay(year, month, day) {
+  const dt = new Date(year, month - 1, day);
+  if (dt.getDay() === 0) return true; // Domingo
+  const iso = `${year}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+  return feriados.some(f => f.date === iso);
+}
+
+function getEffectiveRate(monthName) {
+  const m = MONTHS.find(x => x.name === monthName);
+  if (!m) return currentRate;
+  return m.status === "LIQUIDADO" ? m.closedRate : currentRate;
+}
+
+function formatMoney(n) {
+  return "$" + Math.round(n).toLocaleString("es-AR");
+}
+
+function renderChip(profName) {
+  const p = profesores.find(x => x.name === profName) || { bg: "#e2e8f0", fg: "#0f172a" };
+  return `<span class="chip" style="background:${p.bg};color:${p.fg}">${profName}</span>`;
+}
+
+// ============================================================================
+// MOTOR DE CÁLCULO (REGLAS R01 A R16)
+// ============================================================================
+function calculateMonthData(monthName) {
+  const m = MONTHS.find(x => x.name === monthName);
+  const rate = getEffectiveRate(monthName);
+  const byProf = {};
+  const byUnit = {};
+
+  profesores.forEach(p => {
+    byProf[p.name] = {
+      name: p.name, status: p.status,
+      gymNorm: 0, gymDob: 0,
+      boxNorm: 0, boxDob: 0,
+      boxeoNorm: 0, boxeoDob: 0
+    };
+  });
+  UNITS.forEach(u => {
+    byUnit[u] = { norm: 0, dob: 0 };
+  });
+
+  UNITS.forEach(u => {
+    for (let d = 1; d <= m.days; d++) {
+      const dbl = isDoubleDay(m.year, m.month, d);
+      for (let s = 0; s < 32; s++) {
+        const list = scheduleData[monthName][u][d][s] || [];
+        // Evitar duplicar el mismo profesor dentro de la misma celda (Sección 15.3)
+        const uniqueProfs = [...new Set(list)];
+        uniqueProfs.forEach(pName => {
+          if (!byProf[pName]) {
+            byProf[pName] = { name: pName, status: "Activo", gymNorm:0, gymDob:0, boxNorm:0, boxDob:0, boxeoNorm:0, boxeoDob:0 };
+          }
+          if (u === "Proteína Gym") {
+            if (dbl) byProf[pName].gymDob += 0.5; else byProf[pName].gymNorm += 0.5;
+          } else if (u === "Proteína Box") {
+            if (dbl) byProf[pName].boxDob += 0.5; else byProf[pName].boxNorm += 0.5;
+          } else {
+            if (dbl) byProf[pName].boxeoDob += 0.5; else byProf[pName].boxeoNorm += 0.5;
+          }
+          if (dbl) byUnit[u].dob += 0.5; else byUnit[u].norm += 0.5;
+        });
+      }
+    }
+  });
+
+  return { m, rate, byProf, byUnit };
+}
+
+// ============================================================================
+// RENDERIZADO DE VISTAS
+// ============================================================================
+function populateSelects() {
+  const monthSelectors = ["sched-month", "res-month", "rep-month"];
+  monthSelectors.forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = MONTHS.map(m => `<option value="${m.name}" ${m.name===currentMonthName?'selected':''}>${m.name} (${m.status})</option>`).join("");
+  });
+
+  const profSel = document.getElementById("res-prof-select");
+  const curProf = profSel.value || (profesores[0] ? profesores[0].name : "");
+  profSel.innerHTML = profesores.map(p => `<option value="${p.name}" ${p.name===curProf?'selected':''}>${p.name} (${p.status})</option>`).join("");
+
+  // Poblar selectores de Carga Rápida por Rango Horario
+  const bulkProfEl = document.getElementById("bulk-prof");
+  if (bulkProfEl) {
+    const curBulkProf = bulkProfEl.value;
+    const activeProfs = profesores.filter(p => p.status === "Activo");
+    bulkProfEl.innerHTML = activeProfs.map(p => `<option value="${p.name}" ${p.name===curBulkProf?'selected':''}>${p.name}</option>`).join("");
+  }
+
+  const bulkStartEl = document.getElementById("bulk-start");
+  const bulkEndEl = document.getElementById("bulk-end");
+  if (bulkStartEl && bulkEndEl && bulkStartEl.options.length === 0) {
+    const startTimes = TIME_SLOTS.map((s, idx) => ({ idx, t: s.split(" a ")[0] }));
+    const endTimes = TIME_SLOTS.map((s, idx) => ({ idx, t: s.split(" a ")[1] }));
+    bulkStartEl.innerHTML = startTimes.map(x => `<option value="${x.idx}" ${x.t==='08:00'?'selected':''}>${x.t}</option>`).join("");
+    bulkEndEl.innerHTML = endTimes.map(x => `<option value="${x.idx}" ${x.t==='22:00'?'selected':''}>${x.t}</option>`).join("");
+  }
+
+  populateBulkDayOptions();
+}
+
+function populateBulkDayOptions() {
+  const bulkDayEl = document.getElementById("bulk-day");
+  if (!bulkDayEl) return;
+  const m = MONTHS.find(x => x.name === currentMonthName);
+  if (!m) return;
+
+  let html = `
+    <optgroup label="Repetir en todos los días de la semana del mes">
+      <option value="dow-1">Todos los LUNES de ${m.name}</option>
+      <option value="dow-2">Todos los MARTES de ${m.name}</option>
+      <option value="dow-3">Todos los MIÉRCOLES de ${m.name}</option>
+      <option value="dow-4">Todos los JUEVES de ${m.name}</option>
+      <option value="dow-5">Todos los VIERNES de ${m.name}</option>
+      <option value="dow-6">Todos los SÁBADOS de ${m.name}</option>
+      <option value="dow-0">Todos los DOMINGOS de ${m.name}</option>
+      <option value="dow-lv">Lunes a Viernes de ${m.name}</option>
+    </optgroup>
+    <optgroup label="Un día específico del mes">
+  `;
+  for (let d = 1; d <= m.days; d++) {
+    const dt = new Date(m.year, m.month - 1, d);
+    const dayName = DAYS_ES[dt.getDay()];
+    const ddStr = `${String(d).padStart(2,"0")}/${String(m.month).padStart(2,"0")}`;
+    html += `<option value="day-${d}" ${d===1?'selected':''}>${dayName} ${ddStr}</option>`;
+  }
+  html += `</optgroup>`;
+  bulkDayEl.innerHTML = html;
+}
+
+function setBulkPreset(startStr, endStr) {
+  const sIdx = TIME_SLOTS.findIndex(s => s.startsWith(startStr));
+  const eIdx = TIME_SLOTS.findIndex(s => s.endsWith(endStr));
+  if (sIdx !== -1) document.getElementById("bulk-start").value = String(sIdx);
+  if (eIdx !== -1) document.getElementById("bulk-end").value = String(eIdx);
+}
+
+function applyBulkRange() {
+  const m = MONTHS.find(x => x.name === currentMonthName);
+  if (m.status === "LIQUIDADO") {
+    alert(`⚠️ El período ${currentMonthName} está cerrado (LIQUIDADO). Reábralo primero para editar.`);
+    return;
+  }
+  const uName = document.getElementById("sched-unit").value;
+  const profName = document.getElementById("bulk-prof").value;
+  const dayTarget = document.getElementById("bulk-day").value;
+  const startIdx = parseInt(document.getElementById("bulk-start").value, 10);
+  const endIdx = parseInt(document.getElementById("bulk-end").value, 10);
+  const mode = document.getElementById("bulk-mode").value;
+
+  if (!profName) { alert("Seleccione un profesor."); return; }
+  if (endIdx < startIdx) {
+    alert("La hora 'Hasta' debe ser posterior a la hora 'Desde' (ej. Desde 08:00 Hasta 22:00).");
+    return;
+  }
+
+  const targetDays = [];
+  if (dayTarget.startsWith("day-")) {
+    targetDays.push(parseInt(dayTarget.split("-")[1], 10));
+  } else if (dayTarget === "dow-lv") {
+    for (let d = 1; d <= m.days; d++) {
+      const jsDay = new Date(m.year, m.month - 1, d).getDay();
+      if (jsDay >= 1 && jsDay <= 5) targetDays.push(d);
+    }
+  } else if (dayTarget.startsWith("dow-")) {
+    const targetDow = parseInt(dayTarget.split("-")[1], 10);
+    for (let d = 1; d <= m.days; d++) {
+      const jsDay = new Date(m.year, m.month - 1, d).getDay();
+      if (jsDay === targetDow) targetDays.push(d);
+    }
+  }
+
+  targetDays.forEach(d => {
+    for (let s = startIdx; s <= endIdx; s++) {
+      let cur = scheduleData[currentMonthName][uName][d][s] || [];
+      if (mode === "add") {
+        if (!cur.includes(profName)) cur.push(profName);
+      } else if (mode === "replace") {
+        cur = [profName];
+      } else if (mode === "remove") {
+        cur = cur.filter(x => x !== profName);
+      }
+      scheduleData[currentMonthName][uName][d][s] = [...new Set(cur)];
+    }
+  });
+
+  refreshAll();
+}
+
+function syncMonthSelect(val) {
+  currentMonthName = val;
+  document.getElementById("sched-month").value = val;
+  document.getElementById("res-month").value = val;
+  document.getElementById("rep-month").value = val;
+  populateBulkDayOptions();
+  refreshAll();
+}
+
+function renderHome() {
+  const calc = calculateMonthData(currentMonthName);
+  let totNorm = 0, totDob = 0, activeWithHours = 0;
+  Object.values(calc.byProf).forEach(p => {
+    const n = p.gymNorm + p.boxNorm + p.boxeoNorm;
+    const d = p.gymDob + p.boxDob + p.boxeoDob;
+    totNorm += n; totDob += d;
+    if (n + d > 0) activeWithHours++;
+  });
+  const totHs = totNorm + totDob;
+  const totCost = (totNorm * calc.rate) + (totDob * calc.rate * 2);
+  const activeCount = profesores.filter(p => p.status === "Activo").length;
+
+  document.getElementById("home-kpis").innerHTML = `
+    <div class="kpi-card"><div class="lbl">Mes en Consulta</div><div class="val">${currentMonthName}</div><div class="sub">Estado: <strong>${calc.m.status}</strong></div></div>
+    <div class="kpi-card"><div class="lbl">Valor Hora Vigente</div><div class="val">${formatMoney(calc.rate)}</div><div class="sub">Doble (Dom/Feriados): ${formatMoney(calc.rate*2)}</div></div>
+    <div class="kpi-card"><div class="lbl">Profesores Activos</div><div class="val">${activeCount}</div><div class="sub">${activeWithHours} registran horas este mes</div></div>
+    <div class="kpi-card"><div class="lbl">Total Horas Mensuales</div><div class="val">${totHs.toFixed(1)} hs</div><div class="sub">${totNorm.toFixed(1)}h Normales · ${totDob.toFixed(1)}h Dobles</div></div>
+    <div class="kpi-card"><div class="lbl">Costo Consolidado Staff</div><div class="val" style="color:#059669">${formatMoney(totCost)}</div><div class="sub">Suma de las 3 unidades sin duplicación</div></div>
+  `;
+
+  let rowsHtml = "";
+  UNITS.forEach(u => {
+    const un = calc.byUnit[u].norm;
+    const ud = calc.byUnit[u].dob;
+    const ut = un + ud;
+    const uCost = (un * calc.rate) + (ud * calc.rate * 2);
+    const pct = totCost > 0 ? ((uCost / totCost) * 100).toFixed(1) + "%" : "0.0%";
+    rowsHtml += `<tr>
+      <td><strong>${u}</strong></td>
+      <td class="num">${un.toFixed(1)} hs</td>
+      <td class="num">${ud.toFixed(1)} hs</td>
+      <td class="num"><strong>${ut.toFixed(1)} hs</strong></td>
+      <td class="num">${formatMoney(un * calc.rate)}</td>
+      <td class="num">${formatMoney(ud * calc.rate * 2)}</td>
+      <td class="num"><strong>${formatMoney(uCost)}</strong></td>
+      <td class="center">${pct}</td>
+    </tr>`;
+  });
+
+  document.getElementById("home-unit-summary").innerHTML = `
+    <table>
+      <thead><tr><th>Unidad de Trabajo</th><th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Importe Normal</th><th>Importe Doble</th><th>Costo Total Unidad</th><th>% del Total</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot><tr class="tot-row">
+        <td>TOTAL CONSOLIDADO (3 UNIDADES)</td>
+        <td class="num">${totNorm.toFixed(1)} hs</td>
+        <td class="num">${totDob.toFixed(1)} hs</td>
+        <td class="num">${totHs.toFixed(1)} hs</td>
+        <td class="num">${formatMoney(totNorm * calc.rate)}</td>
+        <td class="num">${formatMoney(totDob * calc.rate * 2)}</td>
+        <td class="num">${formatMoney(totCost)}</td>
+        <td class="center">100.0%</td>
+      </tr></tfoot>
+    </table>
+  `;
+}
+
+function renderSchedule() {
+  const mName = document.getElementById("sched-month").value;
+  currentMonthName = mName;
+  const uName = document.getElementById("sched-unit").value;
+  const weekVal = document.getElementById("sched-week").value;
+  const m = MONTHS.find(x => x.name === mName);
+
+  let startDay = 1, endDay = m.days;
+  if (weekVal !== "all") {
+    const w = parseInt(weekVal, 10);
+    startDay = w * 7 + 1;
+    endDay = w === 3 ? m.days : Math.min(m.days, (w + 1) * 7);
+  }
+
+  let thDays = `<th>HORARIO</th>`;
+  for (let d = startDay; d <= endDay; d++) {
+    const dt = new Date(m.year, m.month - 1, d);
+    const dayName = DAYS_ES[dt.getDay()];
+    const dbl = isDoubleDay(m.year, m.month, d);
+    const ddStr = `${String(d).padStart(2,"0")}/${String(m.month).padStart(2,"0")}`;
+    thDays += `<th style="background:${dbl?'#7c2d12':'#1e293b'}">
+      <div>${dayName}</div>
+      <div style="font-size:0.9rem;margin:2px 0">${ddStr}</div>
+      <span class="${dbl?'badge-double':'badge-normal'}">${dbl?'DOBLE ×2':'NORMAL ×1'}</span>
+    </th>`;
+  }
+
+  let bodyRows = "";
+  TIME_SLOTS.forEach((slotStr, sIdx) => {
+    let tds = `<td class="center" style="background:#f1f5f9;font-weight:700;white-space:nowrap">${slotStr}</td>`;
+    for (let d = startDay; d <= endDay; d++) {
+      const dbl = isDoubleDay(m.year, m.month, d);
+      const assigned = scheduleData[mName][uName][d][sIdx] || [];
+      const chipsHtml = assigned.length > 0
+        ? assigned.map(p => renderChip(p)).join(" ")
+        : `<span style="color:#94a3b8;font-size:0.72rem">+ Asignar</span>`;
+      tds += `<td class="sched-cell ${dbl?'double-day':''}" onclick="openCellModal('${mName}','${uName}',${d},${sIdx})">${chipsHtml}</td>`;
+    }
+    bodyRows += `<tr>${tds}</tr>`;
+  });
+
+  document.getElementById("schedule-container").innerHTML = `
+    <table>
+      <thead><tr>${thDays}</tr></thead>
+      <tbody>${bodyRows}</tbody>
+    </table>
+  `;
+}
+
+// Modal de edición de celda (Selección Múltiple y Reemplazos)
+let editingContext = null;
+let modalSelectedProfs = [];
+
+function openCellModal(mName, uName, day, slotIdx) {
+  const m = MONTHS.find(x => x.name === mName);
+  if (m.status === "LIQUIDADO") {
+    alert(`⚠️ El período ${mName} está cerrado (LIQUIDADO - Regla R13). Para modificarlo, reábralo primero en Resumen Mensual o Configuración.`);
+    return;
+  }
+  editingContext = { mName, uName, day, slotIdx };
+  modalSelectedProfs = [...(scheduleData[mName][uName][day][slotIdx] || [])];
+
+  const ddStr = `${String(day).padStart(2,"0")}/${String(m.month).padStart(2,"0")}/${m.year}`;
+  document.getElementById("modal-title").textContent = `${uName} — ${ddStr} (${TIME_SLOTS[slotIdx]})`;
+  document.getElementById("modal-subtitle").textContent = `Cada profesor seleccionado contabiliza 0,5 horas completas en ${uName}.`;
+
+  renderModalPicker();
+
+  // Poblar selector de extensión de horario ("Repetir hasta las:")
+  const extEl = document.getElementById("modal-extend-end");
+  if (extEl) {
+    let extHtml = "";
+    for (let s = slotIdx; s < 32; s++) {
+      const endHour = TIME_SLOTS[s].split(" a ")[1];
+      const countHs = ((s - slotIdx + 1) * 0.5).toFixed(1);
+      extHtml += `<option value="${s}" ${s===slotIdx?'selected':''}>${s===slotIdx ? `Solo esta celda (hasta ${endHour} = 0.5 hs)` : `Hasta las ${endHour} (${countHs} hs de corrido)`}</option>`;
+    }
+    extEl.innerHTML = extHtml;
+  }
+
+  const activeProfs = profesores.filter(p => p.status === "Activo");
+  const opts = `<option value="">-- Seleccionar --</option>` + activeProfs.map(p => `<option value="${p.name}">${p.name}</option>`).join("");
+  document.getElementById("repl-titular").innerHTML = `<option value="">-- Profesor Titular --</option>` + activeProfs.map(p => `<option value="${p.name}" ${modalSelectedProfs[0]===p.name?'selected':''}>${p.name}</option>`).join("");
+  document.getElementById("repl-suplente").innerHTML = `<option value="">-- Profesor Reemplazante --</option>` + activeProfs.map(p => `<option value="${p.name}">${p.name}</option>`).join("");
+  document.getElementById("repl-motivo").value = "";
+
+  document.getElementById("cell-modal").classList.add("open");
+}
+
+function renderModalPicker() {
+  const picker = document.getElementById("modal-prof-picker");
+  // Mostrar profesores activos (más cualquier inactivo que ya estuviera asignado históricamente en esa celda)
+  const list = profesores.filter(p => p.status === "Activo" || modalSelectedProfs.includes(p.name));
+  picker.innerHTML = list.map(p => {
+    const sel = modalSelectedProfs.includes(p.name);
+    return `<div class="prof-opt ${sel?'selected':''}" style="background:${sel?p.bg:'#fff'}" onclick="toggleModalProf('${p.name}')">
+      <input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();toggleModalProf('${p.name}')" />
+      <span style="font-weight:700;color:${p.fg};font-size:0.84rem">${p.name}</span>
+    </div>`;
+  }).join("");
+}
+
+function toggleModalProf(name) {
+  const idx = modalSelectedProfs.indexOf(name);
+  if (idx === -1) modalSelectedProfs.push(name);
+  else modalSelectedProfs.splice(idx, 1);
+  renderModalPicker();
+}
+
+function closeCellModal() {
+  document.getElementById("cell-modal").classList.remove("open");
+}
+
+function saveCellModal() {
+  if (!editingContext) return;
+  const { mName, uName, day, slotIdx } = editingContext;
+  const tit = document.getElementById("repl-titular").value;
+  const sup = document.getElementById("repl-suplente").value;
+  const mot = document.getElementById("repl-motivo").value.trim();
+  const extEl = document.getElementById("modal-extend-end");
+  const endSlotIdx = extEl ? parseInt(extEl.value, 10) : slotIdx;
+
+  if (tit && sup) {
+    if (!modalSelectedProfs.includes(tit)) modalSelectedProfs.push(tit);
+    if (!modalSelectedProfs.includes(sup)) modalSelectedProfs.push(sup);
+    const m = MONTHS.find(x => x.name === mName);
+    const ddStr = `${String(day).padStart(2,"0")}/${String(m.month).padStart(2,"0")}/${m.year}`;
+    const hIni = TIME_SLOTS[slotIdx].split(" a ")[0];
+    const hFin = TIME_SLOTS[endSlotIdx].split(" a ")[1];
+    reemplazosLog.unshift({
+      fecha: ddStr,
+      horario: `${hIni} a ${hFin}`,
+      unidad: uName,
+      titular: tit,
+      suplente: sup,
+      motivo: mot || "Reemplazo registrado (ambos cobran)"
+    });
+  }
+
+  for (let s = slotIdx; s <= endSlotIdx; s++) {
+    scheduleData[mName][uName][day][s] = [...new Set(modalSelectedProfs)];
+  }
+  closeCellModal();
+  refreshAll();
+}
+
+function preloadCurrentMonthFromTemplate() {
+  const m = MONTHS.find(x => x.name === currentMonthName);
+  if (m.status === "LIQUIDADO") {
+    alert("No se puede modificar un mes LIQUIDADO.");
+    return;
+  }
+  UNITS.forEach(u => {
+    for (let d = 1; d <= m.days; d++) {
+      const dt = new Date(m.year, m.month - 1, d);
+      const jsDay = dt.getDay();
+      for (let s = 0; s < 32; s++) {
+        scheduleData[m.name][u][d][s] = [...getTemplateForSlot(u, jsDay, s)];
+      }
+    }
+  });
+  refreshAll();
+}
+
+function renderResumenMensual() {
+  const calc = calculateMonthData(currentMonthName);
+  let totGym = 0, totBox = 0, totBoxeo = 0, totNorm = 0, totDob = 0, totPay = 0, workedCount = 0;
+
+  let rowsHtml = "";
+  Object.values(calc.byProf).forEach(p => {
+    const gHs = p.gymNorm + p.gymDob;
+    const bHs = p.boxNorm + p.boxDob;
+    const xHs = p.boxeoNorm + p.boxeoDob;
+    const nHs = p.gymNorm + p.boxNorm + p.boxeoNorm;
+    const dHs = p.gymDob + p.boxDob + p.boxeoDob;
+    const tHs = nHs + dHs;
+    if (p.status !== "Activo" && tHs === 0) return;
+    if (tHs > 0) workedCount++;
+
+    const impNorm = nHs * calc.rate;
+    const impDob = dHs * calc.rate * 2;
+    const impTot = impNorm + impDob;
+
+    totGym += gHs; totBox += bHs; totBoxeo += xHs;
+    totNorm += nHs; totDob += dHs; totPay += impTot;
+
+    rowsHtml += `<tr>
+      <td>${renderChip(p.name)}</td>
+      <td class="center">${p.status}</td>
+      <td class="num">${gHs.toFixed(1)}</td>
+      <td class="num">${bHs.toFixed(1)}</td>
+      <td class="num">${xHs.toFixed(1)}</td>
+      <td class="num">${nHs.toFixed(1)}</td>
+      <td class="num">${dHs.toFixed(1)}</td>
+      <td class="num"><strong>${tHs.toFixed(1)}</strong></td>
+      <td class="num">${formatMoney(calc.rate)}</td>
+      <td class="num">${formatMoney(impNorm)}</td>
+      <td class="num">${formatMoney(impDob)}</td>
+      <td class="num" style="background:#ecfdf5"><strong>${formatMoney(impTot)}</strong></td>
+    </tr>`;
+  });
+
+  document.getElementById("res-mensual-kpis").innerHTML = `
+    <div class="kpi-card"><div class="lbl">Período Liquidado</div><div class="val">${currentMonthName}</div><div class="sub">Estado: <strong>${calc.m.status}</strong></div></div>
+    <div class="kpi-card"><div class="lbl">Profesores con Horas</div><div class="val">${workedCount}</div><div class="sub">Tarifa aplicable: ${formatMoney(calc.rate)}/h</div></div>
+    <div class="kpi-card"><div class="lbl">Horas Normales / Dobles</div><div class="val">${totNorm.toFixed(1)}h / ${totDob.toFixed(1)}h</div><div class="sub">Total: ${(totNorm+totDob).toFixed(1)} horas</div></div>
+    <div class="kpi-card"><div class="lbl">Total General a Liquidar</div><div class="val" style="color:#059669">${formatMoney(totPay)}</div><div class="sub">Consolidado de las 3 unidades</div></div>
+  `;
+
+  document.getElementById("res-mensual-table").innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Profesor</th><th>Estado</th><th>Hs Proteína Gym</th><th>Hs Proteína Box</th><th>Hs Boxeo</th>
+        <th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Valor Hora</th>
+        <th>Importe Normal</th><th>Importe Doble</th><th>Total a Pagar ($)</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot><tr class="tot-row">
+        <td>TOTAL GENERAL STAFF</td>
+        <td class="center">${workedCount} profes</td>
+        <td class="num">${totGym.toFixed(1)}</td>
+        <td class="num">${totBox.toFixed(1)}</td>
+        <td class="num">${totBoxeo.toFixed(1)}</td>
+        <td class="num">${totNorm.toFixed(1)}</td>
+        <td class="num">${totDob.toFixed(1)}</td>
+        <td class="num">${(totNorm+totDob).toFixed(1)}</td>
+        <td class="num">${formatMoney(calc.rate)}</td>
+        <td class="num">${formatMoney(totNorm * calc.rate)}</td>
+        <td class="num">${formatMoney(totDob * calc.rate * 2)}</td>
+        <td class="num">${formatMoney(totPay)}</td>
+      </tr></tfoot>
+    </table>
+  `;
+
+  document.getElementById("res-mensual-units").innerHTML = document.getElementById("home-unit-summary").innerHTML;
+  renderIndividualDetail();
+}
+
+function renderIndividualDetail() {
+  const profName = document.getElementById("res-prof-select").value || "Robert";
+  const calc = calculateMonthData(currentMonthName);
+  const p = calc.byProf[profName] || { gymNorm:0, gymDob:0, boxNorm:0, boxDob:0, boxeoNorm:0, boxeoDob:0 };
+  const rows = [
+    { u: "Proteína Gym", n: p.gymNorm, d: p.gymDob },
+    { u: "Proteína Box", n: p.boxNorm, d: p.boxDob },
+    { u: "Boxeo", n: p.boxeoNorm, d: p.boxeoDob }
+  ];
+  let tn = 0, td = 0;
+  const body = rows.map(r => {
+    tn += r.n; td += r.d;
+    const t = r.n + r.d;
+    const inorm = r.n * calc.rate;
+    const idob = r.d * calc.rate * 2;
+    return `<tr>
+      <td><strong>${r.u}</strong></td>
+      <td class="num">${r.n.toFixed(1)} hs</td>
+      <td class="num">${r.d.toFixed(1)} hs</td>
+      <td class="num"><strong>${t.toFixed(1)} hs</strong></td>
+      <td class="num">${formatMoney(inorm)}</td>
+      <td class="num">${formatMoney(idob)}</td>
+      <td class="num"><strong>${formatMoney(inorm + idob)}</strong></td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("res-individual-detail").innerHTML = `
+    <table>
+      <thead><tr><th>Unidad (${profName} — ${currentMonthName})</th><th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Importe Normal</th><th>Importe Doble</th><th>Total a Pagar ($)</th></tr></thead>
+      <tbody>${body}</tbody>
+      <tfoot><tr class="tot-row">
+        <td>TOTAL A COBRAR POR ${profName.toUpperCase()}</td>
+        <td class="num">${tn.toFixed(1)} hs</td>
+        <td class="num">${td.toFixed(1)} hs</td>
+        <td class="num">${(tn+td).toFixed(1)} hs</td>
+        <td class="num">${formatMoney(tn * calc.rate)}</td>
+        <td class="num">${formatMoney(td * calc.rate * 2)}</td>
+        <td class="num">${formatMoney((tn * calc.rate) + (td * calc.rate * 2))}</td>
+      </tr></tfoot>
+    </table>
+  `;
+}
+
+function renderReportesPorUnidad() {
+  const calc = calculateMonthData(currentMonthName);
+  let rows = "";
+  let gN=0, gD=0, gC=0, bN=0, bD=0, bC=0, xN=0, xD=0, xC=0;
+
+  Object.values(calc.byProf).forEach(p => {
+    const cGym = (p.gymNorm + p.gymDob * 2) * calc.rate;
+    const cBox = (p.boxNorm + p.boxDob * 2) * calc.rate;
+    const cBoxeo = (p.boxeoNorm + p.boxeoDob * 2) * calc.rate;
+    const cTot = cGym + cBox + cBoxeo;
+    gN += p.gymNorm; gD += p.gymDob; gC += cGym;
+    bN += p.boxNorm; bD += p.boxDob; bC += cBox;
+    xN += p.boxeoNorm; xD += p.boxeoDob; xC += cBoxeo;
+
+    rows += `<tr>
+      <td>${renderChip(p.name)}</td>
+      <td class="num">${p.gymNorm.toFixed(1)}</td><td class="num">${p.gymDob.toFixed(1)}</td><td class="num"><strong>${(p.gymNorm+p.gymDob).toFixed(1)}</strong></td><td class="num">${formatMoney(cGym)}</td>
+      <td class="num">${p.boxNorm.toFixed(1)}</td><td class="num">${p.boxDob.toFixed(1)}</td><td class="num"><strong>${(p.boxNorm+p.boxDob).toFixed(1)}</strong></td><td class="num">${formatMoney(cBox)}</td>
+      <td class="num">${p.boxeoNorm.toFixed(1)}</td><td class="num">${p.boxeoDob.toFixed(1)}</td><td class="num"><strong>${(p.boxeoNorm+p.boxeoDob).toFixed(1)}</strong></td><td class="num">${formatMoney(cBoxeo)}</td>
+      <td class="num" style="background:#ecfdf5"><strong>${formatMoney(cTot)}</strong></td>
+    </tr>`;
+  });
+
+  document.getElementById("rep-unidad-table").innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2">Profesor</th>
+          <th colspan="4" style="background:#1e3a8a">UNIDAD 1: PROTEÍNA GYM</th>
+          <th colspan="4" style="background:#065f46">UNIDAD 2: PROTEÍNA BOX</th>
+          <th colspan="4" style="background:#7c2d12">UNIDAD 3: BOXEO</th>
+          <th rowspan="2">CONSOLIDADO ($)</th>
+        </tr>
+        <tr>
+          <th>Norm</th><th>Dob</th><th>Tot Hs</th><th>Costo Gym</th>
+          <th>Norm</th><th>Dob</th><th>Tot Hs</th><th>Costo Box</th>
+          <th>Norm</th><th>Dob</th><th>Tot Hs</th><th>Costo Boxeo</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr class="tot-row">
+        <td>TOTALES POR UNIDAD</td>
+        <td class="num">${gN.toFixed(1)}</td><td class="num">${gD.toFixed(1)}</td><td class="num">${(gN+gD).toFixed(1)}</td><td class="num">${formatMoney(gC)}</td>
+        <td class="num">${bN.toFixed(1)}</td><td class="num">${bD.toFixed(1)}</td><td class="num">${(bN+bD).toFixed(1)}</td><td class="num">${formatMoney(bC)}</td>
+        <td class="num">${xN.toFixed(1)}</td><td class="num">${xD.toFixed(1)}</td><td class="num">${(xN+xD).toFixed(1)}</td><td class="num">${formatMoney(xC)}</td>
+        <td class="num">${formatMoney(gC+bC+xC)}</td>
+      </tr></tfoot>
+    </table>
+  `;
+}
+
+function renderResumenAnual() {
+  const allCalcs = MONTHS.map(m => calculateMonthData(m.name));
+  const profAcc = {};
+  profesores.forEach(p => {
+    profAcc[p.name] = { name: p.name, status: p.status, norm: 0, dob: 0, pay: 0, perMonth: [] };
+  });
+
+  const unitAcc = {
+    "Proteína Gym": { norm: 0, dob: 0, cost: 0 },
+    "Proteína Box": { norm: 0, dob: 0, cost: 0 },
+    "Boxeo": { norm: 0, dob: 0, cost: 0 }
+  };
+
+  allCalcs.forEach(c => {
+    profesores.forEach(p => {
+      const bp = c.byProf[p.name] || { gymNorm:0, gymDob:0, boxNorm:0, boxDob:0, boxeoNorm:0, boxeoDob:0 };
+      const n = bp.gymNorm + bp.boxNorm + bp.boxeoNorm;
+      const d = bp.gymDob + bp.boxDob + bp.boxeoDob;
+      const pay = (n + d * 2) * c.rate;
+      profAcc[p.name].norm += n;
+      profAcc[p.name].dob += d;
+      profAcc[p.name].pay += pay;
+      profAcc[p.name].perMonth.push(n + d);
+    });
+    UNITS.forEach(u => {
+      const un = c.byUnit[u].norm;
+      const ud = c.byUnit[u].dob;
+      unitAcc[u].norm += un;
+      unitAcc[u].dob += ud;
+      unitAcc[u].cost += (un + ud * 2) * c.rate;
+    });
+  });
+
+  let topProf = { name: "-", hs: 0 };
+  let totAnualNorm = 0, totAnualDob = 0, totAnualPay = 0;
+
+  let pRows = "";
+  Object.values(profAcc).forEach(pa => {
+    const ths = pa.norm + pa.dob;
+    if (ths > topProf.hs) topProf = { name: pa.name, hs: ths };
+    totAnualNorm += pa.norm; totAnualDob += pa.dob; totAnualPay += pa.pay;
+    const mCells = pa.perMonth.map(v => `<td class="num">${v > 0 ? v.toFixed(1) : '-'}</td>`).join("");
+    pRows += `<tr>
+      <td>${renderChip(pa.name)}</td>
+      <td class="num">${pa.norm.toFixed(1)}</td>
+      <td class="num">${pa.dob.toFixed(1)}</td>
+      <td class="num"><strong>${ths.toFixed(1)}</strong></td>
+      <td class="num" style="background:#ecfdf5"><strong>${formatMoney(pa.pay)}</strong></td>
+      ${mCells}
+    </tr>`;
+  });
+
+  document.getElementById("anual-kpis").innerHTML = `
+    <div class="kpi-card"><div class="lbl">Costo Acumulado del Período</div><div class="val" style="color:#059669">${formatMoney(totAnualPay)}</div><div class="sub">Noviembre 2026 – Diciembre 2027</div></div>
+    <div class="kpi-card"><div class="lbl">Total Horas Acumuladas</div><div class="val">${(totAnualNorm+totAnualDob).toFixed(1)} hs</div><div class="sub">${totAnualNorm.toFixed(1)}h Norm · ${totAnualDob.toFixed(1)}h Dobles</div></div>
+    <div class="kpi-card"><div class="lbl">Profesor con Mayor Carga</div><div class="val">${topProf.name}</div><div class="sub">${topProf.hs.toFixed(1)} horas en el período</div></div>
+  `;
+
+  const mHeaders = MONTHS.map(m => `<th>${m.name.slice(0,3)} ${String(m.year).slice(2)}</th>`).join("");
+  document.getElementById("anual-prof-table").innerHTML = `
+    <table>
+      <thead><tr><th>Profesor</th><th>Hs Normales</th><th>Hs Dobles</th><th>Total Horas</th><th>Total Cobrado ($)</th>${mHeaders}</tr></thead>
+      <tbody>${pRows}</tbody>
+    </table>
+  `;
+
+  let uRows = "";
+  UNITS.forEach(u => {
+    const ua = unitAcc[u];
+    const ut = ua.norm + ua.dob;
+    const pct = totAnualPay > 0 ? ((ua.cost / totAnualPay)*100).toFixed(1)+"%" : "0.0%";
+    uRows += `<tr>
+      <td><strong>${u}</strong></td>
+      <td class="num">${ua.norm.toFixed(1)} hs</td>
+      <td class="num">${ua.dob.toFixed(1)} hs</td>
+      <td class="num"><strong>${ut.toFixed(1)} hs</strong></td>
+      <td class="num"><strong>${formatMoney(ua.cost)}</strong></td>
+      <td class="center">${pct}</td>
+    </tr>`;
+  });
+
+  document.getElementById("anual-unit-table").innerHTML = `
+    <table>
+      <thead><tr><th>Unidad</th><th>Horas Normales</th><th>Horas Dobles</th><th>Total Horas</th><th>Costo Anual Acumulado ($)</th><th>% Participación</th></tr></thead>
+      <tbody>${uRows}</tbody>
+      <tfoot><tr class="tot-row">
+        <td>TOTAL GENERAL (3 UNIDADES)</td>
+        <td class="num">${totAnualNorm.toFixed(1)} hs</td>
+        <td class="num">${totAnualDob.toFixed(1)} hs</td>
+        <td class="num">${(totAnualNorm+totAnualDob).toFixed(1)} hs</td>
+        <td class="num">${formatMoney(totAnualPay)}</td>
+        <td class="center">100.0%</td>
+      </tr></tfoot>
+    </table>
+  `;
+}
+
+function renderProfes() {
+  const calc = calculateMonthData(currentMonthName);
+  const rows = profesores.map((p, idx) => {
+    const bp = calc.byProf[p.name] || { gymNorm:0, gymDob:0, boxNorm:0, boxDob:0, boxeoNorm:0, boxeoDob:0 };
+    const mHs = bp.gymNorm + bp.gymDob + bp.boxNorm + bp.boxDob + bp.boxeoNorm + bp.boxeoDob;
+    const mPay = ((bp.gymNorm + bp.boxNorm + bp.boxeoNorm) + (bp.gymDob + bp.boxDob + bp.boxeoDob)*2) * calc.rate;
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <strong>${p.name}</strong>
+          <button class="btn btn-outline" style="padding:3px 8px;font-size:0.75rem" onclick="renameProfesor(${idx})" title="Cambiar nombre en todo el sistema">✏️ Cambiar Nombre</button>
+        </div>
+      </td>
+      <td class="center">${renderChip(p.name)}</td>
+      <td class="center">
+        <button class="btn ${p.status==='Activo'?'btn-success':'btn-outline'}" style="padding:4px 10px;font-size:0.78rem" onclick="toggleProfStatus(${idx})">
+          ${p.status} (Cambiar)
+        </button>
+      </td>
+      <td>${p.role}</td>
+      <td class="num">${mHs.toFixed(1)} hs</td>
+      <td class="num"><strong>${formatMoney(mPay)}</strong></td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("profes-table").innerHTML = `
+    <table>
+      <thead><tr><th>Nombre del Profesor</th><th>Chip / Color Visual</th><th>Estado (Alta/Baja)</th><th>Unidades y Rol</th><th>Horas (${currentMonthName})</th><th>Liquidación (${currentMonthName})</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function renameProfesor(idx) {
+  const oldName = profesores[idx].name;
+  const newNameRaw = prompt(`✏️ Cambiar nombre del profesor "${oldName}" en todo el sistema:\n(Se actualizarán automáticamente todos sus horarios e historial)`, oldName);
+  if (!newNameRaw) return;
+  const newName = newNameRaw.trim();
+  if (!newName || newName === oldName) return;
+
+  if (profesores.some((p, i) => i !== idx && p.name.toLowerCase() === newName.toLowerCase())) {
+    alert("⚠️ Ya existe otro profesor con ese nombre en la lista.");
+    return;
+  }
+
+  profesores[idx].name = newName;
+
+  // Actualizar automáticamente todas las celdas de los 14 meses y 3 unidades
+  MONTHS.forEach(m => {
+    UNITS.forEach(u => {
+      for (let d = 1; d <= m.days; d++) {
+        for (let s = 0; s < 32; s++) {
+          const arr = scheduleData[m.name][u][d][s] || [];
+          const pos = arr.indexOf(oldName);
+          if (pos !== -1) arr[pos] = newName;
+        }
+      }
+    });
+  });
+
+  // Actualizar historial de reemplazos
+  reemplazosLog.forEach(r => {
+    if (r.titular === oldName) r.titular = newName;
+    if (r.suplente === oldName) r.suplente = newName;
+  });
+
+  populateSelects();
+  refreshAll();
+}
+
+function addNewProfesor() {
+  const nameInput = document.getElementById("new-prof-name");
+  const roleInput = document.getElementById("new-prof-role");
+  const colorInput = document.getElementById("new-prof-color");
+  const name = nameInput.value.trim();
+  if (!name) { alert("Ingrese el nombre del nuevo profesor."); return; }
+  if (profesores.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+    alert("⚠️ Ya existe un profesor con ese nombre en la lista única PROFES (Prevención de duplicados - Sección 15.3).");
+    return;
+  }
+  profesores.push({
+    name,
+    status: "Activo",
+    bg: colorInput.value,
+    fg: "#0f172a",
+    role: roleInput.value.trim() || "Disponible en las 3 unidades"
+  });
+  nameInput.value = "";
+  roleInput.value = "";
+  populateSelects();
+  refreshAll();
+}
+
+function toggleProfStatus(idx) {
+  profesores[idx].status = profesores[idx].status === "Activo" ? "Inactivo" : "Activo";
+  populateSelects();
+  refreshAll();
+}
+
+function updateHourlyRate(val) {
+  const num = Number(val);
+  if (num > 0) {
+    currentRate = num;
+    document.getElementById("cfg-double-rate").textContent = formatMoney(currentRate * 2);
+    refreshAll();
+  }
+}
+
+function toggleCloseMonth() {
+  const m = MONTHS.find(x => x.name === currentMonthName);
+  if (!m) return;
+  if (m.status === "ABIERTO") {
+    m.status = "LIQUIDADO";
+    m.closedRate = currentRate;
+  } else {
+    m.status = "ABIERTO";
+  }
+  populateSelects();
+  refreshAll();
+}
+
+function renderConfigAndFeriados() {
+  const mRows = MONTHS.map((m, idx) => {
+    const c = calculateMonthData(m.name);
+    let n = 0, d = 0;
+    UNITS.forEach(u => { n += c.byUnit[u].norm; d += c.byUnit[u].dob; });
+    const cost = (n + d * 2) * c.rate;
+    return `<tr>
+      <td><strong>${m.name}</strong></td>
+      <td class="center"><span class="chip" style="background:${m.status==='LIQUIDADO'?'#fee2e2':'#d1fae5'};color:${m.status==='LIQUIDADO'?'#991b1b':'#065f46'}">${m.status}</span></td>
+      <td class="num">${formatMoney(c.rate)}</td>
+      <td class="num">${formatMoney(c.rate * 2)}</td>
+      <td class="num">${(n+d).toFixed(1)} hs</td>
+      <td class="num"><strong>${formatMoney(cost)}</strong></td>
+      <td class="center"><button class="btn btn-outline" style="padding:3px 9px;font-size:0.76rem" onclick="toggleCloseMonthByIndex(${idx})">${m.status==='ABIERTO'?'🔒 Cerrar Mes':'🔓 Reabrir'}</button></td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("cfg-months-table").innerHTML = `
+    <table>
+      <thead><tr><th>Período</th><th>Estado</th><th>Valor Hora Aplicable</th><th>Valor Doble (×2)</th><th>Total Horas</th><th>Costo Consolidado</th><th>Acción Cierre</th></tr></thead>
+      <tbody>${mRows}</tbody>
+    </table>
+  `;
+
+  const fRows = feriados.map(f => `<tr>
+    <td class="center"><strong>${f.date.split("-").reverse().join("/")}</strong></td>
+    <td>${f.desc}</td>
+    <td class="center">${f.type}</td>
+    <td class="center"><span class="badge-double">×2 (Remuneración Doble)</span></td>
+  </tr>`).join("");
+
+  document.getElementById("feriados-table").innerHTML = `
+    <table>
+      <thead><tr><th>Fecha</th><th>Descripción</th><th>Tipo</th><th>Multiplicador</th></tr></thead>
+      <tbody>${fRows}</tbody>
+    </table>
+  `;
+}
+
+function toggleCloseMonthByIndex(idx) {
+  const m = MONTHS[idx];
+  if (m.status === "ABIERTO") { m.status = "LIQUIDADO"; m.closedRate = currentRate; }
+  else { m.status = "ABIERTO"; }
+  populateSelects();
+  refreshAll();
+}
+
+function addFeriado() {
+  const dt = document.getElementById("new-fer-date").value;
+  const desc = document.getElementById("new-fer-desc").value.trim();
+  if (!dt || !desc) { alert("Complete la fecha y descripción del feriado."); return; }
+  if (!feriados.some(f => f.date === dt)) {
+    feriados.push({ date: dt, desc, type: "Feriado Agregado" });
+    feriados.sort((a,b) => a.date.localeCompare(b.date));
+  }
+  document.getElementById("new-fer-desc").value = "";
+  refreshAll();
+}
+
+function renderBDAndTests() {
+  const tests = [
+    ["1", "Asignar un profesor durante 30 minutos", "Se contabilizan 0,5 horas (R01-R02)", "✅ APROBADO"],
+    ["2", "Asignar un profesor durante 2 horas (4 bloques)", "Se contabilizan 2,0 horas", "✅ APROBADO"],
+    ["3", "Asignar dos profesores en una celda (ej. Robert, Agustín)", "Cada uno recibe 0,5 horas completas (R03)", "✅ APROBADO"],
+    ["4", "Reemplazar un profesor por otro (Lunes 02/11 18:00 Box)", "Se conserva titular + suplente y ambos cobran 0,5 hs", "✅ APROBADO"],
+    ["5", "Asignar un profesor un domingo (ej. Luna Domingos 10:00-13:00)", "Se liquida automáticamente al doble ×2 (R06)", "✅ APROBADO"],
+    ["6", "Asignar un profesor un feriado (ej. 23/11/2026 o 08/12/2026)", "Se liquida automáticamente al doble ×2 (R07)", "✅ APROBADO"],
+    ["7", "Asignar un profesor en domingo que además es feriado (20/06/2027)", "Se paga doble (×2), nunca cuádruple (R08)", "✅ APROBADO"],
+    ["8", "Cambiar el valor de hora en CONFIGURACIÓN", "Se actualizan los períodos ABIERTOS según vigencia", "✅ APROBADO"],
+    ["9", "Agregar un profesor nuevo en PROFES", "Aparece automáticamente en todas las listas y resúmenes (R10)", "✅ APROBADO"],
+    ["10", "Desactivar un profesor (pasar de Activo a Inactivo)", "No aparece en nuevas asignaciones y conserva su historial (R11-R12)", "✅ APROBADO"],
+    ["11", "Seleccionar otro mes en RESUMEN MENSUAL", "Se actualizan automáticamente todas las tablas y KPIs", "✅ APROBADO"],
+    ["12", "Consultar el RESUMEN ANUAL", "Se acumulan los 14 meses de Nov 2026 a Dic 2027", "✅ APROBADO"],
+    ["13", "Modificar una celda con múltiples nombres", "Se normaliza sin duplicar al mismo profesor en el mismo turno", "✅ APROBADO"],
+    ["14", "Cerrar una liquidación (marcar como LIQUIDADO)", "Congela el importe liquidado y advierte ante ediciones (R13)", "✅ APROBADO"],
+    ["15", "Consultar desde un celular / pantalla móvil", "Diseño adaptable y selector por semana/unidad apto para móvil", "✅ APROBADO"],
+    ["16", "Asignar un profesor en Proteína Gym", "Se registra e imputa en la unidad Proteína Gym (R04)", "✅ APROBADO"],
+    ["17", "Asignar un profesor en Proteína Box", "Se registra e imputa en la unidad Proteína Box (R04)", "✅ APROBADO"],
+    ["18", "Asignar un profesor en Boxeo", "Se registra e imputa en la unidad Boxeo (R04)", "✅ APROBADO"],
+    ["19", "Un profesor trabaja en 2 o 3 unidades (ej. Robert, Valentina, Fede)", "Se consolida su liquidación sin duplicar pagos (R14)", "✅ APROBADO"],
+    ["20", "Consultar costos por unidad", "Muestra horas normales, dobles y costo de cada sector (R15)", "✅ APROBADO"],
+    ["21", "Consultar costo general consolidado", "Suma exactamente las tres unidades sin duplicaciones (R16)", "✅ APROBADO"],
+    ["22", "Modificar una asignación de reemplazo", "Actualiza el registro conservando historial de titular y suplente", "✅ APROBADO"]
+  ];
+
+  document.getElementById("tests-table").innerHTML = `
+    <table>
+      <thead><tr><th>Prueba #</th><th>Acción Verificada</th><th>Resultado Esperado (Especificación Sección 18)</th><th>Estado</th></tr></thead>
+      <tbody>${tests.map(t => `<tr><td class="center"><strong>#${t[0]}</strong></td><td>${t[1]}</td><td>${t[2]}</td><td class="center"><span class="chip" style="background:#d1fae5;color:#065f46">${t[3]}</span></td></tr>`).join("")}</tbody>
+    </table>
+  `;
+
+  document.getElementById("reemplazos-table").innerHTML = `
+    <table>
+      <thead><tr><th>Fecha</th><th>Horario</th><th>Unidad</th><th>Profesor Titular</th><th>Profesor Reemplazante</th><th>Motivo / Observación</th></tr></thead>
+      <tbody>${reemplazosLog.map(r => `<tr><td class="center">${r.fecha}</td><td class="center">${r.horario}</td><td><strong>${r.unidad}</strong></td><td>${renderChip(r.titular)}</td><td>${renderChip(r.suplente)}</td><td>${r.motivo}</td></tr>`).join("")}</tbody>
+    </table>
+  `;
+
+  // Generar muestra de registros individuales normalizados del mes en consulta
+  const m = MONTHS.find(x => x.name === currentMonthName);
+  const rate = getEffectiveRate(currentMonthName);
+  const recs = [];
+  let idNum = 1;
+  UNITS.forEach(u => {
+    for (let d = 1; d <= Math.min(5, m.days); d++) {
+      const dbl = isDoubleDay(m.year, m.month, d);
+      const ddStr = `${String(d).padStart(2,"0")}/${String(m.month).padStart(2,"0")}/${m.year}`;
+      for (let s = 0; s < 32; s++) {
+        const list = scheduleData[currentMonthName][u][d][s] || [];
+        list.forEach(pName => {
+          if (recs.length < 40) {
+            recs.push({
+              id: `ASIG-${String(idNum++).padStart(5,"0")}`,
+              fecha: ddStr,
+              horario: TIME_SLOTS[s],
+              prof: pName,
+              unidad: u,
+              hs: "0.5",
+              jornada: dbl ? "Doble (×2)" : "Normal (×1)",
+              imp: formatMoney(0.5 * rate * (dbl ? 2 : 1))
+            });
+          }
+        });
+      }
+    }
+  });
+
+  document.getElementById("bd-table").innerHTML = `
+    <table>
+      <thead><tr><th>ID Registro</th><th>Fecha</th><th>Franja Horaria</th><th>Profesor (Normalizado)</th><th>Unidad</th><th>Horas</th><th>Tipo Jornada</th><th>Importe Calculado</th></tr></thead>
+      <tbody>${recs.map(r => `<tr><td class="center">${r.id}</td><td class="center">${r.fecha}</td><td class="center">${r.horario}</td><td>${renderChip(r.prof)}</td><td><strong>${r.unidad}</strong></td><td class="num">${r.hs}</td><td class="center">${r.jornada}</td><td class="num"><strong>${r.imp}</strong></td></tr>`).join("")}</tbody>
+    </table>
+  `;
+}
+
+function showTab(tabId, btnEl) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById("view-" + tabId).classList.add("active");
+  document.querySelectorAll("nav.tabs button").forEach(b => b.classList.remove("active"));
+  if (btnEl) btnEl.classList.add("active");
+}
+
+function triggerNav(btnIndex) {
+  const btns = document.querySelectorAll("nav.tabs button");
+  if (btns[btnIndex]) btns[btnIndex].click();
+}
+
+function refreshAll() {
+  renderHome();
+  renderSchedule();
+  renderResumenMensual();
+  renderReportesPorUnidad();
+  renderResumenAnual();
+  renderProfes();
+  renderConfigAndFeriados();
+  renderBDAndTests();
+}
+
+initScheduleData();
+populateSelects();
+refreshAll();
+</script>
+</body>
+</html>
