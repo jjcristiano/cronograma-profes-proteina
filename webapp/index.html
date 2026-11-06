@@ -507,7 +507,7 @@
             <select id="bulk-prof"></select>
           </label>
           <label><strong>Día:</strong>
-            <select id="bulk-day"></select>
+            <select id="bulk-day" onchange="onBulkDayChange()"></select>
           </label>
           <label><strong>Desde:</strong>
             <select id="bulk-start"></select>
@@ -1663,6 +1663,16 @@ function renderHome() {
       </tr></tfoot>
     </table>
   `;
+function onBulkDayChange() {
+  const bulkDayEl = document.getElementById("bulk-day");
+  const weekEl = document.getElementById("sched-week");
+  if (!bulkDayEl || !weekEl) return;
+  const val = bulkDayEl.value;
+  // Si en carga rápida se elige un día puntual y la vista es día por día, actualizar la vista
+  if (val.startsWith("day-") && weekEl.value.startsWith("day-") && weekEl.value !== val) {
+    weekEl.value = val;
+    renderSchedule();
+  }
 }
 
 function renderSchedule() {
@@ -1676,6 +1686,11 @@ function renderSchedule() {
   if (weekVal.startsWith("day-")) {
     startDay = parseInt(weekVal.split("-")[1], 10);
     endDay = startDay;
+    // Sincronizar automáticamente con "Carga Rápida de Turnos"
+    const bulkDayEl = document.getElementById("bulk-day");
+    if (bulkDayEl && bulkDayEl.value !== weekVal) {
+      bulkDayEl.value = weekVal;
+    }
   } else if (weekVal !== "all") {
     const w = parseInt(weekVal, 10);
     startDay = w * 7 + 1;
