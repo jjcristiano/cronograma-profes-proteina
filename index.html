@@ -85,13 +85,13 @@
       font-size: 0.82rem;
       font-weight: 800;
       background: #18181b;
-      border: 2px solid #52525b;
-      color: #e4e4e7;
-      cursor: pointer;
-    }
-    .sync-badge.online {
-      border-color: #22c55e;
+      border: 2px solid #22c55e;
       color: #86efac;
+      user-select: none;
+    }
+    .sync-badge.offline {
+      border-color: #eab308;
+      color: #fde047;
     }
 
     nav.tabs {
@@ -410,10 +410,10 @@
     </div>
   </div>
   <div class="header-right">
-    <div id="sync-status-badge" class="sync-badge" onclick="showTab('nube', document.getElementById('tab-btn-nube'))" title="Estado de sincronización entre celulares">
-      ☁️ Modo Local (Clic para conectar en la nube)
+    <div id="sync-status-badge" class="sync-badge">
+      🟢 Conectado Online
     </div>
-    <button class="btn btn-excel" onclick="exportAllUnitsToExcel()">📥 Descargar Excel (3 Solapas)</button>
+    <button class="btn btn-excel" onclick="exportAllUnitsToExcel()">📥 Descargar Excel</button>
   </div>
 </header>
 
@@ -426,7 +426,6 @@
   <button onclick="showTab('profes', this)">👥 PROFES</button>
   <button onclick="showTab('config', this)">⚙️ VALOR HORA Y FERIADOS</button>
   <button onclick="showTab('reemplazos', this)">🔄 REEMPLAZOS</button>
-  <button id="tab-btn-nube" onclick="showTab('nube', this)">☁️ SINCRONIZACIÓN ONLINE</button>
 </nav>
 
 <main>
@@ -439,7 +438,7 @@
     <div class="card">
       <div class="card-hdr">
         <h2>Accesos Rápidos</h2>
-        <button class="btn btn-excel" onclick="exportAllUnitsToExcel()">📥 Descargar Excel (Gym + Box + Boxeo)</button>
+        <button class="btn btn-excel" onclick="exportAllUnitsToExcel()">📥 Descargar Excel</button>
       </div>
       <div class="kpi-grid">
         <div class="kpi-card" style="cursor:pointer;border-top-color:var(--yellow-border)" onclick="triggerNav(1)">
@@ -661,40 +660,6 @@
       <div class="table-wrap" id="reemplazos-table"></div>
     </div>
   </section>
-
-  <!-- ==================================================================== -->
-  <!-- 9. SINCRONIZACIÓN ONLINE EN TIEMPO REAL ENTRE CELULARES -->
-  <!-- ==================================================================== -->
-  <section id="view-nube" class="view">
-    <div class="card">
-      <div class="card-hdr">
-        <h2>☁️ Base de Datos Compartida entre Celulares y Computadoras</h2>
-      </div>
-      <p style="margin-bottom:14px;font-size:0.95rem">
-        Para que todos los celulares vean y editen exactamente los mismos horarios al instante, conectá una URL de base de datos gratuita de <strong>Firebase Realtime Database</strong> (o exportá/importá la copia de seguridad).
-      </p>
-      <div class="toolbar">
-        <label style="flex:1;min-width:260px">
-          <strong>URL de Base de Datos Compartida (Firebase Realtime Database):</strong>
-          <input type="text" id="cloud-db-url" placeholder="https://tu-proyecto-default-rtdb.firebaseio.com" />
-        </label>
-        <button class="btn btn-primary" onclick="connectCloudDatabase()">🔗 Conectar y Sincronizar</button>
-        <button class="btn btn-outline" onclick="pullFromCloudNow()">🔄 Traer últimos datos ahora</button>
-      </div>
-      <div id="cloud-msg" style="font-size:0.9rem;font-weight:700;margin-top:8px;color:#15803d"></div>
-
-      <hr style="margin:20px 0;border:none;border-top:2px solid #e4e4e7" />
-
-      <h3 style="font-size:1.05rem;margin-bottom:10px">📦 Copia de Seguridad Manual (Enviar por WhatsApp a otro celular)</h3>
-      <div class="toolbar">
-        <button class="btn btn-success" onclick="downloadBackupJSON()">💾 Descargar Copia de Datos (.json)</button>
-        <label class="btn btn-outline" style="cursor:pointer;margin:0">
-          📂 Cargar Copia de Datos (.json)
-          <input type="file" accept=".json" style="display:none" onchange="uploadBackupJSON(event)" />
-        </label>
-      </div>
-    </div>
-  </section>
 </main>
 
 <!-- MODAL PARA ASIGNACIÓN DE HORARIO Y REEMPLAZO -->
@@ -728,17 +693,15 @@
   </div>
 </div>
 
-<!-- Librería SheetJS para generar archivos Excel (.xlsx) reales con múltiples solapas -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Librería xlsx-js-style para generar archivos Excel (.xlsx) con colores, bordes y diseño de tabla -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
 <script>
 // ============================================================================
-// DATOS MAESTROS DEL SISTEMA
+// CONEXIÓN INTERNA FIJA A FIREBASE REALTIME DATABASE (OCULTA AL USUARIO)
 // ============================================================================
 const STORAGE_KEY = "proteina_gym_sistema_web_v3";
-const CLOUD_URL_KEY = "proteina_gym_cloud_url";
-// URL preconfigurada opcional si se desea fijar en el código:
-const DEFAULT_CLOUD_URL = "";
+const CLOUD_DB_URL = "https://proteina-gym-cronograma-profes-default-rtdb.firebaseio.com";
 
 const UNITS = ["Proteína Gym", "Proteína Box", "Boxeo"];
 const MONTHS = [
@@ -770,7 +733,7 @@ for (let h = 7; h < 23; h++) {
 
 let currentRate = 5000;
 let currentMonthName = "NOVIEMBRE 2026";
-let cloudDbUrl = localStorage.getItem(CLOUD_URL_KEY) || DEFAULT_CLOUD_URL;
+let lastLoadedTimestamp = 0;
 
 let profesores = [
   { name: "Sil", status: "Activo", bg: "#D9FBFB", fg: "#004D4D" },
@@ -916,11 +879,13 @@ function initScheduleData() {
 }
 
 // ============================================================================
-// PERSISTENCIA LOCAL Y SINCRONIZACIÓN EN LA NUBE (MULTICELULAR)
+// PERSISTENCIA AUTOMÁTICA INTERNA EN FIREBASE + LOCALSTORAGE
 // ============================================================================
 function buildPayload() {
+  const ts = Date.now();
+  lastLoadedTimestamp = ts;
   return {
-    updatedAt: Date.now(),
+    updatedAt: ts,
     currentRate,
     profesores,
     feriados,
@@ -932,6 +897,7 @@ function buildPayload() {
 
 function applyPayload(data) {
   if (!data) return;
+  if (data.updatedAt) lastLoadedTimestamp = data.updatedAt;
   if (data.currentRate) {
     currentRate = data.currentRate;
     const rateEl = document.getElementById("cfg-rate");
@@ -966,19 +932,16 @@ async function saveState() {
     console.warn("No se pudo guardar en localStorage:", e);
   }
 
-  if (cloudDbUrl) {
-    try {
-      const cleanUrl = cloudDbUrl.replace(/\/$/, "");
-      await fetch(`${cleanUrl}/proteina_sistema.json`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      updateSyncBadge(true);
-    } catch (e) {
-      console.warn("Error al sincronizar con la nube:", e);
-      updateSyncBadge(false, true);
-    }
+  try {
+    const res = await fetch(`${CLOUD_DB_URL}/proteina_sistema.json`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    updateSyncBadge(res.ok);
+  } catch (e) {
+    console.warn("Error al sincronizar con Firebase:", e);
+    updateSyncBadge(false);
   }
 }
 
@@ -993,97 +956,55 @@ function loadState() {
   }
 }
 
-function updateSyncBadge(isOnline, hasError) {
+function updateSyncBadge(isOnline) {
   const badge = document.getElementById("sync-status-badge");
   if (!badge) return;
   if (isOnline) {
-    badge.className = "sync-badge online";
-    badge.textContent = "🟢 Sincronizado Online";
-  } else if (hasError) {
     badge.className = "sync-badge";
-    badge.textContent = "⚠️ Sin conexión a nube (Guardado en el celular)";
+    badge.textContent = "🟢 Conectado Online";
   } else {
-    badge.className = "sync-badge";
-    badge.textContent = "☁️ Modo Local (Clic para conectar entre celulares)";
+    badge.className = "sync-badge offline";
+    badge.textContent = "🟡 Guardado en el dispositivo";
   }
 }
 
-async function connectCloudDatabase() {
-  const input = document.getElementById("cloud-db-url");
-  const msg = document.getElementById("cloud-msg");
-  const url = (input.value || "").trim().replace(/\/$/, "");
-  if (!url) {
-    cloudDbUrl = "";
-    localStorage.removeItem(CLOUD_URL_KEY);
-    updateSyncBadge(false);
-    msg.textContent = "Desconectado de la nube. Usando memoria local del dispositivo.";
-    return;
-  }
-  cloudDbUrl = url;
-  localStorage.setItem(CLOUD_URL_KEY, cloudDbUrl);
-  msg.textContent = "Conectando con la base de datos...";
-  await pullFromCloudNow(true);
-}
+async function syncFromCloud() {
+  // No sobreescribir mientras el usuario tiene abierta la ventana de asignar horario
+  const modalOpen = document.getElementById("cell-modal").classList.contains("open");
+  if (modalOpen) return;
 
-async function pullFromCloudNow(pushIfEmpty) {
-  if (!cloudDbUrl) return;
-  const msg = document.getElementById("cloud-msg");
   try {
-    const cleanUrl = cloudDbUrl.replace(/\/$/, "");
-    const res = await fetch(`${cleanUrl}/proteina_sistema.json`);
+    const res = await fetch(`${CLOUD_DB_URL}/proteina_sistema.json`);
     if (!res.ok) throw new Error("HTTP " + res.status);
     const remoteData = await res.json();
     if (remoteData && remoteData.scheduleData) {
-      applyPayload(remoteData);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteData));
-      populateSelects();
-      refreshAll();
+      if (!remoteData.updatedAt || remoteData.updatedAt > lastLoadedTimestamp) {
+        applyPayload(remoteData);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteData));
+        populateSelects();
+        refreshAll();
+      }
       updateSyncBadge(true);
-      if (msg) msg.textContent = "✅ Conectado y sincronizado en tiempo real con todos los celulares.";
-    } else if (pushIfEmpty) {
+    } else {
+      // Si la base de Firebase está vacía por primera vez, subimos los datos iniciales
       await saveState();
-      if (msg) msg.textContent = "✅ Base de datos inicializada con los horarios actuales.";
     }
   } catch (err) {
-    updateSyncBadge(false, true);
-    if (msg) msg.textContent = "⚠️ No se pudo conectar a esa URL. Verifique que sea una URL válida de Firebase Realtime Database.";
+    updateSyncBadge(false);
   }
 }
 
-function downloadBackupJSON() {
-  const payload = buildPayload();
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `Copia_Proteina_Gym_${currentMonthName.replace(/\s+/g, "_")}.json`;
-  a.click();
+// ============================================================================
+// EXPORTAR A EXCEL (.XLSX) CON DISEÑO ESTÉTICO, COLORES Y TABLAS FORMATEADAS
+// ============================================================================
+function cleanHex(hex, fallback) {
+  if (!hex) return fallback;
+  return String(hex).replace("#", "").toUpperCase();
 }
 
-function uploadBackupJSON(ev) {
-  const file = ev.target.files && ev.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const data = JSON.parse(e.target.result);
-      applyPayload(data);
-      saveState();
-      populateSelects();
-      refreshAll();
-      alert("✅ Datos cargados correctamente.");
-    } catch (err) {
-      alert("⚠️ El archivo seleccionado no es válido.");
-    }
-  };
-  reader.readAsText(file);
-}
-
-// ============================================================================
-// EXPORTAR A EXCEL (.XLSX) CON LAS 3 UNIDADES EN SOLAPAS SEPARADAS
-// ============================================================================
 function exportAllUnitsToExcel() {
   if (typeof XLSX === "undefined") {
-    alert("Cargando librería de Excel, intente nuevamente en un segundo.");
+    alert("Cargando motor de Excel, intente nuevamente en un segundo.");
     return;
   }
 
@@ -1091,44 +1012,63 @@ function exportAllUnitsToExcel() {
   const calc = calculateMonthData(currentMonthName);
   const wb = XLSX.utils.book_new();
 
-  // Solapa 1, 2 y 3: Cada unidad en su propia pestaña
+  const borderThin = {
+    top: { style: "thin", color: { rgb: "CBD5E1" } },
+    bottom: { style: "thin", color: { rgb: "CBD5E1" } },
+    left: { style: "thin", color: { rgb: "CBD5E1" } },
+    right: { style: "thin", color: { rgb: "CBD5E1" } }
+  };
+
+  const borderStrong = {
+    top: { style: "medium", color: { rgb: "0A0A0A" } },
+    bottom: { style: "medium", color: { rgb: "0A0A0A" } },
+    left: { style: "thin", color: { rgb: "0A0A0A" } },
+    right: { style: "thin", color: { rgb: "0A0A0A" } }
+  };
+
   const sheetTabs = [
-    { unit: "Proteína Gym", tabName: "1. Proteina Gym" },
-    { unit: "Proteína Box", tabName: "2. Proteina Box" },
-    { unit: "Boxeo", tabName: "3. Boxeo" }
+    { unit: "Proteína Gym", tabName: "1. Proteina Gym", bannerColor: "18181B", accentText: "F5E600" },
+    { unit: "Proteína Box", tabName: "2. Proteina Box", bannerColor: "065F46", accentText: "FFFFFF" },
+    { unit: "Boxeo", tabName: "3. Boxeo", bannerColor: "7C2D12", accentText: "FFFFFF" }
   ];
 
-  sheetTabs.forEach(({ unit, tabName }) => {
+  sheetTabs.forEach(({ unit, tabName, bannerColor, accentText }) => {
     const aoa = [];
-    aoa.push([`${unit.toUpperCase()} — CRONOGRAMA ${m.name}`]);
-    aoa.push([`Valor Hora Normal: ${formatMoney(calc.rate)} | Valor Hora Doble (Domingos y Feriados): ${formatMoney(calc.rate * 2)}`]);
+    // Fila 0: Título principal
+    aoa.push([`PROTEÍNA GYM — ${unit.toUpperCase()} (${m.name})`]);
+    // Fila 1: Subtítulo con tarifas
+    aoa.push([`Valor Hora Normal: ${formatMoney(calc.rate)}   |   Valor Hora Doble (Domingos y Feriados ×2): ${formatMoney(calc.rate * 2)}`]);
+    // Fila 2: Vacía
     aoa.push([]);
 
-    // Encabezado de días
+    // Fila 3 y 4: Encabezado de días y tipo de jornada
     const headerRow = ["HORARIO"];
-    const subHeaderRow = ["TIPO DE DÍA"];
+    const subHeaderRow = ["JORNADA"];
+    const doubleCols = {};
+
     for (let d = 1; d <= m.days; d++) {
       const dt = new Date(m.year, m.month - 1, d);
       const dayName = DAYS_ES[dt.getDay()];
       const ddStr = `${String(d).padStart(2, "0")}/${String(m.month).padStart(2, "0")}`;
       const dbl = isDoubleDay(m.year, m.month, d);
+      doubleCols[d] = dbl;
       headerRow.push(`${dayName} ${ddStr}`);
-      subHeaderRow.push(dbl ? "DOBLE (x2)" : "NORMAL");
+      subHeaderRow.push(dbl ? "DOBLE ×2" : "NORMAL");
     }
     aoa.push(headerRow);
     aoa.push(subHeaderRow);
 
-    // Filas de horarios (07:00 a 23:00)
+    // Filas 5 a 36: Bloques de 30 minutos (07:00 a 23:00)
     TIME_SLOTS.forEach((slotStr, sIdx) => {
       const row = [slotStr];
       for (let d = 1; d <= m.days; d++) {
         const assigned = scheduleData[m.name][unit][d][sIdx] || [];
-        row.push(assigned.join(", "));
+        row.push(assigned.join(" / "));
       }
       aoa.push(row);
     });
 
-    // Fila de total de horas del día en esa unidad
+    // Fila 37: Total de horas del día
     const totalDayRow = ["TOTAL HORAS DÍA"];
     for (let d = 1; d <= m.days; d++) {
       let dayHours = 0;
@@ -1136,28 +1076,150 @@ function exportAllUnitsToExcel() {
         const assigned = scheduleData[m.name][unit][d][s] || [];
         dayHours += assigned.length * 0.5;
       }
-      totalDayRow.push(dayHours);
+      totalDayRow.push(`${dayHours.toFixed(1)} hs`);
     }
-    aoa.push([]);
     aoa.push(totalDayRow);
 
     const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+    // Unir celdas del banner superior
+    ws["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: Math.min(8, m.days) } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: Math.min(8, m.days) } }
+    ];
+
+    // Ancho de columnas y alto de filas
     const cols = [{ wch: 18 }];
-    for (let d = 1; d <= m.days; d++) cols.push({ wch: 22 });
+    for (let d = 1; d <= m.days; d++) cols.push({ wch: 24 });
     ws["!cols"] = cols;
+
+    const rowsHeights = [
+      { hpt: 30 },
+      { hpt: 22 },
+      { hpt: 10 },
+      { hpt: 26 },
+      { hpt: 20 }
+    ];
+    for (let s = 0; s < 32; s++) rowsHeights.push({ hpt: 22 });
+    rowsHeights.push({ hpt: 26 });
+    ws["!rows"] = rowsHeights;
+
+    // Aplicar estilos celda por celda
+    for (let c = 0; c <= m.days; c++) {
+      // Estilo Título (Fila 0)
+      const ref0 = XLSX.utils.encode_cell({ r: 0, c });
+      if (!ws[ref0]) ws[ref0] = { t: "s", v: "" };
+      ws[ref0].s = {
+        fill: { fgColor: { rgb: bannerColor } },
+        font: { name: "Segoe UI", sz: 14, bold: true, color: { rgb: accentText } },
+        alignment: { vertical: "center", horizontal: "left" }
+      };
+
+      // Estilo Subtítulo (Fila 1)
+      const ref1 = XLSX.utils.encode_cell({ r: 1, c });
+      if (!ws[ref1]) ws[ref1] = { t: "s", v: "" };
+      ws[ref1].s = {
+        fill: { fgColor: { rgb: "FEFCE8" } },
+        font: { name: "Segoe UI", sz: 10, bold: true, color: { rgb: "18181B" } },
+        alignment: { vertical: "center", horizontal: "left" }
+      };
+
+      // Estilo Encabezado de Días (Fila 3)
+      const isDbl = doubleCols[c];
+      const refH = XLSX.utils.encode_cell({ r: 3, c });
+      if (ws[refH]) {
+        ws[refH].s = {
+          fill: { fgColor: { rgb: c === 0 ? "0A0A0A" : (isDbl ? "7C2D12" : "18181B") } },
+          font: { name: "Segoe UI", sz: 10, bold: true, color: { rgb: c === 0 ? "F5E600" : "FFFFFF" } },
+          alignment: { vertical: "center", horizontal: "center" },
+          border: borderStrong
+        };
+      }
+
+      // Estilo Subencabezado NORMAL / DOBLE (Fila 4)
+      const refSub = XLSX.utils.encode_cell({ r: 4, c });
+      if (ws[refSub]) {
+        ws[refSub].s = {
+          fill: { fgColor: { rgb: c === 0 ? "27272A" : (isDbl ? "FEE2E2" : "E4E4E7") } },
+          font: { name: "Segoe UI", sz: 9, bold: true, color: { rgb: c === 0 ? "F5E600" : (isDbl ? "991B1B" : "18181B") } },
+          alignment: { vertical: "center", horizontal: "center" },
+          border: borderThin
+        };
+      }
+
+      // Estilo Filas de Horarios (Filas 5 a 36)
+      for (let s = 0; s < 32; s++) {
+        const rIdx = 5 + s;
+        const cellRef = XLSX.utils.encode_cell({ r: rIdx, c });
+        if (!ws[cellRef]) ws[cellRef] = { t: "s", v: "" };
+
+        if (c === 0) {
+          ws[cellRef].s = {
+            fill: { fgColor: { rgb: s % 2 === 0 ? "F4F4F5" : "E4E4E7" } },
+            font: { name: "Segoe UI", sz: 10, bold: true, color: { rgb: "0A0A0A" } },
+            alignment: { vertical: "center", horizontal: "center" },
+            border: borderThin
+          };
+        } else {
+          const assigned = scheduleData[m.name][unit][c][s] || [];
+          let bgHex = isDbl ? "FFF1F2" : (s % 2 === 0 ? "FFFFFF" : "F8FAFC");
+          let fgHex = "0A0A0A";
+          let isBold = false;
+
+          if (assigned.length === 1) {
+            const pObj = profesores.find(p => p.name === assigned[0]);
+            if (pObj) {
+              bgHex = cleanHex(pObj.bg, "FEF9C3");
+              fgHex = cleanHex(pObj.fg, "0A0A0A");
+            }
+            isBold = true;
+          } else if (assigned.length > 1) {
+            // Varios profesores en el mismo bloque: fondo amarillo suave destacado
+            bgHex = "FEF08A";
+            fgHex = "0A0A0A";
+            isBold = true;
+          }
+
+          ws[cellRef].s = {
+            fill: { fgColor: { rgb: bgHex } },
+            font: { name: "Segoe UI", sz: 10, bold: isBold, color: { rgb: fgHex } },
+            alignment: { vertical: "center", horizontal: "center", wrapText: true },
+            border: borderThin
+          };
+        }
+      }
+
+      // Estilo Fila Totales del Día (Fila 37)
+      const refTot = XLSX.utils.encode_cell({ r: 37, c });
+      if (ws[refTot]) {
+        ws[refTot].s = {
+          fill: { fgColor: { rgb: "FEFCE8" } },
+          font: { name: "Segoe UI", sz: 10, bold: true, color: { rgb: "0A0A0A" } },
+          alignment: { vertical: "center", horizontal: "center" },
+          border: borderStrong
+        };
+      }
+    }
 
     XLSX.utils.book_append_sheet(wb, ws, tabName);
   });
 
-  // Solapa 4: Liquidación Mensual Consolidada
+  // Solapa 4: Liquidación Mensual con colores de cada profesor
+  const liqHeaders = [
+    "Profesor", "Estado", "1. Proteína Gym (Hs)", "2. Proteína Box (Hs)", "3. Boxeo (Hs)",
+    "Horas Normales", "Horas Dobles (×2)", "Total Horas", "Valor Hora",
+    "Importe Normal", "Importe Doble", "TOTAL A PAGAR"
+  ];
   const liqAoa = [
-    [`LIQUIDACIÓN MENSUAL — ${m.name}`],
-    [`Valor Hora Normal: ${formatMoney(calc.rate)} | Valor Hora Doble: ${formatMoney(calc.rate * 2)}`],
+    [`PROTEÍNA GYM — LIQUIDACIÓN MENSUAL (${m.name})`],
+    [`Valor Hora Normal: ${formatMoney(calc.rate)}   |   Valor Hora Doble (×2): ${formatMoney(calc.rate * 2)}`],
     [],
-    ["Profesor", "Estado", "Hs 1. Proteína Gym", "Hs 2. Proteína Box", "Hs 3. Boxeo", "Horas Normales", "Horas Dobles (x2)", "Total Horas", "Valor Hora ($)", "Importe Normal ($)", "Importe Doble ($)", "TOTAL A PAGAR ($)"]
+    liqHeaders
   ];
 
   let totGym = 0, totBox = 0, totBoxeo = 0, totNorm = 0, totDob = 0, totPay = 0;
+  const profRowsMeta = [];
+
   Object.values(calc.byProf).forEach(p => {
     const gHs = p.gymNorm + p.gymDob;
     const bHs = p.boxNorm + p.boxDob;
@@ -1174,16 +1236,91 @@ function exportAllUnitsToExcel() {
     totGym += gHs; totBox += bHs; totBoxeo += xHs;
     totNorm += nHs; totDob += dHs; totPay += impTot;
 
-    liqAoa.push([p.name, p.status, gHs, bHs, xHs, nHs, dHs, tHs, calc.rate, impNorm, impDob, impTot]);
+    const pObj = profesores.find(x => x.name === p.name) || { bg: "#F4F4F5", fg: "#0A0A0A" };
+    profRowsMeta.push(pObj);
+
+    liqAoa.push([
+      p.name, p.status,
+      Number(gHs.toFixed(1)), Number(bHs.toFixed(1)), Number(xHs.toFixed(1)),
+      Number(nHs.toFixed(1)), Number(dHs.toFixed(1)), Number(tHs.toFixed(1)),
+      formatMoney(calc.rate), formatMoney(impNorm), formatMoney(impDob), formatMoney(impTot)
+    ]);
   });
 
-  liqAoa.push(["TOTAL GENERAL", "", totGym, totBox, totBoxeo, totNorm, totDob, totNorm + totDob, calc.rate, totNorm * calc.rate, totDob * calc.rate * 2, totPay]);
+  liqAoa.push([
+    "TOTAL GENERAL", "",
+    Number(totGym.toFixed(1)), Number(totBox.toFixed(1)), Number(totBoxeo.toFixed(1)),
+    Number(totNorm.toFixed(1)), Number(totDob.toFixed(1)), Number((totNorm + totDob).toFixed(1)),
+    formatMoney(calc.rate), formatMoney(totNorm * calc.rate), formatMoney(totDob * calc.rate * 2), formatMoney(totPay)
+  ]);
 
   const wsLiq = XLSX.utils.aoa_to_sheet(liqAoa);
-  wsLiq["!cols"] = [
-    { wch: 22 }, { wch: 12 }, { wch: 18 }, { wch: 18 }, { wch: 15 },
-    { wch: 16 }, { wch: 18 }, { wch: 14 }, { wch: 15 }, { wch: 18 }, { wch: 18 }, { wch: 20 }
+  wsLiq["!merges"] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } }
   ];
+  wsLiq["!cols"] = [
+    { wch: 22 }, { wch: 12 }, { wch: 20 }, { wch: 20 }, { wch: 16 },
+    { wch: 16 }, { wch: 18 }, { wch: 15 }, { wch: 15 }, { wch: 18 }, { wch: 18 }, { wch: 20 }
+  ];
+
+  const liqRowsH = [{ hpt: 30 }, { hpt: 22 }, { hpt: 10 }, { hpt: 26 }];
+  profRowsMeta.forEach(() => liqRowsH.push({ hpt: 22 }));
+  liqRowsH.push({ hpt: 26 });
+  wsLiq["!rows"] = liqRowsH;
+
+  for (let c = 0; c < 12; c++) {
+    const r0 = XLSX.utils.encode_cell({ r: 0, c });
+    if (!wsLiq[r0]) wsLiq[r0] = { t: "s", v: "" };
+    wsLiq[r0].s = {
+      fill: { fgColor: { rgb: "0A0A0A" } },
+      font: { name: "Segoe UI", sz: 14, bold: true, color: { rgb: "F5E600" } },
+      alignment: { vertical: "center", horizontal: "left" }
+    };
+
+    const r1 = XLSX.utils.encode_cell({ r: 1, c });
+    if (!wsLiq[r1]) wsLiq[r1] = { t: "s", v: "" };
+    wsLiq[r1].s = {
+      fill: { fgColor: { rgb: "FEFCE8" } },
+      font: { name: "Segoe UI", sz: 10, bold: true, color: { rgb: "18181B" } },
+      alignment: { vertical: "center", horizontal: "left" }
+    };
+
+    const rH = XLSX.utils.encode_cell({ r: 3, c });
+    if (wsLiq[rH]) {
+      wsLiq[rH].s = {
+        fill: { fgColor: { rgb: "18181B" } },
+        font: { name: "Segoe UI", sz: 10, bold: true, color: { rgb: "F5E600" } },
+        alignment: { vertical: "center", horizontal: "center" },
+        border: borderStrong
+      };
+    }
+
+    profRowsMeta.forEach((pObj, idx) => {
+      const rIdx = 4 + idx;
+      const ref = XLSX.utils.encode_cell({ r: rIdx, c });
+      if (!wsLiq[ref]) wsLiq[ref] = { t: "s", v: "" };
+      const isNameCol = c === 0;
+      const isTotalCol = c === 11;
+      wsLiq[ref].s = {
+        fill: { fgColor: { rgb: isNameCol ? cleanHex(pObj.bg, "FFFFFF") : (isTotalCol ? "FEFCE8" : (idx % 2 === 0 ? "FFFFFF" : "F8FAFC")) } },
+        font: { name: "Segoe UI", sz: 10, bold: (isNameCol || isTotalCol || c === 7), color: { rgb: isNameCol ? cleanHex(pObj.fg, "0A0A0A") : "0A0A0A" } },
+        alignment: { vertical: "center", horizontal: c === 0 ? "left" : (c === 1 ? "center" : "right") },
+        border: borderThin
+      };
+    });
+
+    const rTot = XLSX.utils.encode_cell({ r: 4 + profRowsMeta.length, c });
+    if (wsLiq[rTot]) {
+      wsLiq[rTot].s = {
+        fill: { fgColor: { rgb: "F5E600" } },
+        font: { name: "Segoe UI", sz: 11, bold: true, color: { rgb: "0A0A0A" } },
+        alignment: { vertical: "center", horizontal: c <= 1 ? "left" : "right" },
+        border: borderStrong
+      };
+    }
+  }
+
   XLSX.utils.book_append_sheet(wb, wsLiq, "4. Liquidacion");
 
   const fileName = `Proteina_Gym_${m.name.replace(/\s+/g, "_")}.xlsx`;
@@ -2101,13 +2238,9 @@ loadState();
 populateSelects();
 refreshAll();
 
-// Si hay URL de nube configurada, sincronizar al abrir y cada 20 segundos
-if (cloudDbUrl) {
-  const urlInput = document.getElementById("cloud-db-url");
-  if (urlInput) urlInput.value = cloudDbUrl;
-  pullFromCloudNow(false);
-  setInterval(() => pullFromCloudNow(false), 20000);
-}
+// Conexión automática e invisible con Firebase al abrir y cada 8 segundos
+syncFromCloud();
+setInterval(syncFromCloud, 8000);
 </script>
 </body>
 </html>
