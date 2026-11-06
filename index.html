@@ -865,7 +865,9 @@ function initScheduleData() {
         scheduleData[m.name][u][d] = {};
         const dt = new Date(m.year, m.month - 1, d);
         const jsDay = dt.getDay();
-        const preload = (m.name === "NOVIEMBRE 2026" || m.name === "DICIEMBRE 2026");
+        // Solo pre-cargar días 1 al 6 de Noviembre 2026 (Domingo 1 a Viernes 6)
+        // A partir del Sábado 7/11/2026 en adelante (y todo 2027) queda vacío sin profesores
+        const preload = (m.name === "NOVIEMBRE 2026" && d <= 6);
         for (let s = 0; s < 32; s++) {
           let arr = preload ? [...getInitialSlotAssignment(u, jsDay, s)] : [];
           if (m.name === "NOVIEMBRE 2026" && d === 2 && u === "Proteína Box" && (s === 22 || s === 23)) {
