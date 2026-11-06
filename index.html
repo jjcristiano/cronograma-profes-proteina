@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>Proteína Gym — Gestión de Horarios y Profesores</title>
   <link rel="icon" type="image/png" href="LOGO_GYM_PROTEINA.PNG" />
   <style>
@@ -32,69 +32,83 @@
       color: var(--black);
       line-height: 1.5;
       font-size: 16px;
+      -webkit-tap-highlight-color: transparent;
     }
     header {
       background: linear-gradient(135deg, #0a0a0a 0%, #1f1f23 100%);
       color: #fff;
-      padding: 14px 24px;
+      padding: 14px 20px;
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       border-bottom: 4px solid var(--yellow);
       box-shadow: 0 3px 12px rgba(0,0,0,0.25);
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
     .brand-logo {
-      width: 66px;
-      height: 66px;
+      width: 60px;
+      height: 60px;
       object-fit: contain;
       filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
       flex-shrink: 0;
     }
     .brand h1 {
-      font-size: 1.45rem;
+      font-size: 1.35rem;
       font-weight: 800;
       letter-spacing: 0.01em;
       color: var(--yellow);
       text-transform: uppercase;
     }
     .brand p {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       color: #e4e4e7;
       font-weight: 500;
     }
-    .unit-pills { display: flex; gap: 8px; flex-wrap: wrap; }
-    .unit-pill {
-      padding: 6px 14px;
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .sync-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
       border-radius: 999px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 800;
-      text-transform: uppercase;
-      border: 2px solid var(--yellow);
       background: #18181b;
-      color: var(--yellow);
+      border: 2px solid #52525b;
+      color: #e4e4e7;
+      cursor: pointer;
+    }
+    .sync-badge.online {
+      border-color: #22c55e;
+      color: #86efac;
     }
 
     nav.tabs {
       background: var(--charcoal);
       display: flex;
       overflow-x: auto;
-      padding: 0 16px;
-      gap: 6px;
+      padding: 0 12px;
+      gap: 4px;
       border-bottom: 2px solid #000;
+      -webkit-overflow-scrolling: touch;
     }
     nav.tabs button {
       background: transparent;
       color: #e4e4e7;
       border: none;
-      padding: 13px 18px;
-      font-size: 0.95rem;
+      padding: 13px 15px;
+      font-size: 0.92rem;
       font-weight: 700;
       cursor: pointer;
       white-space: nowrap;
@@ -111,34 +125,34 @@
       border-bottom-color: #ca8a04;
     }
 
-    main { max-width: 1600px; margin: 0 auto; padding: 22px; }
+    main { max-width: 1600px; margin: 0 auto; padding: 18px; }
     .view { display: none; }
     .view.active { display: block; }
 
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
     }
     .kpi-card {
       background: var(--surface);
       border: 2px solid var(--border);
       border-top: 5px solid var(--black);
       border-radius: 10px;
-      padding: 16px 18px;
+      padding: 15px 16px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    .kpi-card .lbl { font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: var(--muted); }
-    .kpi-card .val { font-size: 1.55rem; font-weight: 800; margin-top: 4px; color: var(--black); }
-    .kpi-card .sub { font-size: 0.85rem; color: var(--muted); margin-top: 3px; }
+    .kpi-card .lbl { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--muted); }
+    .kpi-card .val { font-size: 1.45rem; font-weight: 800; margin-top: 4px; color: var(--black); }
+    .kpi-card .sub { font-size: 0.84rem; color: var(--muted); margin-top: 3px; }
 
     .card {
       background: var(--surface);
       border: 2px solid var(--border);
       border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
+      padding: 18px;
+      margin-bottom: 18px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
     .card-hdr {
@@ -147,27 +161,34 @@
       align-items: center;
       flex-wrap: wrap;
       gap: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       padding-bottom: 12px;
       border-bottom: 2px solid #e4e4e7;
     }
-    .card-hdr h2 { font-size: 1.2rem; font-weight: 800; color: var(--black); }
+    .card-hdr h2 { font-size: 1.18rem; font-weight: 800; color: var(--black); }
 
     .toolbar {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 10px;
       align-items: center;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
+    }
+    .toolbar label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.88rem;
     }
     select, input[type="text"], input[type="number"], input[type="date"] {
-      padding: 9px 13px;
+      padding: 10px 12px;
       border: 2px solid #71717a;
       border-radius: 8px;
-      font-size: 0.95rem;
+      font-size: 0.96rem;
       background: #fff;
       color: var(--black);
       font-weight: 700;
+      min-height: 44px;
     }
     select:focus, input:focus {
       outline: 3px solid var(--yellow-border);
@@ -175,13 +196,15 @@
     }
     button.btn {
       padding: 10px 16px;
+      min-height: 44px;
       border-radius: 8px;
       border: 2px solid transparent;
-      font-size: 0.92rem;
+      font-size: 0.94rem;
       font-weight: 800;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       transition: all 0.15s;
     }
@@ -201,6 +224,14 @@
     .btn-success:hover {
       background: var(--yellow-hover);
     }
+    .btn-excel {
+      background: #15803d;
+      color: #fff;
+      border-color: #166534;
+    }
+    .btn-excel:hover {
+      background: #166534;
+    }
     .btn-amber {
       background: #d97706;
       color: #fff;
@@ -214,15 +245,32 @@
       background: #f4f4f5;
     }
 
-    .table-wrap { overflow-x: auto; border: 2px solid var(--border); border-radius: 10px; }
+    .table-wrap {
+      overflow-x: auto;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      -webkit-overflow-scrolling: touch;
+    }
     table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
-    th, td { padding: 9px 11px; border: 1px solid #d4d4d8; text-align: left; }
+    th, td { padding: 9px 10px; border: 1px solid #d4d4d8; text-align: left; }
     th {
       background: var(--charcoal);
       color: var(--yellow);
       font-weight: 800;
       text-align: center;
       white-space: nowrap;
+    }
+    /* Fijar primera columna de HORARIO para navegar cómodo en celular */
+    .sticky-col {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: #f4f4f5 !important;
+      border-right: 2px solid var(--black) !important;
+    }
+    th.sticky-col {
+      background: var(--charcoal) !important;
+      z-index: 3;
     }
     tr.tot-row td {
       background: var(--yellow-soft);
@@ -238,16 +286,17 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 3px 10px;
+      padding: 4px 10px;
       border-radius: 999px;
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       font-weight: 800;
       margin: 2px;
       white-space: nowrap;
-      border: 1px solid rgba(0,0,0,0.18);
+      border: 1px solid rgba(0,0,0,0.2);
     }
     .sched-cell {
-      min-width: 130px;
+      min-width: 135px;
+      height: 46px;
       cursor: pointer;
       background: #ffffff;
       transition: background 0.12s;
@@ -287,7 +336,7 @@
       align-items: center;
       justify-content: center;
       z-index: 1000;
-      padding: 16px;
+      padding: 12px;
     }
     .modal-backdrop.open { display: flex; }
     .modal {
@@ -296,13 +345,15 @@
       border-radius: 14px;
       max-width: 560px;
       width: 100%;
-      padding: 22px;
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 20px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.35);
     }
     .modal h3 { font-size: 1.15rem; margin-bottom: 6px; color: var(--black); }
     .prof-picker {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
       gap: 8px;
       margin: 12px 0;
     }
@@ -310,15 +361,35 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 9px 11px;
+      padding: 10px 11px;
       border: 2px solid var(--border);
       border-radius: 8px;
       cursor: pointer;
       user-select: none;
     }
+    .prof-opt input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
     .prof-opt.selected {
       border: 2px solid var(--black);
       box-shadow: 0 0 0 3px var(--yellow);
+    }
+
+    /* Ajustes especiales para Celular (Mobile Responsive) */
+    @media (max-width: 768px) {
+      header { padding: 12px 14px; }
+      .brand-logo { width: 48px; height: 48px; }
+      .brand h1 { font-size: 1.15rem; }
+      .brand p { font-size: 0.8rem; }
+      main { padding: 10px; }
+      .card { padding: 14px; }
+      .card-hdr { flex-direction: column; align-items: stretch; }
+      .toolbar { width: 100%; }
+      .toolbar label { flex: 1 1 calc(50% - 6px); min-width: 135px; }
+      .toolbar select, .toolbar input { width: 100%; }
+      .toolbar button.btn { width: 100%; }
+      .prof-picker { grid-template-columns: repeat(2, 1fr); }
     }
 
     @media print {
@@ -335,13 +406,14 @@
     <img src="LOGO_GYM_PROTEINA.PNG" alt="Logo Proteína Gym" class="brand-logo" />
     <div>
       <h1>PROTEÍNA GYM</h1>
-      <p>Sistema de Horarios, Profesores y Liquidaciones</p>
+      <p>Horarios, Profesores y Liquidaciones</p>
     </div>
   </div>
-  <div class="unit-pills">
-    <span class="unit-pill">1. Proteína Gym</span>
-    <span class="unit-pill">2. Proteína Box</span>
-    <span class="unit-pill">3. Boxeo</span>
+  <div class="header-right">
+    <div id="sync-status-badge" class="sync-badge" onclick="showTab('nube', document.getElementById('tab-btn-nube'))" title="Estado de sincronización entre celulares">
+      ☁️ Modo Local (Clic para conectar en la nube)
+    </div>
+    <button class="btn btn-excel" onclick="exportAllUnitsToExcel()">📥 Descargar Excel (3 Solapas)</button>
   </div>
 </header>
 
@@ -354,6 +426,7 @@
   <button onclick="showTab('profes', this)">👥 PROFES</button>
   <button onclick="showTab('config', this)">⚙️ VALOR HORA Y FERIADOS</button>
   <button onclick="showTab('reemplazos', this)">🔄 REEMPLAZOS</button>
+  <button id="tab-btn-nube" onclick="showTab('nube', this)">☁️ SINCRONIZACIÓN ONLINE</button>
 </nav>
 
 <main>
@@ -366,12 +439,13 @@
     <div class="card">
       <div class="card-hdr">
         <h2>Accesos Rápidos</h2>
+        <button class="btn btn-excel" onclick="exportAllUnitsToExcel()">📥 Descargar Excel (Gym + Box + Boxeo)</button>
       </div>
       <div class="kpi-grid">
         <div class="kpi-card" style="cursor:pointer;border-top-color:var(--yellow-border)" onclick="triggerNav(1)">
           <div class="lbl">1. Cronogramas</div>
           <div class="val" style="font-size:1.2rem">Ver y Cargar Horarios</div>
-          <div class="sub">Proteína Gym · Proteína Box · Boxeo</div>
+          <div class="sub">1. Proteína Gym · 2. Proteína Box · 3. Boxeo</div>
         </div>
         <div class="kpi-card" style="cursor:pointer;border-top-color:#15803d" onclick="triggerNav(2)">
           <div class="lbl">2. Liquidación Mensual</div>
@@ -417,21 +491,16 @@
               <option value="Boxeo">3. Boxeo</option>
             </select>
           </label>
-          <label><strong>Semana:</strong>
-            <select id="sched-week" onchange="renderSchedule()">
-              <option value="0">Días 1 al 7</option>
-              <option value="1">Días 8 al 14</option>
-              <option value="2">Días 15 al 21</option>
-              <option value="3">Días 22 al Fin de Mes</option>
-              <option value="all">Mes Completo (1 al 31)</option>
-            </select>
+          <label><strong>Vista de Días:</strong>
+            <select id="sched-week" onchange="renderSchedule()"></select>
           </label>
+          <button class="btn btn-excel" onclick="exportAllUnitsToExcel()">📥 Descargar Excel</button>
         </div>
       </div>
 
       <!-- CARGA RÁPIDA DE TURNOS -->
       <div style="background:var(--yellow-soft);border:2px solid var(--yellow-border);border-radius:10px;padding:14px 16px;margin-bottom:16px">
-        <div style="font-size:1rem;font-weight:800;color:var(--black);margin-bottom:10px">
+        <div style="font-size:1.02rem;font-weight:800;color:var(--black);margin-bottom:10px">
           Carga Rápida de Turnos
         </div>
         <div class="toolbar" style="margin-bottom:0">
@@ -473,6 +542,7 @@
           <label><strong>Mes:</strong>
             <select id="res-month" onchange="syncMonthSelect(this.value)"></select>
           </label>
+          <button class="btn btn-excel" onclick="exportAllUnitsToExcel()">📥 Descargar Excel</button>
           <button class="btn btn-amber" onclick="toggleCloseMonth()">🔒 Cerrar / Reabrir Mes</button>
           <button class="btn btn-outline" onclick="window.print()">🖨️ Imprimir / PDF</button>
         </div>
@@ -507,6 +577,7 @@
           <label><strong>Mes:</strong>
             <select id="rep-month" onchange="syncMonthSelect(this.value)"></select>
           </label>
+          <button class="btn btn-excel" onclick="exportAllUnitsToExcel()">📥 Descargar Excel</button>
         </div>
       </div>
       <div class="table-wrap" id="rep-unidad-table"></div>
@@ -539,7 +610,7 @@
         <h2>Profesores</h2>
         <div class="toolbar" style="margin-bottom:0">
           <input type="text" id="new-prof-name" placeholder="Nombre del profesor..." />
-          <input type="color" id="new-prof-color" value="#fde047" title="Elegir color" style="height:40px;width:54px;padding:2px;cursor:pointer" />
+          <input type="color" id="new-prof-color" value="#fde047" title="Elegir color" style="height:44px;width:58px;padding:2px;cursor:pointer" />
           <button class="btn btn-primary" onclick="addNewProfesor()">➕ Agregar Profesor</button>
         </div>
       </div>
@@ -559,7 +630,7 @@
         <label><strong>Valor de la Hora Normal ($):</strong>
           <input type="number" id="cfg-rate" value="5000" step="500" onchange="updateHourlyRate(this.value)" />
         </label>
-        <span style="font-size:0.95rem;font-weight:800;color:#991b1b;background:#fee2e2;padding:9px 14px;border-radius:8px">
+        <span style="font-size:0.95rem;font-weight:800;color:#991b1b;background:#fee2e2;padding:10px 14px;border-radius:8px">
           Valor Hora Doble (Domingos y Feriados ×2): <span id="cfg-double-rate">$10.000</span>
         </span>
       </div>
@@ -590,26 +661,60 @@
       <div class="table-wrap" id="reemplazos-table"></div>
     </div>
   </section>
+
+  <!-- ==================================================================== -->
+  <!-- 9. SINCRONIZACIÓN ONLINE EN TIEMPO REAL ENTRE CELULARES -->
+  <!-- ==================================================================== -->
+  <section id="view-nube" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>☁️ Base de Datos Compartida entre Celulares y Computadoras</h2>
+      </div>
+      <p style="margin-bottom:14px;font-size:0.95rem">
+        Para que todos los celulares vean y editen exactamente los mismos horarios al instante, conectá una URL de base de datos gratuita de <strong>Firebase Realtime Database</strong> (o exportá/importá la copia de seguridad).
+      </p>
+      <div class="toolbar">
+        <label style="flex:1;min-width:260px">
+          <strong>URL de Base de Datos Compartida (Firebase Realtime Database):</strong>
+          <input type="text" id="cloud-db-url" placeholder="https://tu-proyecto-default-rtdb.firebaseio.com" />
+        </label>
+        <button class="btn btn-primary" onclick="connectCloudDatabase()">🔗 Conectar y Sincronizar</button>
+        <button class="btn btn-outline" onclick="pullFromCloudNow()">🔄 Traer últimos datos ahora</button>
+      </div>
+      <div id="cloud-msg" style="font-size:0.9rem;font-weight:700;margin-top:8px;color:#15803d"></div>
+
+      <hr style="margin:20px 0;border:none;border-top:2px solid #e4e4e7" />
+
+      <h3 style="font-size:1.05rem;margin-bottom:10px">📦 Copia de Seguridad Manual (Enviar por WhatsApp a otro celular)</h3>
+      <div class="toolbar">
+        <button class="btn btn-success" onclick="downloadBackupJSON()">💾 Descargar Copia de Datos (.json)</button>
+        <label class="btn btn-outline" style="cursor:pointer;margin:0">
+          📂 Cargar Copia de Datos (.json)
+          <input type="file" accept=".json" style="display:none" onchange="uploadBackupJSON(event)" />
+        </label>
+      </div>
+    </div>
+  </section>
 </main>
 
 <!-- MODAL PARA ASIGNACIÓN DE HORARIO Y REEMPLAZO -->
 <div class="modal-backdrop" id="cell-modal">
   <div class="modal">
     <h3 id="modal-title">Asignar Profesor</h3>
-    <p id="modal-subtitle" style="font-size:0.9rem;color:var(--muted);margin-bottom:10px"></p>
+    <p id="modal-subtitle" style="font-size:0.92rem;color:var(--muted);margin-bottom:10px"></p>
 
-    <div style="font-size:0.9rem;font-weight:800;margin-bottom:6px">Seleccione uno o varios profesores:</div>
+    <div style="font-size:0.92rem;font-weight:800;margin-bottom:6px">Seleccione uno o varios profesores:</div>
     <div class="prof-picker" id="modal-prof-picker"></div>
 
     <div style="background:var(--yellow-soft);border:2px solid var(--yellow-border);border-radius:8px;padding:10px;margin-top:10px">
-      <label style="font-size:0.9rem;font-weight:800;color:var(--black);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <label style="font-size:0.92rem;font-weight:800;color:var(--black);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
         <span>Repetir en este día hasta las:</span>
         <select id="modal-extend-end" style="background:#fff"></select>
       </label>
     </div>
 
     <div style="background:#f4f4f5;border:2px solid #d4d4d8;border-radius:8px;padding:10px;margin-top:10px">
-      <div style="font-size:0.9rem;font-weight:800;color:var(--black);margin-bottom:8px">🔄 ¿Es un Reemplazo?</div>
+      <div style="font-size:0.92rem;font-weight:800;color:var(--black);margin-bottom:8px">🔄 ¿Es un Reemplazo?</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <select id="repl-titular"><option value="">-- Profesor Titular --</option></select>
         <select id="repl-suplente"><option value="">-- Profesor Reemplazante --</option></select>
@@ -623,11 +728,18 @@
   </div>
 </div>
 
+<!-- Librería SheetJS para generar archivos Excel (.xlsx) reales con múltiples solapas -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <script>
 // ============================================================================
 // DATOS MAESTROS DEL SISTEMA
 // ============================================================================
 const STORAGE_KEY = "proteina_gym_sistema_web_v3";
+const CLOUD_URL_KEY = "proteina_gym_cloud_url";
+// URL preconfigurada opcional si se desea fijar en el código:
+const DEFAULT_CLOUD_URL = "";
+
 const UNITS = ["Proteína Gym", "Proteína Box", "Boxeo"];
 const MONTHS = [
   { name: "NOVIEMBRE 2026", year: 2026, month: 11, days: 30, status: "ABIERTO", closedRate: 5000 },
@@ -658,6 +770,7 @@ for (let h = 7; h < 23; h++) {
 
 let currentRate = 5000;
 let currentMonthName = "NOVIEMBRE 2026";
+let cloudDbUrl = localStorage.getItem(CLOUD_URL_KEY) || DEFAULT_CLOUD_URL;
 
 let profesores = [
   { name: "Sil", status: "Activo", bg: "#D9FBFB", fg: "#004D4D" },
@@ -704,14 +817,14 @@ let reemplazosLog = [
 
 function getInitialSlotAssignment(unit, jsDay, slotIdx) {
   if (unit === "Proteína Gym") {
-    if (jsDay === 1) { // LUNES
+    if (jsDay === 1) {
       if (slotIdx <= 9) return ["Robert", "Sil"];
       if (slotIdx <= 19) return ["Agustin", "Jesi"];
       if (slotIdx <= 27) return ["Ceci", "Luna", "Valentin"];
       if (slotIdx <= 29) return ["Ceci", "Oscar", "Valentin"];
       return ["Oscar"];
     }
-    if (jsDay === 2) { // MARTES
+    if (jsDay === 2) {
       if (slotIdx <= 9) return ["Agustin", "Valentin"];
       if (slotIdx <= 15) return ["Agustin", "Jesi"];
       if (slotIdx <= 19) return ["Ceci", "Irina", "Jesi"];
@@ -719,7 +832,7 @@ function getInitialSlotAssignment(unit, jsDay, slotIdx) {
       if (slotIdx <= 29) return ["Ceci", "Oscar", "Robert", "Sil"];
       return ["Oscar"];
     }
-    if (jsDay === 3) { // MIÉRCOLES
+    if (jsDay === 3) {
       if (slotIdx <= 9) return ["Robert", "Jesi"];
       if (slotIdx <= 11) return ["Robert", "Sil"];
       if (slotIdx <= 19) return ["Agustin", "Robert", "Sil"];
@@ -728,7 +841,7 @@ function getInitialSlotAssignment(unit, jsDay, slotIdx) {
       if (slotIdx <= 29) return ["Ceci", "Luna", "Valentin"];
       return ["Luna"];
     }
-    if (jsDay === 4) { // JUEVES
+    if (jsDay === 4) {
       if (slotIdx <= 9) return ["Agustin", "Robert", "Sil"];
       if (slotIdx <= 15) return ["Agustin", "Jesi"];
       if (slotIdx <= 18) return ["Irina", "Jesi"];
@@ -738,7 +851,7 @@ function getInitialSlotAssignment(unit, jsDay, slotIdx) {
       if (slotIdx <= 29) return ["Ceci", "Irina", "Valentin"];
       return ["Irina"];
     }
-    if (jsDay === 5) { // VIERNES
+    if (jsDay === 5) {
       if (slotIdx <= 9) return ["Robert", "Valentin"];
       if (slotIdx <= 11) return ["Robert", "Jesi"];
       if (slotIdx <= 19) return ["Agustin", "Jesi"];
@@ -746,10 +859,10 @@ function getInitialSlotAssignment(unit, jsDay, slotIdx) {
       if (slotIdx <= 29) return ["Ceci", "Luna", "Irina"];
       return ["Luna"];
     }
-    if (jsDay === 6) { // SÁBADO
+    if (jsDay === 6) {
       if (slotIdx >= 6 && slotIdx <= 17) return ["Luna", "Irina"];
     }
-    if (jsDay === 0) { // DOMINGO
+    if (jsDay === 0) {
       if (slotIdx >= 6 && slotIdx <= 11) return ["Luna"];
     }
   } else if (unit === "Proteína Box") {
@@ -802,56 +915,284 @@ function initScheduleData() {
   });
 }
 
-function saveState() {
+// ============================================================================
+// PERSISTENCIA LOCAL Y SINCRONIZACIÓN EN LA NUBE (MULTICELULAR)
+// ============================================================================
+function buildPayload() {
+  return {
+    updatedAt: Date.now(),
+    currentRate,
+    profesores,
+    feriados,
+    reemplazosLog,
+    monthsStatus: MONTHS.map(m => ({ name: m.name, status: m.status, closedRate: m.closedRate })),
+    scheduleData
+  };
+}
+
+function applyPayload(data) {
+  if (!data) return;
+  if (data.currentRate) {
+    currentRate = data.currentRate;
+    const rateEl = document.getElementById("cfg-rate");
+    if (rateEl) rateEl.value = currentRate;
+    const dblEl = document.getElementById("cfg-double-rate");
+    if (dblEl) dblEl.textContent = formatMoney(currentRate * 2);
+  }
+  if (Array.isArray(data.profesores) && data.profesores.length > 0) profesores = data.profesores;
+  if (Array.isArray(data.feriados) && data.feriados.length > 0) feriados = data.feriados;
+  if (Array.isArray(data.reemplazosLog)) reemplazosLog = data.reemplazosLog;
+  if (Array.isArray(data.monthsStatus)) {
+    data.monthsStatus.forEach(ms => {
+      const m = MONTHS.find(x => x.name === ms.name);
+      if (m) {
+        m.status = ms.status;
+        m.closedRate = ms.closedRate;
+      }
+    });
+  }
+  if (data.scheduleData) {
+    Object.keys(data.scheduleData).forEach(mName => {
+      if (scheduleData[mName]) scheduleData[mName] = data.scheduleData[mName];
+    });
+  }
+}
+
+async function saveState() {
+  const payload = buildPayload();
   try {
-    const payload = {
-      currentRate,
-      profesores,
-      feriados,
-      reemplazosLog,
-      monthsStatus: MONTHS.map(m => ({ name: m.name, status: m.status, closedRate: m.closedRate })),
-      scheduleData
-    };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch (e) {
     console.warn("No se pudo guardar en localStorage:", e);
+  }
+
+  if (cloudDbUrl) {
+    try {
+      const cleanUrl = cloudDbUrl.replace(/\/$/, "");
+      await fetch(`${cleanUrl}/proteina_sistema.json`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      updateSyncBadge(true);
+    } catch (e) {
+      console.warn("Error al sincronizar con la nube:", e);
+      updateSyncBadge(false, true);
+    }
   }
 }
 
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const data = JSON.parse(raw);
-    if (data.currentRate) {
-      currentRate = data.currentRate;
-      const rateEl = document.getElementById("cfg-rate");
-      if (rateEl) rateEl.value = currentRate;
-      const dblEl = document.getElementById("cfg-double-rate");
-      if (dblEl) dblEl.textContent = formatMoney(currentRate * 2);
-    }
-    if (Array.isArray(data.profesores) && data.profesores.length > 0) profesores = data.profesores;
-    if (Array.isArray(data.feriados) && data.feriados.length > 0) feriados = data.feriados;
-    if (Array.isArray(data.reemplazosLog)) reemplazosLog = data.reemplazosLog;
-    if (Array.isArray(data.monthsStatus)) {
-      data.monthsStatus.forEach(ms => {
-        const m = MONTHS.find(x => x.name === ms.name);
-        if (m) {
-          m.status = ms.status;
-          m.closedRate = ms.closedRate;
-        }
-      });
-    }
-    if (data.scheduleData) {
-      Object.keys(data.scheduleData).forEach(mName => {
-        if (scheduleData[mName]) scheduleData[mName] = data.scheduleData[mName];
-      });
+    if (raw) {
+      applyPayload(JSON.parse(raw));
     }
   } catch (e) {
-    console.warn("No se pudo cargar estado guardado:", e);
+    console.warn("No se pudo cargar estado local:", e);
   }
 }
 
+function updateSyncBadge(isOnline, hasError) {
+  const badge = document.getElementById("sync-status-badge");
+  if (!badge) return;
+  if (isOnline) {
+    badge.className = "sync-badge online";
+    badge.textContent = "🟢 Sincronizado Online";
+  } else if (hasError) {
+    badge.className = "sync-badge";
+    badge.textContent = "⚠️ Sin conexión a nube (Guardado en el celular)";
+  } else {
+    badge.className = "sync-badge";
+    badge.textContent = "☁️ Modo Local (Clic para conectar entre celulares)";
+  }
+}
+
+async function connectCloudDatabase() {
+  const input = document.getElementById("cloud-db-url");
+  const msg = document.getElementById("cloud-msg");
+  const url = (input.value || "").trim().replace(/\/$/, "");
+  if (!url) {
+    cloudDbUrl = "";
+    localStorage.removeItem(CLOUD_URL_KEY);
+    updateSyncBadge(false);
+    msg.textContent = "Desconectado de la nube. Usando memoria local del dispositivo.";
+    return;
+  }
+  cloudDbUrl = url;
+  localStorage.setItem(CLOUD_URL_KEY, cloudDbUrl);
+  msg.textContent = "Conectando con la base de datos...";
+  await pullFromCloudNow(true);
+}
+
+async function pullFromCloudNow(pushIfEmpty) {
+  if (!cloudDbUrl) return;
+  const msg = document.getElementById("cloud-msg");
+  try {
+    const cleanUrl = cloudDbUrl.replace(/\/$/, "");
+    const res = await fetch(`${cleanUrl}/proteina_sistema.json`);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const remoteData = await res.json();
+    if (remoteData && remoteData.scheduleData) {
+      applyPayload(remoteData);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteData));
+      populateSelects();
+      refreshAll();
+      updateSyncBadge(true);
+      if (msg) msg.textContent = "✅ Conectado y sincronizado en tiempo real con todos los celulares.";
+    } else if (pushIfEmpty) {
+      await saveState();
+      if (msg) msg.textContent = "✅ Base de datos inicializada con los horarios actuales.";
+    }
+  } catch (err) {
+    updateSyncBadge(false, true);
+    if (msg) msg.textContent = "⚠️ No se pudo conectar a esa URL. Verifique que sea una URL válida de Firebase Realtime Database.";
+  }
+}
+
+function downloadBackupJSON() {
+  const payload = buildPayload();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `Copia_Proteina_Gym_${currentMonthName.replace(/\s+/g, "_")}.json`;
+  a.click();
+}
+
+function uploadBackupJSON(ev) {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      applyPayload(data);
+      saveState();
+      populateSelects();
+      refreshAll();
+      alert("✅ Datos cargados correctamente.");
+    } catch (err) {
+      alert("⚠️ El archivo seleccionado no es válido.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================================
+// EXPORTAR A EXCEL (.XLSX) CON LAS 3 UNIDADES EN SOLAPAS SEPARADAS
+// ============================================================================
+function exportAllUnitsToExcel() {
+  if (typeof XLSX === "undefined") {
+    alert("Cargando librería de Excel, intente nuevamente en un segundo.");
+    return;
+  }
+
+  const m = MONTHS.find(x => x.name === currentMonthName);
+  const calc = calculateMonthData(currentMonthName);
+  const wb = XLSX.utils.book_new();
+
+  // Solapa 1, 2 y 3: Cada unidad en su propia pestaña
+  const sheetTabs = [
+    { unit: "Proteína Gym", tabName: "1. Proteina Gym" },
+    { unit: "Proteína Box", tabName: "2. Proteina Box" },
+    { unit: "Boxeo", tabName: "3. Boxeo" }
+  ];
+
+  sheetTabs.forEach(({ unit, tabName }) => {
+    const aoa = [];
+    aoa.push([`${unit.toUpperCase()} — CRONOGRAMA ${m.name}`]);
+    aoa.push([`Valor Hora Normal: ${formatMoney(calc.rate)} | Valor Hora Doble (Domingos y Feriados): ${formatMoney(calc.rate * 2)}`]);
+    aoa.push([]);
+
+    // Encabezado de días
+    const headerRow = ["HORARIO"];
+    const subHeaderRow = ["TIPO DE DÍA"];
+    for (let d = 1; d <= m.days; d++) {
+      const dt = new Date(m.year, m.month - 1, d);
+      const dayName = DAYS_ES[dt.getDay()];
+      const ddStr = `${String(d).padStart(2, "0")}/${String(m.month).padStart(2, "0")}`;
+      const dbl = isDoubleDay(m.year, m.month, d);
+      headerRow.push(`${dayName} ${ddStr}`);
+      subHeaderRow.push(dbl ? "DOBLE (x2)" : "NORMAL");
+    }
+    aoa.push(headerRow);
+    aoa.push(subHeaderRow);
+
+    // Filas de horarios (07:00 a 23:00)
+    TIME_SLOTS.forEach((slotStr, sIdx) => {
+      const row = [slotStr];
+      for (let d = 1; d <= m.days; d++) {
+        const assigned = scheduleData[m.name][unit][d][sIdx] || [];
+        row.push(assigned.join(", "));
+      }
+      aoa.push(row);
+    });
+
+    // Fila de total de horas del día en esa unidad
+    const totalDayRow = ["TOTAL HORAS DÍA"];
+    for (let d = 1; d <= m.days; d++) {
+      let dayHours = 0;
+      for (let s = 0; s < 32; s++) {
+        const assigned = scheduleData[m.name][unit][d][s] || [];
+        dayHours += assigned.length * 0.5;
+      }
+      totalDayRow.push(dayHours);
+    }
+    aoa.push([]);
+    aoa.push(totalDayRow);
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const cols = [{ wch: 18 }];
+    for (let d = 1; d <= m.days; d++) cols.push({ wch: 22 });
+    ws["!cols"] = cols;
+
+    XLSX.utils.book_append_sheet(wb, ws, tabName);
+  });
+
+  // Solapa 4: Liquidación Mensual Consolidada
+  const liqAoa = [
+    [`LIQUIDACIÓN MENSUAL — ${m.name}`],
+    [`Valor Hora Normal: ${formatMoney(calc.rate)} | Valor Hora Doble: ${formatMoney(calc.rate * 2)}`],
+    [],
+    ["Profesor", "Estado", "Hs 1. Proteína Gym", "Hs 2. Proteína Box", "Hs 3. Boxeo", "Horas Normales", "Horas Dobles (x2)", "Total Horas", "Valor Hora ($)", "Importe Normal ($)", "Importe Doble ($)", "TOTAL A PAGAR ($)"]
+  ];
+
+  let totGym = 0, totBox = 0, totBoxeo = 0, totNorm = 0, totDob = 0, totPay = 0;
+  Object.values(calc.byProf).forEach(p => {
+    const gHs = p.gymNorm + p.gymDob;
+    const bHs = p.boxNorm + p.boxDob;
+    const xHs = p.boxeoNorm + p.boxeoDob;
+    const nHs = p.gymNorm + p.boxNorm + p.boxeoNorm;
+    const dHs = p.gymDob + p.boxDob + p.boxeoDob;
+    const tHs = nHs + dHs;
+    if (p.status !== "Activo" && tHs === 0) return;
+
+    const impNorm = nHs * calc.rate;
+    const impDob = dHs * calc.rate * 2;
+    const impTot = impNorm + impDob;
+
+    totGym += gHs; totBox += bHs; totBoxeo += xHs;
+    totNorm += nHs; totDob += dHs; totPay += impTot;
+
+    liqAoa.push([p.name, p.status, gHs, bHs, xHs, nHs, dHs, tHs, calc.rate, impNorm, impDob, impTot]);
+  });
+
+  liqAoa.push(["TOTAL GENERAL", "", totGym, totBox, totBoxeo, totNorm, totDob, totNorm + totDob, calc.rate, totNorm * calc.rate, totDob * calc.rate * 2, totPay]);
+
+  const wsLiq = XLSX.utils.aoa_to_sheet(liqAoa);
+  wsLiq["!cols"] = [
+    { wch: 22 }, { wch: 12 }, { wch: 18 }, { wch: 18 }, { wch: 15 },
+    { wch: 16 }, { wch: 18 }, { wch: 14 }, { wch: 15 }, { wch: 18 }, { wch: 18 }, { wch: 20 }
+  ];
+  XLSX.utils.book_append_sheet(wb, wsLiq, "4. Liquidacion");
+
+  const fileName = `Proteina_Gym_${m.name.replace(/\s+/g, "_")}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+}
+
+// ============================================================================
+// MOTOR DE CÁLCULO
+// ============================================================================
 function isDoubleDay(year, month, day) {
   const dt = new Date(year, month - 1, day);
   if (dt.getDay() === 0) return true; // Domingo
@@ -874,9 +1215,6 @@ function renderChip(profName) {
   return `<span class="chip" style="background:${p.bg};color:${p.fg}">${profName}</span>`;
 }
 
-// ============================================================================
-// MOTOR DE CÁLCULO
-// ============================================================================
 function calculateMonthData(monthName) {
   const m = MONTHS.find(x => x.name === monthName);
   const rate = getEffectiveRate(monthName);
@@ -951,7 +1289,40 @@ function populateSelects() {
     bulkEndEl.innerHTML = endTimes.map(x => `<option value="${x.idx}" ${x.t==='22:00'?'selected':''}>${x.t}</option>`).join("");
   }
 
+  populateWeekAndDayOptions();
   populateBulkDayOptions();
+}
+
+function populateWeekAndDayOptions() {
+  const weekEl = document.getElementById("sched-week");
+  if (!weekEl) return;
+  const prevVal = weekEl.value || (window.innerWidth <= 768 ? "day-1" : "0");
+  const m = MONTHS.find(x => x.name === currentMonthName);
+  if (!m) return;
+
+  let html = `
+    <optgroup label="Por Semana">
+      <option value="0">Días 1 al 7</option>
+      <option value="1">Días 8 al 14</option>
+      <option value="2">Días 15 al 21</option>
+      <option value="3">Días 22 al Fin de Mes</option>
+      <option value="all">Mes Completo (1 al ${m.days})</option>
+    </optgroup>
+    <optgroup label="Día por Día (Ideal Celular)">
+  `;
+  for (let d = 1; d <= m.days; d++) {
+    const dt = new Date(m.year, m.month - 1, d);
+    const dayName = DAYS_ES[dt.getDay()];
+    const ddStr = `${String(d).padStart(2,"0")}/${String(m.month).padStart(2,"0")}`;
+    html += `<option value="day-${d}">Solo ${dayName} ${ddStr}</option>`;
+  }
+  html += `</optgroup>`;
+  weekEl.innerHTML = html;
+  if ([...weekEl.options].some(o => o.value === prevVal)) {
+    weekEl.value = prevVal;
+  } else {
+    weekEl.value = "0";
+  }
 }
 
 function populateBulkDayOptions() {
@@ -1041,6 +1412,7 @@ function syncMonthSelect(val) {
   document.getElementById("sched-month").value = val;
   document.getElementById("res-month").value = val;
   document.getElementById("rep-month").value = val;
+  populateWeekAndDayOptions();
   populateBulkDayOptions();
   refreshAll();
 }
@@ -1111,13 +1483,16 @@ function renderSchedule() {
   const m = MONTHS.find(x => x.name === mName);
 
   let startDay = 1, endDay = m.days;
-  if (weekVal !== "all") {
+  if (weekVal.startsWith("day-")) {
+    startDay = parseInt(weekVal.split("-")[1], 10);
+    endDay = startDay;
+  } else if (weekVal !== "all") {
     const w = parseInt(weekVal, 10);
     startDay = w * 7 + 1;
     endDay = w === 3 ? m.days : Math.min(m.days, (w + 1) * 7);
   }
 
-  let thDays = `<th>HORARIO</th>`;
+  let thDays = `<th class="sticky-col">HORARIO</th>`;
   for (let d = startDay; d <= endDay; d++) {
     const dt = new Date(m.year, m.month - 1, d);
     const dayName = DAYS_ES[dt.getDay()];
@@ -1132,13 +1507,13 @@ function renderSchedule() {
 
   let bodyRows = "";
   TIME_SLOTS.forEach((slotStr, sIdx) => {
-    let tds = `<td class="center" style="background:#f4f4f5;font-weight:800;white-space:nowrap">${slotStr}</td>`;
+    let tds = `<td class="center sticky-col" style="font-weight:800;white-space:nowrap">${slotStr}</td>`;
     for (let d = startDay; d <= endDay; d++) {
       const dbl = isDoubleDay(m.year, m.month, d);
       const assigned = scheduleData[mName][uName][d][sIdx] || [];
       const chipsHtml = assigned.length > 0
         ? assigned.map(p => renderChip(p)).join(" ")
-        : `<span style="color:#a1a1aa;font-size:0.78rem">+ Asignar</span>`;
+        : `<span style="color:#a1a1aa;font-size:0.8rem">+ Asignar</span>`;
       tds += `<td class="sched-cell ${dbl?'double-day':''}" onclick="openCellModal('${mName}','${uName}',${d},${sIdx})">${chipsHtml}</td>`;
     }
     bodyRows += `<tr>${tds}</tr>`;
@@ -1517,14 +1892,14 @@ function renderProfes() {
     const mPay = ((bp.gymNorm + bp.boxNorm + bp.boxeoNorm) + (bp.gymDob + bp.boxDob + bp.boxeoDob)*2) * calc.rate;
     return `<tr>
       <td>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
           <strong>${p.name}</strong>
-          <button class="btn btn-outline" style="padding:5px 10px;font-size:0.82rem" onclick="renameProfesor(${idx})">✏️ Cambiar Nombre</button>
+          <button class="btn btn-outline" style="padding:5px 10px;font-size:0.82rem;min-height:36px" onclick="renameProfesor(${idx})">✏️ Cambiar Nombre</button>
         </div>
       </td>
       <td class="center">${renderChip(p.name)}</td>
       <td class="center">
-        <button class="btn ${p.status==='Activo'?'btn-success':'btn-outline'}" style="padding:5px 12px;font-size:0.84rem" onclick="toggleProfStatus(${idx})">
+        <button class="btn ${p.status==='Activo'?'btn-success':'btn-outline'}" style="padding:5px 12px;font-size:0.84rem;min-height:36px" onclick="toggleProfStatus(${idx})">
           ${p.status}
         </button>
       </td>
@@ -1642,7 +2017,7 @@ function renderConfigAndFeriados() {
       <td class="num">${formatMoney(c.rate * 2)}</td>
       <td class="num">${(n+d).toFixed(1)} hs</td>
       <td class="num"><strong>${formatMoney(cost)}</strong></td>
-      <td class="center"><button class="btn btn-outline" style="padding:4px 10px;font-size:0.8rem" onclick="toggleCloseMonthByIndex(${idx})">${m.status==='ABIERTO'?'🔒 Cerrar Mes':'🔓 Reabrir'}</button></td>
+      <td class="center"><button class="btn btn-outline" style="padding:4px 10px;font-size:0.8rem;min-height:36px" onclick="toggleCloseMonthByIndex(${idx})">${m.status==='ABIERTO'?'🔒 Cerrar Mes':'🔓 Reabrir'}</button></td>
     </tr>`;
   }).join("");
 
@@ -1725,6 +2100,14 @@ initScheduleData();
 loadState();
 populateSelects();
 refreshAll();
+
+// Si hay URL de nube configurada, sincronizar al abrir y cada 20 segundos
+if (cloudDbUrl) {
+  const urlInput = document.getElementById("cloud-db-url");
+  if (urlInput) urlInput.value = cloudDbUrl;
+  pullFromCloudNow(false);
+  setInterval(() => pullFromCloudNow(false), 20000);
+}
 </script>
 </body>
 </html>
