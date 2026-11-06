@@ -895,6 +895,42 @@ function buildPayload() {
   };
 }
 
+function ensureScheduleStructure() {
+  MONTHS.forEach(m => {
+    if (!scheduleData[m.name] || typeof scheduleData[m.name] !== "object") {
+      scheduleData[m.name] = {};
+    }
+    UNITS.forEach(u => {
+      if (!scheduleData[m.name][u] || typeof scheduleData[m.name][u] !== "object") {
+        scheduleData[m.name][u] = {};
+      }
+      for (let d = 1; d <= m.days; d++) {
+        if (!scheduleData[m.name][u][d] || typeof scheduleData[m.name][u][d] !== "object") {
+          scheduleData[m.name][u][d] = {};
+        }
+        for (let s = 0; s < 32; s++) {
+          const val = scheduleData[m.name][u][d][s];
+          scheduleData[m.name][u][d][s] = Array.isArray(val) ? val.filter(Boolean) : [];
+        }
+      }
+    });
+  });
+}
+
+function getSlotProfs(monthName, unitName, day, slotIdx) {
+  try {
+    const val = scheduleData?.[monthName]?.[unitName]?.[day]?.[slotIdx];
+    return Array.isArray(val) ? val.filter(Boolean) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function setSlotProfs(monthName, unitName, day, slotIdx, profList) {
+  ensureScheduleStructure();
+  scheduleData[monthName][unitName][day][slotIdx] = Array.isArray(profList) ? [...new Set(profList.filter(Boolean))] : [];
+}
+
 function applyPayload(data) {
   if (!data) return;
   if (data.updatedAt) lastLoadedTimestamp = data.updatedAt;
@@ -917,11 +953,26 @@ function applyPayload(data) {
       }
     });
   }
-  if (data.scheduleData) {
-    Object.keys(data.scheduleData).forEach(mName => {
-      if (scheduleData[mName]) scheduleData[mName] = data.scheduleData[mName];
+  if (data.scheduleData && typeof data.scheduleData === "object") {
+    // Reconstruir los 14 meses completos combinando con lo que devuelve Firebase (que omite arrays vacíos)
+    MONTHS.forEach(m => {
+      if (!scheduleData[m.name]) scheduleData[m.name] = {};
+      const remMonth = data.scheduleData[m.name] || {};
+      UNITS.forEach(u => {
+        if (!scheduleData[m.name][u]) scheduleData[m.name][u] = {};
+        const remUnit = remMonth[u] || {};
+        for (let d = 1; d <= m.days; d++) {
+          if (!scheduleData[m.name][u][d]) scheduleData[m.name][u][d] = {};
+          const remDay = remUnit[d] || {};
+          for (let s = 0; s < 32; s++) {
+            const remSlot = remDay[s];
+            scheduleData[m.name][u][d][s] = Array.isArray(remSlot) ? remSlot.filter(Boolean) : [];
+          }
+        }
+      });
     });
   }
+  ensureScheduleStructure();
 }
 
 async function saveState() {
