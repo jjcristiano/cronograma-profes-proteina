@@ -455,6 +455,7 @@
   <button class="active" onclick="showTab('inicio', this)">🏠 INICIO</button>
   <button onclick="showTab('cronogramas', this)">📅 CRONOGRAMAS</button>
   <button onclick="showTab('resumen-mensual', this)">💰 LIQUIDACIÓN Y REPORTES</button>
+  <button onclick="showTab('pagos-cuenta', this)">💵 PAGOS A CUENTA</button>
   <button onclick="showTab('adelantos', this)">💸 ADELANTOS</button>
   <button onclick="showTab('reportes-unidad', this)">🏢 COSTOS POR UNIDAD</button>
   <button onclick="showTab('resumen-anual', this)">📊 RESUMEN ANUAL</button>
@@ -476,23 +477,28 @@
         <button class="btn btn-excel" onclick="exportAllUnitsToExcel()">📥 Descargar Excel</button>
       </div>
       <div class="kpi-grid">
-        <div class="kpi-card" style="cursor:pointer;border-top-color:var(--yellow-border)" onclick="triggerNav(1)">
+        <div class="kpi-card" style="cursor:pointer;border-top-color:var(--yellow-border)" onclick="openTabById('cronogramas')">
           <div class="lbl">1. Cronogramas</div>
           <div class="val" style="font-size:1.2rem">Ver y Cargar Horarios</div>
           <div class="sub">1. Proteína Gym · 2. Proteína Box</div>
         </div>
-        <div class="kpi-card" style="cursor:pointer;border-top-color:#15803d" onclick="triggerNav(2)">
+        <div class="kpi-card" style="cursor:pointer;border-top-color:#15803d" onclick="openTabById('resumen-mensual')">
           <div class="lbl">2. Liquidación y Reportes</div>
           <div class="val" style="font-size:1.2rem">Mensual, Semanal y Diario</div>
-          <div class="sub">Pagos, adelantos y ficha con horarios</div>
+          <div class="sub">Pagos, a cuenta, adelantos y horarios</div>
         </div>
-        <div class="kpi-card" style="cursor:pointer;border-top-color:#7c3aed" onclick="triggerNav(3)">
-          <div class="lbl">3. Adelantos de Sueldo</div>
+        <div class="kpi-card" style="cursor:pointer;border-top-color:#0284c7" onclick="openTabById('pagos-cuenta')">
+          <div class="lbl">3. Pagos a Cuenta</div>
+          <div class="val" style="font-size:1.2rem">Pagos Parciales de Sueldo</div>
+          <div class="sub">Cantidad de pagos, valor de cada uno y saldo</div>
+        </div>
+        <div class="kpi-card" style="cursor:pointer;border-top-color:#7c3aed" onclick="openTabById('adelantos')">
+          <div class="lbl">4. Adelantos de Sueldo</div>
           <div class="val" style="font-size:1.2rem">Registrar Adelanto</div>
           <div class="sub">Suma en mes actual y descuenta en mes adelantado</div>
         </div>
-        <div class="kpi-card" style="cursor:pointer;border-top-color:#b45309" onclick="triggerNav(6)">
-          <div class="lbl">4. Profesores</div>
+        <div class="kpi-card" style="cursor:pointer;border-top-color:#b45309" onclick="openTabById('profes')">
+          <div class="lbl">5. Profesores</div>
           <div class="val" style="font-size:1.2rem">Agregar o Editar Profes</div>
           <div class="sub">Altas, bajas y cambio de nombre</div>
         </div>
@@ -527,7 +533,7 @@
           <label><strong>Vista de Días:</strong>
             <select id="sched-week" onchange="renderSchedule()"></select>
           </label>
-          <button class="btn btn-camera" onclick="captureElementAsImage('schedule-capture-area', 'Cronograma_' + document.getElementById('sched-unit').value + '_' + currentMonthName)">📸 Captura Cronograma (PNG)</button>
+          <button class="btn btn-camera" onclick="captureElementAsImage('schedule-capture-area', 'Cronograma_' + document.getElementById('sched-unit').value + '_' + currentMonthName)">📸 Captura</button>
           <button class="btn btn-excel" onclick="exportAllUnitsToExcel()">📥 Descargar Excel</button>
         </div>
       </div>
@@ -588,7 +594,7 @@
           <label id="res-general-sub-wrap" style="display:none"><strong id="res-general-sub-lbl">Período:</strong>
             <select id="res-general-sub" onchange="renderResumenMensual()"></select>
           </label>
-          <button class="btn btn-camera" onclick="captureElementAsImage('general-liq-capture-area', 'Liquidacion_' + currentMonthName)">📸 Captura Tabla (PNG)</button>
+          <button class="btn btn-camera" onclick="captureElementAsImage('general-liq-capture-area', 'Liquidacion_' + currentMonthName)">📸 Captura</button>
           <button class="btn btn-excel" onclick="exportAllUnitsToExcel()">📥 Descargar Excel</button>
           <button class="btn btn-amber" onclick="toggleCloseMonth()">🔒 Cerrar / Reabrir Mes</button>
         </div>
@@ -604,7 +610,7 @@
         <div class="table-wrap" id="res-mensual-units"></div>
       </div>
 
-      <!-- 3. DETALLE INDIVIDUAL POR PROFESOR (MENSUAL / SEMANAL / DIARIO + CRONOGRAMA DE TURNOS CUBIERTOS + CAPTURA PNG) -->
+      <!-- 3. DETALLE INDIVIDUAL POR PROFESOR (MENSUAL / SEMANAL / DIARIO + PAGOS A CUENTA + CRONOGRAMA DE TURNOS CUBIERTOS + CAPTURA) -->
       <div style="margin-top:26px;padding-top:20px;border-top:3px solid var(--black)">
         <div class="card-hdr" style="margin-bottom:12px">
           <h2>3. Detalle Individual por Profesor y Horarios Cubiertos</h2>
@@ -622,8 +628,18 @@
             <label id="ind-sub-wrap" style="display:none"><strong id="ind-sub-lbl">Seleccionar:</strong>
               <select id="ind-sub-select" onchange="renderIndividualDetail()"></select>
             </label>
-            <button class="btn btn-camera" onclick="captureIndividualDetail('png')">📸 Captura Detalle (PNG)</button>
-            <button class="btn btn-outline" onclick="captureIndividualDetail('jpg')">🖼️ Captura (JPG)</button>
+            <button class="btn btn-camera" onclick="captureIndividualDetail('png')">📸 Captura</button>
+          </div>
+        </div>
+
+        <!-- Carga rápida de Pago a Cuenta desde el Detalle Individual -->
+        <div class="no-print" style="background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div style="font-size:0.95rem;font-weight:800;color:#14532d">
+            💵 Registrar Pago a Cuenta para este Profesor (<span id="ind-quick-prof-lbl"></span> — <span id="ind-quick-month-lbl"></span>):
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <input type="number" id="ind-quick-pago-amount" placeholder="Monto del pago ($) Ej: 250000" step="1000" min="0" style="min-width:220px;background:#fff" />
+            <button class="btn btn-success" onclick="addQuickPagoFromIndividual()">➕ Agregar Pago a Cuenta</button>
           </div>
         </div>
 
@@ -635,7 +651,49 @@
   </section>
 
   <!-- ==================================================================== -->
-  <!-- 4. SECTOR DE ADELANTOS DE SUELDO -->
+  <!-- 4. SECTOR DE PAGOS A CUENTA (PAGOS PARCIALES DE SUELDO) -->
+  <!-- ==================================================================== -->
+  <section id="view-pagos-cuenta" class="view">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>💵 Pagos a Cuenta (Pagos Parciales de Sueldos)</h2>
+        <div class="toolbar" style="margin-bottom:0">
+          <label><strong>Mes de Liquidación:</strong>
+            <select id="pac-month" onchange="syncMonthSelect(this.value)"></select>
+          </label>
+          <button class="btn btn-camera" onclick="captureElementAsImage('pac-capture-area', 'Pagos_A_Cuenta_' + currentMonthName)">📸 Captura</button>
+        </div>
+      </div>
+
+      <div style="background:var(--yellow-soft);border:2px solid var(--yellow-border);border-radius:10px;padding:16px;margin-bottom:18px">
+        <div style="font-size:1rem;font-weight:800;margin-bottom:10px">
+          Registrar Nuevo Pago a Cuenta (Ej: si el sueldo es $800.000 y se entregan $250.000, luego $136.000, etc.)
+        </div>
+        <div class="toolbar" style="margin-bottom:10px">
+          <label><strong>Profesor:</strong>
+            <select id="pac-prof" onchange="updatePacHelperInfo()"></select>
+          </label>
+          <label><strong>Monto de este Pago ($):</strong>
+            <input type="number" id="pac-amount" placeholder="Ej: 250000" step="1000" min="0" />
+          </label>
+          <button class="btn btn-primary" onclick="addPagoACuenta()">➕ Registrar Pago a Cuenta</button>
+          <button class="btn btn-outline" onclick="fillRemainingBalanceInPac()">⚡ Completar Saldo Restante</button>
+        </div>
+        <div id="pac-helper-info" style="font-size:0.95rem;font-weight:700;background:#fff;padding:10px 14px;border-radius:8px;border:1px solid #d4d4d8"></div>
+      </div>
+
+      <div id="pac-capture-area" style="background:#fff;padding:8px;border-radius:10px">
+        <h3 style="font-size:1.05rem;margin-bottom:10px">1. Resumen de Pagos a Cuenta y Saldo Pendiente por Profesor (<span id="pac-summary-month-lbl"></span>)</h3>
+        <div class="table-wrap" id="pac-summary-table" style="margin-bottom:22px"></div>
+
+        <h3 style="font-size:1.05rem;margin-bottom:10px">2. Detalle de Cada Pago Registrado en <span id="pac-history-month-lbl"></span></h3>
+        <div class="table-wrap" id="pac-history-table"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- 5. SECTOR DE ADELANTOS DE SUELDO -->
   <!-- ==================================================================== -->
   <section id="view-adelantos" class="view">
     <div class="card">
@@ -887,6 +945,9 @@ let reemplazosLog = [
 // Lista de adelantos: { id, fecha, prof, mesActual, mesAdelantar, monto }
 let adelantosLog = [];
 
+// Lista de pagos a cuenta (pagos parciales de sueldo): { id, fecha, prof, mes, monto }
+let pagosACuentaLog = [];
+
 function getInitialSlotAssignment(unit, jsDay, slotIdx) {
   if (unit === "Proteína Gym") {
     if (jsDay === 1) {
@@ -1003,6 +1064,7 @@ function buildPayload() {
     feriados,
     reemplazosLog,
     adelantosLog,
+    pagosACuentaLog,
     monthsStatus: MONTHS.map(m => ({ name: m.name, status: m.status, closedRate: m.closedRate })),
     scheduleData
   };
@@ -1049,6 +1111,7 @@ function applyPayload(data) {
     }));
   }
   if (Array.isArray(data.adelantosLog)) adelantosLog = data.adelantosLog;
+  if (Array.isArray(data.pagosACuentaLog)) pagosACuentaLog = data.pagosACuentaLog;
   if (Array.isArray(data.monthsStatus)) {
     data.monthsStatus.forEach(ms => {
       const m = MONTHS.find(x => x.name === ms.name);
@@ -1246,6 +1309,251 @@ function renderAdelantos() {
 }
 
 // ============================================================================
+// CÁLCULO Y GESTIÓN DE PAGOS A CUENTA (PAGOS PARCIALES DE SUELDO)
+// ============================================================================
+function getPagosACuentaForProfMonth(profName, monthName) {
+  const list = pagosACuentaLog
+    .filter(p => p.prof === profName && p.mes === monthName)
+    .sort((a, b) => (a.id || 0) - (b.id || 0));
+  const totalPaid = list.reduce((acc, item) => acc + (Number(item.monto) || 0), 0);
+  return {
+    list,
+    count: list.length,
+    totalPaid
+  };
+}
+
+function getProfMonthlyTotalToPay(profName, monthName) {
+  const m = MONTHS.find(x => x.name === monthName);
+  if (!m) return 0;
+  const calc = calculateMonthData(monthName, 1, m.days);
+  const p = calc.byProf[profName] || { gymNorm: 0, gymDob: 0, boxNorm: 0, boxDob: 0 };
+  const nHs = p.gymNorm + p.boxNorm;
+  const dHs = p.gymDob + p.boxDob;
+  const subHoras = (nHs * calc.rate) + (dHs * calc.rate * 2);
+  const advObj = getNetAdelantoForProfMonth(profName, monthName);
+  return subHoras + advObj.net;
+}
+
+function registerPagoACuentaEntry(prof, mes, monto) {
+  const today = new Date();
+  const fechaStr = `${String(today.getDate()).padStart(2,"0")}/${String(today.getMonth()+1).padStart(2,"0")}/${today.getFullYear()}`;
+  pagosACuentaLog.push({
+    id: Date.now() + Math.floor(Math.random() * 1000),
+    fecha: fechaStr,
+    prof,
+    mes,
+    monto
+  });
+  saveState();
+  refreshAll();
+}
+
+function addPagoACuenta() {
+  const prof = document.getElementById("pac-prof").value;
+  const amountInput = document.getElementById("pac-amount");
+  const monto = Number(amountInput.value);
+
+  if (!prof) { alert("Seleccione un profesor."); return; }
+  if (!monto || monto <= 0) { alert("Ingrese un monto de pago mayor a $0."); return; }
+
+  registerPagoACuentaEntry(prof, currentMonthName, monto);
+  amountInput.value = "";
+}
+
+function addQuickPagoFromIndividual() {
+  const prof = document.getElementById("res-prof-select").value;
+  const amountInput = document.getElementById("ind-quick-pago-amount");
+  const monto = Number(amountInput.value);
+
+  if (!prof) { alert("Seleccione un profesor."); return; }
+  if (!monto || monto <= 0) { alert("Ingrese un monto de pago mayor a $0."); return; }
+
+  registerPagoACuentaEntry(prof, currentMonthName, monto);
+  amountInput.value = "";
+}
+
+function fillRemainingBalanceInPac() {
+  const prof = document.getElementById("pac-prof").value;
+  if (!prof) return;
+  const totalSueldo = getProfMonthlyTotalToPay(prof, currentMonthName);
+  const pacObj = getPagosACuentaForProfMonth(prof, currentMonthName);
+  const restante = Math.max(0, Math.round(totalSueldo - pacObj.totalPaid));
+  if (restante <= 0) {
+    alert(`El profesor ${prof} no tiene saldo pendiente por cobrar en ${currentMonthName}.`);
+    return;
+  }
+  document.getElementById("pac-amount").value = restante;
+}
+
+function deletePagoACuenta(id) {
+  if (!confirm("¿Eliminar este pago a cuenta del registro?")) return;
+  pagosACuentaLog = pagosACuentaLog.filter(p => p.id !== id);
+  saveState();
+  refreshAll();
+}
+
+function updatePacHelperInfo() {
+  const helperEl = document.getElementById("pac-helper-info");
+  const profEl = document.getElementById("pac-prof");
+  if (!helperEl || !profEl) return;
+  const prof = profEl.value || (profesores[0] ? profesores[0].name : "");
+  const totalSueldo = getProfMonthlyTotalToPay(prof, currentMonthName);
+  const pacObj = getPagosACuentaForProfMonth(prof, currentMonthName);
+  const restante = totalSueldo - pacObj.totalPaid;
+
+  const listStr = pacObj.count > 0
+    ? pacObj.list.map((item, idx) => `Pago #${idx + 1}: ${formatMoney(item.monto)} (${item.fecha})`).join(" · ")
+    : "Ningún pago registrado aún";
+
+  helperEl.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+      <div>👤 <strong>${prof}</strong> (${currentMonthName})</div>
+      <div>💰 Total Sueldo a Pagar: <strong>${formatMoney(totalSueldo)}</strong></div>
+      <div>🔢 Cantidad de Pagos: <strong>${pacObj.count} ${pacObj.count === 1 ? 'pago' : 'pagos'}</strong></div>
+      <div style="color:#15803d">💵 Total Pagado a Cuenta: <strong>${formatMoney(pacObj.totalPaid)}</strong></div>
+      <div style="color:${restante > 0 ? '#991b1b' : '#166534'}">📌 Saldo Restante: <strong>${formatMoney(restante)}</strong></div>
+    </div>
+    <div style="font-size:0.84rem;color:var(--muted);margin-top:6px">
+      Detalle de pagos hechos: <strong>${listStr}</strong>
+    </div>
+  `;
+}
+
+function renderPagosACuenta() {
+  const m = MONTHS.find(x => x.name === currentMonthName);
+  if (!m) return;
+
+  const lbl1 = document.getElementById("pac-summary-month-lbl");
+  const lbl2 = document.getElementById("pac-history-month-lbl");
+  if (lbl1) lbl1.textContent = currentMonthName;
+  if (lbl2) lbl2.textContent = currentMonthName;
+
+  updatePacHelperInfo();
+
+  const calc = calculateMonthData(currentMonthName, 1, m.days);
+  let sumTotalToPay = 0;
+  let sumTotalPaid = 0;
+  let sumRemaining = 0;
+  let totalPaymentsCount = 0;
+
+  let summaryRows = "";
+  Object.values(calc.byProf).forEach(p => {
+    const nHs = p.gymNorm + p.boxNorm;
+    const dHs = p.gymDob + p.boxDob;
+    const tHs = nHs + dHs;
+    const advObj = getNetAdelantoForProfMonth(p.name, currentMonthName);
+    const pacObj = getPagosACuentaForProfMonth(p.name, currentMonthName);
+    const totalToPay = (nHs * calc.rate) + (dHs * calc.rate * 2) + advObj.net;
+    const remaining = totalToPay - pacObj.totalPaid;
+
+    if (p.status !== "Activo" && tHs === 0 && advObj.net === 0 && pacObj.count === 0) return;
+
+    sumTotalToPay += totalToPay;
+    sumTotalPaid += pacObj.totalPaid;
+    sumRemaining += remaining;
+    totalPaymentsCount += pacObj.count;
+
+    const paymentsChips = pacObj.count > 0
+      ? pacObj.list.map((item, idx) => `<span class="chip" style="background:#dcfce7;color:#14532d;margin:2px">Pago #${idx + 1} (${item.fecha.slice(0,5)}): ${formatMoney(item.monto)}</span>`).join(" ")
+      : `<span style="color:var(--muted);font-size:0.82rem">Sin pagos aún</span>`;
+
+    const statusBadge = remaining <= 0 && totalToPay > 0
+      ? `<span class="chip" style="background:#16a34a;color:#fff">✅ PAGADO COMPLETO</span>`
+      : (pacObj.count > 0
+          ? `<span class="chip" style="background:#fef08a;color:#854d0e">⏳ EN CUOTAS (${pacObj.count})</span>`
+          : `<span class="chip" style="background:#f4f4f5;color:#52525b">PENDIENTE</span>`);
+
+    summaryRows += `
+      <tr>
+        <td>${renderChip(p.name)}</td>
+        <td class="num"><strong>${formatMoney(totalToPay)}</strong></td>
+        <td class="center"><strong>${pacObj.count} ${pacObj.count === 1 ? 'pago' : 'pagos'}</strong></td>
+        <td>${paymentsChips}</td>
+        <td class="num" style="color:#15803d;font-weight:800">${formatMoney(pacObj.totalPaid)}</td>
+        <td class="num" style="background:${remaining > 0 ? '#fef2f2' : '#f0fdf4'};color:${remaining > 0 ? '#991b1b' : '#166534'};font-weight:800">${formatMoney(remaining)}</td>
+        <td class="center">${statusBadge}</td>
+      </tr>
+    `;
+  });
+
+  document.getElementById("pac-summary-table").innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Profesor</th>
+          <th>Total Sueldo a Pagar ($)</th>
+          <th>Cantidad de Pagos</th>
+          <th>Valor de Cada Pago Realizado</th>
+          <th>Total Pagado a Cuenta ($)</th>
+          <th>Saldo Restante a Pagar ($)</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${summaryRows}
+      </tbody>
+      <tfoot>
+        <tr class="tot-row">
+          <td>TOTALES (${currentMonthName})</td>
+          <td class="num">${formatMoney(sumTotalToPay)}</td>
+          <td class="center">${totalPaymentsCount} pagos</td>
+          <td>—</td>
+          <td class="num">${formatMoney(sumTotalPaid)}</td>
+          <td class="num">${formatMoney(sumRemaining)}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+
+  // Tabla 2: Historial de cada pago individual registrado en el mes actual
+  const monthPayments = [];
+  profesores.forEach(p => {
+    const pacObj = getPagosACuentaForProfMonth(p.name, currentMonthName);
+    pacObj.list.forEach((item, idx) => {
+      monthPayments.push({
+        ...item,
+        numPago: idx + 1,
+        totalPagosProf: pacObj.count
+      });
+    });
+  });
+  monthPayments.sort((a, b) => (b.id || 0) - (a.id || 0));
+
+  const historyRows = monthPayments.map(item => `
+    <tr>
+      <td class="center">${item.fecha}</td>
+      <td>${renderChip(item.prof)}</td>
+      <td class="center"><span class="chip" style="background:#e0f2fe;color:#0369a1">Pago #${item.numPago} de ${item.totalPagosProf}</span></td>
+      <td class="center">${item.mes}</td>
+      <td class="num"><strong>${formatMoney(item.monto)}</strong></td>
+      <td class="center">
+        <button class="btn btn-danger" style="padding:4px 10px;font-size:0.78rem;min-height:34px" onclick="deletePagoACuenta(${item.id})">🗑️ Quitar</button>
+      </td>
+    </tr>
+  `).join("");
+
+  document.getElementById("pac-history-table").innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha del Pago</th>
+          <th>Profesor</th>
+          <th>N° de Pago</th>
+          <th>Mes</th>
+          <th>Valor del Pago ($)</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${historyRows || `<tr><td colspan="6" class="center" style="color:var(--muted);padding:16px">No hay pagos a cuenta registrados en ${currentMonthName}.</td></tr>`}
+      </tbody>
+    </table>
+  `;
+}
+
+// ============================================================================
 // CAPTURA DE PANTALLA EN PNG / JPG (PARA ENVIAR POR WHATSAPP AL PROFESOR)
 // ============================================================================
 async function captureElementAsImage(elementId, baseFilename, format = "png") {
@@ -1260,7 +1568,8 @@ async function captureElementAsImage(elementId, baseFilename, format = "png") {
       scale: 2,
       backgroundColor: "#ffffff",
       useCORS: true,
-      logging: false
+      logging: false,
+      ignoreElements: (node) => node.classList && node.classList.contains("no-print")
     });
     const mime = format === "jpg" ? "image/jpeg" : "image/png";
     const ext = format === "jpg" ? "jpg" : "png";
@@ -1467,11 +1776,12 @@ function exportAllUnitsToExcel() {
     XLSX.utils.book_append_sheet(wb, ws, tabName);
   });
 
-  // Solapa 3: Liquidación Mensual con Adelantos
+  // Solapa 3: Liquidación Mensual con Adelantos y Pagos a Cuenta
   const liqHeaders = [
     "Profesor", "Estado", "1. Proteína Gym (Hs)", "2. Proteína Box (Hs)",
     "Horas Normales", "Horas Dobles (×2)", "Total Horas", "Valor Hora",
-    "Subtotal Horas ($)", "Adelantos (+/-)", "TOTAL A PAGAR ($)"
+    "Subtotal Horas ($)", "Adelantos (+/-)", "TOTAL A PAGAR ($)",
+    "Cant. Pagos", "Detalle Pagos a Cuenta", "Pagado a Cuenta ($)", "SALDO RESTANTE ($)"
   ];
   const liqAoa = [
     [`PROTEÍNA GYM — LIQUIDACIÓN MENSUAL (${m.name})`],
@@ -1480,7 +1790,7 @@ function exportAllUnitsToExcel() {
     liqHeaders
   ];
 
-  let totGym = 0, totBox = 0, totNorm = 0, totDob = 0, totSub = 0, totAdv = 0, totPay = 0;
+  let totGym = 0, totBox = 0, totNorm = 0, totDob = 0, totSub = 0, totAdv = 0, totPay = 0, totPacCount = 0, totPacPaid = 0, totRestante = 0;
   const profRowsMeta = [];
 
   Object.values(calc.byProf).forEach(p => {
@@ -1490,14 +1800,20 @@ function exportAllUnitsToExcel() {
     const dHs = p.gymDob + p.boxDob;
     const tHs = nHs + dHs;
     const advObj = getNetAdelantoForProfMonth(p.name, m.name);
-    if (p.status !== "Activo" && tHs === 0 && advObj.net === 0) return;
+    const pacObj = getPagosACuentaForProfMonth(p.name, m.name);
+    if (p.status !== "Activo" && tHs === 0 && advObj.net === 0 && pacObj.count === 0) return;
 
     const subHoras = (nHs * calc.rate) + (dHs * calc.rate * 2);
     const impTot = subHoras + advObj.net;
+    const restante = impTot - pacObj.totalPaid;
+    const pacDetailStr = pacObj.count > 0
+      ? pacObj.list.map((it, idx) => `#${idx + 1}: ${formatMoney(it.monto)}`).join(" | ")
+      : "-";
 
     totGym += gHs; totBox += bHs;
     totNorm += nHs; totDob += dHs;
     totSub += subHoras; totAdv += advObj.net; totPay += impTot;
+    totPacCount += pacObj.count; totPacPaid += pacObj.totalPaid; totRestante += restante;
 
     const pObj = profesores.find(x => x.name === p.name) || { bg: "#F4F4F5", fg: "#0A0A0A" };
     profRowsMeta.push(pObj);
@@ -1506,7 +1822,8 @@ function exportAllUnitsToExcel() {
       p.name, p.status,
       Number(gHs.toFixed(1)), Number(bHs.toFixed(1)),
       Number(nHs.toFixed(1)), Number(dHs.toFixed(1)), Number(tHs.toFixed(1)),
-      formatMoney(calc.rate), formatMoney(subHoras), formatSignedMoney(advObj.net), formatMoney(impTot)
+      formatMoney(calc.rate), formatMoney(subHoras), formatSignedMoney(advObj.net), formatMoney(impTot),
+      pacObj.count, pacDetailStr, formatMoney(pacObj.totalPaid), formatMoney(restante)
     ]);
   });
 
@@ -1514,17 +1831,19 @@ function exportAllUnitsToExcel() {
     "TOTAL GENERAL", "",
     Number(totGym.toFixed(1)), Number(totBox.toFixed(1)),
     Number(totNorm.toFixed(1)), Number(totDob.toFixed(1)), Number((totNorm + totDob).toFixed(1)),
-    formatMoney(calc.rate), formatMoney(totSub), formatSignedMoney(totAdv), formatMoney(totPay)
+    formatMoney(calc.rate), formatMoney(totSub), formatSignedMoney(totAdv), formatMoney(totPay),
+    totPacCount, "", formatMoney(totPacPaid), formatMoney(totRestante)
   ]);
 
   const wsLiq = XLSX.utils.aoa_to_sheet(liqAoa);
   wsLiq["!merges"] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 10 } },
-    { s: { r: 1, c: 0 }, e: { r: 1, c: 10 } }
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 14 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 14 } }
   ];
   wsLiq["!cols"] = [
     { wch: 22 }, { wch: 12 }, { wch: 20 }, { wch: 20 },
-    { wch: 16 }, { wch: 18 }, { wch: 15 }, { wch: 15 }, { wch: 18 }, { wch: 18 }, { wch: 20 }
+    { wch: 16 }, { wch: 18 }, { wch: 15 }, { wch: 15 }, { wch: 18 }, { wch: 18 }, { wch: 20 },
+    { wch: 14 }, { wch: 32 }, { wch: 20 }, { wch: 20 }
   ];
 
   const liqRowsH = [{ hpt: 30 }, { hpt: 22 }, { hpt: 10 }, { hpt: 26 }];
@@ -1532,7 +1851,7 @@ function exportAllUnitsToExcel() {
   liqRowsH.push({ hpt: 26 });
   wsLiq["!rows"] = liqRowsH;
 
-  for (let c = 0; c < 11; c++) {
+  for (let c = 0; c < 15; c++) {
     const r0 = XLSX.utils.encode_cell({ r: 0, c });
     if (!wsLiq[r0]) wsLiq[r0] = { t: "s", v: "" };
     wsLiq[r0].s = {
@@ -1564,11 +1883,11 @@ function exportAllUnitsToExcel() {
       const ref = XLSX.utils.encode_cell({ r: rIdx, c });
       if (!wsLiq[ref]) wsLiq[ref] = { t: "s", v: "" };
       const isNameCol = c === 0;
-      const isTotalCol = c === 10;
+      const isTotalCol = c === 10 || c === 14;
       wsLiq[ref].s = {
         fill: { fgColor: { rgb: isNameCol ? cleanHex(pObj.bg, "FFFFFF") : (isTotalCol ? "FEFCE8" : (idx % 2 === 0 ? "FFFFFF" : "F8FAFC")) } },
-        font: { name: "Segoe UI", sz: 10, bold: (isNameCol || isTotalCol || c === 6), color: { rgb: isNameCol ? cleanHex(pObj.fg, "0A0A0A") : "0A0A0A" } },
-        alignment: { vertical: "center", horizontal: c === 0 ? "left" : (c === 1 ? "center" : "right") },
+        font: { name: "Segoe UI", sz: 10, bold: (isNameCol || isTotalCol || c === 6 || c === 13), color: { rgb: isNameCol ? cleanHex(pObj.fg, "0A0A0A") : "0A0A0A" } },
+        alignment: { vertical: "center", horizontal: c === 0 || c === 12 ? "left" : (c === 1 || c === 11 ? "center" : "right") },
         border: borderThin
       };
     });
@@ -1578,7 +1897,7 @@ function exportAllUnitsToExcel() {
       wsLiq[rTot].s = {
         fill: { fgColor: { rgb: "F5E600" } },
         font: { name: "Segoe UI", sz: 11, bold: true, color: { rgb: "0A0A0A" } },
-        alignment: { vertical: "center", horizontal: c <= 1 ? "left" : "right" },
+        alignment: { vertical: "center", horizontal: c <= 1 ? "left" : (c === 11 ? "center" : "right") },
         border: borderStrong
       };
     }
@@ -1670,13 +1989,20 @@ function calculateMonthData(monthName, startDay = 1, endDay = null) {
 // RENDERIZADO DE VISTAS Y SELECTORES
 // ============================================================================
 function populateSelects() {
-  const monthSelectors = ["sched-month", "res-month", "rep-month"];
+  const monthSelectors = ["sched-month", "res-month", "rep-month", "pac-month"];
   monthSelectors.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.innerHTML = MONTHS.map(m => `<option value="${m.name}" ${m.name===currentMonthName?'selected':''}>${m.name} (${m.status})</option>`).join("");
     }
   });
+
+  // Selectores de Pagos a Cuenta
+  const pacProfEl = document.getElementById("pac-prof");
+  if (pacProfEl) {
+    const curPacProf = pacProfEl.value || (profesores[0] ? profesores[0].name : "");
+    pacProfEl.innerHTML = profesores.map(p => `<option value="${p.name}" ${p.name===curPacProf?'selected':''}>${p.name}</option>`).join("");
+  }
 
   // Selectores de Adelantos
   const advProfEl = document.getElementById("adv-prof");
@@ -1918,9 +2244,10 @@ function applyBulkRange() {
 
 function syncMonthSelect(val) {
   currentMonthName = val;
-  document.getElementById("sched-month").value = val;
-  document.getElementById("res-month").value = val;
-  document.getElementById("rep-month").value = val;
+  ["sched-month", "res-month", "rep-month", "pac-month"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  });
   populateWeekAndDayOptions();
   populateBulkDayOptions();
   populateReportSubSelectors();
@@ -2147,7 +2474,7 @@ function saveCellModal() {
 }
 
 // ============================================================================
-// LIQUIDACIÓN Y REPORTES GENERALES (MENSUAL / SEMANAL / DIARIO + ADELANTOS)
+// LIQUIDACIÓN Y REPORTES GENERALES (MENSUAL / SEMANAL / DIARIO + ADELANTOS + A CUENTA)
 // ============================================================================
 function renderResumenMensual() {
   const m = MONTHS.find(x => x.name === currentMonthName);
@@ -2174,7 +2501,7 @@ function renderResumenMensual() {
   document.getElementById("res-table-title").textContent = `1. Liquidación por Profesor — ${periodLabel}`;
 
   const calc = calculateMonthData(currentMonthName, startDay, endDay);
-  let totGym = 0, totBox = 0, totNorm = 0, totDob = 0, totSub = 0, totAdv = 0, totPay = 0, workedCount = 0;
+  let totGym = 0, totBox = 0, totNorm = 0, totDob = 0, totSub = 0, totAdv = 0, totPay = 0, totPacCount = 0, totPacPaid = 0, totRestante = 0, workedCount = 0;
 
   let rowsHtml = "";
   Object.values(calc.byProf).forEach(p => {
@@ -2183,22 +2510,28 @@ function renderResumenMensual() {
     const nHs = p.gymNorm + p.boxNorm;
     const dHs = p.gymDob + p.boxDob;
     const tHs = nHs + dHs;
-    // Adelantos solo aplican en la vista mensual (o se muestran informativamente)
+    // Adelantos y Pagos a Cuenta aplican sobre el mes
     const advObj = mode === "mensual" ? getNetAdelantoForProfMonth(p.name, currentMonthName) : { net: 0 };
+    const pacObj = mode === "mensual" ? getPagosACuentaForProfMonth(p.name, currentMonthName) : { list: [], count: 0, totalPaid: 0 };
 
-    if (p.status !== "Activo" && tHs === 0 && advObj.net === 0) return;
+    if (p.status !== "Activo" && tHs === 0 && advObj.net === 0 && pacObj.count === 0) return;
     if (tHs > 0) workedCount++;
 
     const impNorm = nHs * calc.rate;
     const impDob = dHs * calc.rate * 2;
     const subHoras = impNorm + impDob;
     const impTot = subHoras + advObj.net;
+    const restante = impTot - pacObj.totalPaid;
 
     totGym += gHs; totBox += bHs;
     totNorm += nHs; totDob += dHs;
     totSub += subHoras; totAdv += advObj.net; totPay += impTot;
+    totPacCount += pacObj.count; totPacPaid += pacObj.totalPaid; totRestante += restante;
 
     const advColor = advObj.net > 0 ? "#166534" : (advObj.net < 0 ? "#991b1b" : "#52525b");
+    const pacMiniDetail = pacObj.count > 0
+      ? `<div style="font-size:0.75rem;color:#14532d;margin-top:2px">${pacObj.list.map((it, idx) => `#${idx+1}: ${formatMoney(it.monto)}`).join(" · ")}</div>`
+      : "";
 
     rowsHtml += `<tr>
       <td>${renderChip(p.name)}</td>
@@ -2212,14 +2545,18 @@ function renderResumenMensual() {
       <td class="num">${formatMoney(subHoras)}</td>
       <td class="num" style="font-weight:800;color:${advColor}">${formatSignedMoney(advObj.net)}</td>
       <td class="num" style="background:var(--yellow-soft)"><strong>${formatMoney(impTot)}</strong></td>
+      <td class="center"><strong>${pacObj.count}</strong></td>
+      <td class="num" style="color:#15803d;font-weight:800">${formatMoney(pacObj.totalPaid)}${pacMiniDetail}</td>
+      <td class="num" style="background:${restante > 0 ? '#fef2f2' : '#f0fdf4'};color:${restante > 0 ? '#991b1b' : '#166534'};font-weight:800">${formatMoney(restante)}</td>
     </tr>`;
   });
 
   document.getElementById("res-mensual-kpis").innerHTML = `
     <div class="kpi-card"><div class="lbl">Período</div><div class="val" style="font-size:1.15rem">${periodLabel}</div><div class="sub">Estado: <strong>${calc.m.status}</strong></div></div>
-    <div class="kpi-card"><div class="lbl">Profes con Horas</div><div class="val">${workedCount}</div><div class="sub">Valor hora: ${formatMoney(calc.rate)}</div></div>
-    <div class="kpi-card"><div class="lbl">Horas Normales / Dobles</div><div class="val">${totNorm.toFixed(1)}h / ${totDob.toFixed(1)}h</div><div class="sub">Total: ${(totNorm+totDob).toFixed(1)} hs</div></div>
-    <div class="kpi-card"><div class="lbl">Total Final a Pagar</div><div class="val" style="color:#15803d">${formatMoney(totPay)}</div><div class="sub">Incluye adelantos del período</div></div>
+    <div class="kpi-card"><div class="lbl">Horas Normales / Dobles</div><div class="val">${totNorm.toFixed(1)}h / ${totDob.toFixed(1)}h</div><div class="sub">Total: ${(totNorm+totDob).toFixed(1)} hs (${workedCount} profes)</div></div>
+    <div class="kpi-card"><div class="lbl">Total Sueldos a Pagar</div><div class="val">${formatMoney(totPay)}</div><div class="sub">Incluye adelantos del período</div></div>
+    <div class="kpi-card"><div class="lbl">Pagado a Cuenta (${totPacCount} pagos)</div><div class="val" style="color:#15803d">${formatMoney(totPacPaid)}</div><div class="sub">Entregas parciales registradas</div></div>
+    <div class="kpi-card"><div class="lbl">Saldo Restante a Pagar</div><div class="val" style="color:${totRestante > 0 ? '#991b1b' : '#15803d'}">${formatMoney(totRestante)}</div><div class="sub">Pendiente de abonar</div></div>
   `;
 
   document.getElementById("res-mensual-table").innerHTML = `
@@ -2228,6 +2565,7 @@ function renderResumenMensual() {
         <th>Profesor</th><th>Estado</th><th>1. Proteína Gym</th><th>2. Proteína Box</th>
         <th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Valor Hora</th>
         <th>Subtotal Horas ($)</th><th>Adelanto (+/-)</th><th>Total a Pagar ($)</th>
+        <th>Cant. Pagos</th><th>Pagado a Cuenta ($)</th><th>Saldo Restante ($)</th>
       </tr></thead>
       <tbody>${rowsHtml}</tbody>
       <tfoot><tr class="tot-row">
@@ -2242,6 +2580,9 @@ function renderResumenMensual() {
         <td class="num">${formatMoney(totSub)}</td>
         <td class="num">${formatSignedMoney(totAdv)}</td>
         <td class="num">${formatMoney(totPay)}</td>
+        <td class="center">${totPacCount}</td>
+        <td class="num">${formatMoney(totPacPaid)}</td>
+        <td class="num">${formatMoney(totRestante)}</td>
       </tr></tfoot>
     </table>
   `;
@@ -2288,7 +2629,7 @@ function renderResumenMensual() {
 }
 
 // ============================================================================
-// DETALLE INDIVIDUAL POR PROFESOR (MENSUAL / SEMANAL / DIARIO + CRONOGRAMA CUBIERTO)
+// DETALLE INDIVIDUAL POR PROFESOR (MENSUAL / SEMANAL / DIARIO + A CUENTA + CRONOGRAMA CUBIERTO)
 // ============================================================================
 function getGroupedTimeRanges(slotIndices) {
   if (!slotIndices || slotIndices.length === 0) return [];
@@ -2323,6 +2664,11 @@ function renderIndividualDetail() {
   const m = MONTHS.find(x => x.name === currentMonthName);
   if (!m) return;
 
+  const quickProfLbl = document.getElementById("ind-quick-prof-lbl");
+  const quickMonthLbl = document.getElementById("ind-quick-month-lbl");
+  if (quickProfLbl) quickProfLbl.textContent = profName;
+  if (quickMonthLbl) quickMonthLbl.textContent = currentMonthName;
+
   let startDay = 1, endDay = m.days;
   let periodTitle = `MENSUAL — ${currentMonthName}`;
 
@@ -2343,6 +2689,7 @@ function renderIndividualDetail() {
   const calc = calculateMonthData(currentMonthName, startDay, endDay);
   const p = calc.byProf[profName] || { gymNorm:0, gymDob:0, boxNorm:0, boxDob:0 };
   const advObj = mode === "mensual" ? getNetAdelantoForProfMonth(profName, currentMonthName) : { net: 0, sumActual: 0, subTarget: 0 };
+  const pacObj = getPagosACuentaForProfMonth(profName, currentMonthName);
 
   const rows = [
     { u: "1. Proteína Gym", n: p.gymNorm, d: p.gymDob },
@@ -2367,6 +2714,7 @@ function renderIndividualDetail() {
 
   const subTotalMoney = (tn * calc.rate) + (td * calc.rate * 2);
   const finalTotalMoney = subTotalMoney + advObj.net;
+  const remainingMoney = finalTotalMoney - pacObj.totalPaid;
 
   // Construir cronograma de días y horarios cubiertos por este profesor en el período
   const coveredRows = [];
@@ -2423,15 +2771,40 @@ function renderIndividualDetail() {
     `;
   }
 
+  // Bloque de Pagos a Cuenta del Profesor
+  const pacItemsHtml = pacObj.count > 0
+    ? pacObj.list.map((it, idx) => `
+        <tr>
+          <td class="center"><strong>Pago #${idx + 1}</strong></td>
+          <td class="center">${it.fecha}</td>
+          <td>Entrega a cuenta (${currentMonthName})</td>
+          <td class="num" style="color:#15803d;font-weight:800">${formatMoney(it.monto)}</td>
+          <td class="center no-print">
+            <button class="btn btn-danger" style="padding:2px 8px;font-size:0.75rem;min-height:28px" onclick="deletePagoACuenta(${it.id})">🗑️ Quitar</button>
+          </td>
+        </tr>
+      `).join("")
+    : `<tr><td colspan="5" class="center" style="color:var(--muted);padding:10px">No registra pagos a cuenta en ${currentMonthName}.</td></tr>`;
+
   document.getElementById("res-individual-detail").innerHTML = `
     <div class="capture-header">
       <div>
         <div style="font-size:1.15rem;font-weight:800">PROTEÍNA GYM — DETALLE DE HORAS Y LIQUIDACIÓN</div>
         <div style="font-size:0.9rem;color:#e4e4e7">Profesor/a: <strong style="color:var(--yellow)">${profName.toUpperCase()}</strong> · ${periodTitle}</div>
       </div>
-      <div style="text-align:right">
-        <div style="font-size:0.8rem;color:#e4e4e7">TOTAL A COBRAR</div>
-        <div style="font-size:1.4rem;font-weight:800;color:var(--yellow)">${formatMoney(finalTotalMoney)}</div>
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;text-align:right">
+        <div>
+          <div style="font-size:0.76rem;color:#e4e4e7">TOTAL SUELDO</div>
+          <div style="font-size:1.25rem;font-weight:800;color:#fff">${formatMoney(finalTotalMoney)}</div>
+        </div>
+        <div>
+          <div style="font-size:0.76rem;color:#86efac">PAGADO A CUENTA (${pacObj.count})</div>
+          <div style="font-size:1.25rem;font-weight:800;color:#86efac">${formatMoney(pacObj.totalPaid)}</div>
+        </div>
+        <div>
+          <div style="font-size:0.76rem;color:var(--yellow)">SALDO RESTANTE</div>
+          <div style="font-size:1.4rem;font-weight:800;color:var(--yellow)">${formatMoney(remainingMoney)}</div>
+        </div>
       </div>
     </div>
 
@@ -2454,13 +2827,43 @@ function renderIndividualDetail() {
         </tbody>
         <tfoot>
           <tr class="tot-row">
-            <td>TOTAL FINAL A COBRAR (${profName.toUpperCase()})</td>
+            <td>TOTAL A COBRAR (${profName.toUpperCase()})</td>
             <td class="num">${tn.toFixed(1)} hs</td>
             <td class="num">${td.toFixed(1)} hs</td>
             <td class="num">${(tn+td).toFixed(1)} hs</td>
             <td class="num">${formatMoney(tn * calc.rate)}</td>
             <td class="num">${formatMoney(td * calc.rate * 2)}</td>
             <td class="num">${formatMoney(finalTotalMoney)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <h4 style="font-size:0.98rem;font-weight:800;margin-bottom:8px">💵 Registro de Pagos a Cuenta — ${profName} (${currentMonthName}: ${pacObj.count} ${pacObj.count === 1 ? 'pago registrado' : 'pagos registrados'})</h4>
+    <div class="table-wrap" style="margin-bottom:18px">
+      <table>
+        <thead>
+          <tr>
+            <th>N° de Pago</th>
+            <th>Fecha</th>
+            <th>Concepto</th>
+            <th>Valor del Pago ($)</th>
+            <th class="no-print">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pacItemsHtml}
+        </tbody>
+        <tfoot>
+          <tr style="background:#f0fdf4;font-weight:800">
+            <td colspan="3">TOTAL PAGADO A CUENTA (${pacObj.count} ${pacObj.count === 1 ? 'pago' : 'pagos'})</td>
+            <td class="num" style="color:#15803d">${formatMoney(pacObj.totalPaid)}</td>
+            <td class="no-print"></td>
+          </tr>
+          <tr class="tot-row">
+            <td colspan="3">SALDO RESTANTE A PAGAR A ${profName.toUpperCase()}</td>
+            <td class="num">${formatMoney(remainingMoney)}</td>
+            <td class="no-print"></td>
           </tr>
         </tfoot>
       </table>
@@ -2700,6 +3103,10 @@ function renameProfesor(idx) {
     if (a.prof === oldName) a.prof = newName;
   });
 
+  pagosACuentaLog.forEach(p => {
+    if (p.prof === oldName) p.prof = newName;
+  });
+
   saveState();
   populateSelects();
   refreshAll();
@@ -2833,15 +3240,17 @@ function showTab(tabId, btnEl) {
   if (btnEl) btnEl.classList.add("active");
 }
 
-function triggerNav(btnIndex) {
-  const btns = document.querySelectorAll("nav.tabs button");
-  if (btns[btnIndex]) btns[btnIndex].click();
+function openTabById(tabId) {
+  const btns = [...document.querySelectorAll("nav.tabs button")];
+  const match = btns.find(b => (b.getAttribute("onclick") || "").includes(`'${tabId}'`));
+  showTab(tabId, match || null);
 }
 
 function refreshAll() {
   renderHome();
   renderSchedule();
   renderResumenMensual();
+  renderPagosACuenta();
   renderAdelantos();
   renderReportesPorUnidad();
   renderResumenAnual();
