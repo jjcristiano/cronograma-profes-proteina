@@ -652,17 +652,35 @@
       <div id="general-liq-capture-area" style="background:#fff;padding:8px;border-radius:10px">
         <div class="kpi-grid" id="res-mensual-kpis"></div>
 
-        <h3 id="res-table-title" style="font-size:1.05rem;margin:14px 0 8px">1. Liquidación por Profesor</h3>
+        <h3 id="res-table-title" style="font-size:1.05rem;margin:14px 0 8px">1. Liquidación por Profesor (Por Hora)</h3>
         <div class="table-wrap" id="res-mensual-table"></div>
 
-        <h3 style="font-size:1.05rem;margin:20px 0 8px">2. Horas y Costos por Unidad</h3>
+        <!-- 2. LIQUIDACIÓN DE VENDEDORES (% DE VENTA + SUELDO FIJO + REDONDEO — SIN CONTEO DE HORAS) -->
+        <div id="res-vendedores-section" style="margin-top:22px;padding-top:16px;border-top:2px dashed #cbd5e1">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+            <h3 style="font-size:1.05rem;margin:0">2. 💼 Liquidación de Vendedores (% de Venta + Sueldo Fijo — Sin Conteo de Horas)</h3>
+            <div class="no-print" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fefce8;border:1px solid #eab308;padding:8px 12px;border-radius:8px">
+              <strong style="font-size:0.84rem">➕ Agregar Vendedor:</strong>
+              <input type="text" id="quick-vend-name" placeholder="Nombre vendedor..." style="width:155px;min-height:36px;padding:4px 8px;background:#fff" />
+              <input type="number" id="quick-vend-pct" placeholder="% Venta (Ej: 5)" step="0.1" min="0" style="width:125px;min-height:36px;padding:4px 8px;background:#fff" />
+              <input type="number" id="quick-vend-fijo" placeholder="Sueldo Fijo ($)" step="1000" min="0" style="width:140px;min-height:36px;padding:4px 8px;background:#fff" />
+              <button class="btn btn-primary" style="padding:5px 12px;min-height:36px;font-size:0.82rem" onclick="addQuickVendedor()">➕ Crear Vendedor</button>
+              <span style="color:#a1a1aa">|</span>
+              <select id="quick-vend-existing" style="min-height:36px;padding:4px 8px;background:#fff"></select>
+              <button class="btn btn-outline" style="padding:5px 10px;min-height:36px;font-size:0.82rem" onclick="convertExistingProfToVendedor()">💼 Pasar a Vendedor</button>
+            </div>
+          </div>
+          <div class="table-wrap" id="res-vendedores-table"></div>
+        </div>
+
+        <h3 style="font-size:1.05rem;margin:20px 0 8px">3. Horas y Costos por Unidad</h3>
         <div class="table-wrap" id="res-mensual-units"></div>
       </div>
 
-      <!-- 3. DETALLE INDIVIDUAL POR PROFESOR (MENSUAL / SEMANAL / DIARIO + PAGOS A CUENTA + CRONOGRAMA DE TURNOS CUBIERTOS + CAPTURA) -->
+      <!-- 4. DETALLE INDIVIDUAL POR PROFESOR (MENSUAL / SEMANAL / DIARIO + PAGOS A CUENTA + CRONOGRAMA DE TURNOS CUBIERTOS + CAPTURA) -->
       <div style="margin-top:26px;padding-top:20px;border-top:3px solid var(--black)">
         <div class="card-hdr" style="margin-bottom:12px">
-          <h2>3. Detalle Individual por Profesor y Horarios Cubiertos</h2>
+          <h2>4. Detalle Individual por Profesor / Vendedor y Horarios Cubiertos</h2>
           <div class="toolbar no-print" style="margin-bottom:0">
             <label><strong>Profesor:</strong>
               <select id="res-prof-select" onchange="renderIndividualDetail()"></select>
@@ -816,19 +834,24 @@
   <section id="view-profes" class="view">
     <div class="card">
       <div class="card-hdr">
-        <h2>Profesores (Categoría y Liquidación)</h2>
+        <h2>Profesores y Vendedores (Categoría, Valor Hora Especial y Liquidación)</h2>
         <div class="toolbar" style="margin-bottom:0">
-          <input type="text" id="new-prof-name" placeholder="Nombre del profesor..." />
+          <input type="text" id="new-prof-name" placeholder="Nombre..." style="width:170px" />
+          <select id="new-prof-mode" title="Modalidad de cobro">
+            <option value="hora">⏱️ Cobra por Hora</option>
+            <option value="vendedor">💼 Vendedor (% Venta + Fijo)</option>
+          </select>
           <select id="new-prof-category" title="Categoría habitual">
             <option value="Proteína Gym">Categoría: 1. Proteína Gym</option>
             <option value="Proteína Box">Categoría: 2. Proteína Box</option>
           </select>
+          <input type="number" id="new-prof-custom-rate" placeholder="Hora Esp. ($) Opcional" step="500" min="0" style="width:175px" title="Dejar vacío para usar el valor general de Gym/Box, o ingresar un monto si cobra distinto (ej: 18000)" />
           <select id="new-prof-liquida" title="¿Incluir en liquidación?">
             <option value="si">💰 Sí sumar a liquidación</option>
-            <option value="no">🚫 No sumar (Dueño / Excluido)</option>
+            <option value="no">🚫 No sumar</option>
           </select>
           <input type="color" id="new-prof-color" value="#fde047" title="Elegir color" style="height:44px;width:58px;padding:2px;cursor:pointer" />
-          <button class="btn btn-primary" onclick="addNewProfesor()">➕ Agregar Profesor</button>
+          <button class="btn btn-primary" onclick="addNewProfesor()">➕ Agregar</button>
         </div>
       </div>
       <div class="table-wrap" id="profes-table"></div>
@@ -977,36 +1000,46 @@ const DEFAULT_BOX_PROFS = ["Cande", "Agustin Castro", "Alejandra Stefani", "Fern
 const DEFAULT_NO_LIQUIDA_PROFS = ["Sil", "Robert"];
 
 let profesores = [
-  { name: "Sil", status: "Activo", category: "Proteína Gym", noLiquida: true, bg: "#D9FBFB", fg: "#004D4D" },
-  { name: "Robert", status: "Activo", category: "Proteína Gym", noLiquida: true, bg: "#DEFBE6", fg: "#0E6027" },
-  { name: "Ceci", status: "Activo", category: "Proteína Gym", noLiquida: false, bg: "#E0E7FF", fg: "#3730A3" },
-  { name: "Jesi", status: "Activo", category: "Proteína Gym", noLiquida: false, bg: "#FFF2D6", fg: "#8E5A00" },
-  { name: "Valentin", status: "Activo", category: "Proteína Gym", noLiquida: false, bg: "#FFD6E8", fg: "#9F1853" },
-  { name: "Agustin", status: "Activo", category: "Proteína Gym", noLiquida: false, bg: "#D0E2FF", fg: "#002D9C" },
-  { name: "Oscar", status: "Activo", category: "Proteína Gym", noLiquida: false, bg: "#ECFCCB", fg: "#3F6212" },
-  { name: "Irina", status: "Activo", category: "Proteína Gym", noLiquida: false, bg: "#FFD7D9", fg: "#A2191F" },
-  { name: "Luna", status: "Activo", category: "Proteína Gym", noLiquida: false, bg: "#E8DAFF", fg: "#491D8B" },
-  { name: "Cande", status: "Activo", category: "Proteína Box", noLiquida: false, bg: "#CFFAFE", fg: "#155E75" },
-  { name: "Agustin Castro", status: "Activo", category: "Proteína Box", noLiquida: false, bg: "#FDE68A", fg: "#78350F" },
-  { name: "Alejandra Stefani", status: "Activo", category: "Proteína Box", noLiquida: false, bg: "#FBCFE8", fg: "#831843" },
-  { name: "Fernanda Firpo", status: "Activo", category: "Proteína Box", noLiquida: false, bg: "#DDD6FE", fg: "#4C1D95" },
-  { name: "Nahuel", status: "Activo", category: "Proteína Box", noLiquida: false, bg: "#CCFBF1", fg: "#115E59" },
-  { name: "Yamila", status: "Activo", category: "Proteína Box", noLiquida: false, bg: "#FED7AA", fg: "#9A3412" }
+  { name: "Sil", status: "Activo", category: "Proteína Gym", noLiquida: true, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#D9FBFB", fg: "#004D4D" },
+  { name: "Robert", status: "Activo", category: "Proteína Gym", noLiquida: true, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#DEFBE6", fg: "#0E6027" },
+  { name: "Ceci", status: "Activo", category: "Proteína Gym", noLiquida: false, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#E0E7FF", fg: "#3730A3" },
+  { name: "Jesi", status: "Activo", category: "Proteína Gym", noLiquida: false, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#FFF2D6", fg: "#8E5A00" },
+  { name: "Valentin", status: "Activo", category: "Proteína Gym", noLiquida: false, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#FFD6E8", fg: "#9F1853" },
+  { name: "Agustin", status: "Activo", category: "Proteína Gym", noLiquida: false, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#D0E2FF", fg: "#002D9C" },
+  { name: "Oscar", status: "Activo", category: "Proteína Gym", noLiquida: false, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#ECFCCB", fg: "#3F6212" },
+  { name: "Irina", status: "Activo", category: "Proteína Gym", noLiquida: false, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#FFD7D9", fg: "#A2191F" },
+  { name: "Luna", status: "Activo", category: "Proteína Gym", noLiquida: false, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#E8DAFF", fg: "#491D8B" },
+  { name: "Cande", status: "Activo", category: "Proteína Box", noLiquida: false, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#CFFAFE", fg: "#155E75" },
+  { name: "Agustin Castro", status: "Activo", category: "Proteína Box", noLiquida: false, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#FDE68A", fg: "#78350F" },
+  { name: "Alejandra Stefani", status: "Activo", category: "Proteína Box", noLiquida: false, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#FBCFE8", fg: "#831843" },
+  { name: "Fernanda Firpo", status: "Activo", category: "Proteína Box", noLiquida: false, customRate: 18000, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#DDD6FE", fg: "#4C1D95" },
+  { name: "Nahuel", status: "Activo", category: "Proteína Box", noLiquida: false, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#CCFBF1", fg: "#115E59" },
+  { name: "Yamila", status: "Activo", category: "Proteína Box", noLiquida: false, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#FED7AA", fg: "#9A3412" }
 ];
 
 function normalizeProfesoresList(list) {
   const cleaned = list
     .filter(p => p && p.name && p.name.toLowerCase() !== "santi plani")
-    .map(p => ({
-      name: p.name,
-      status: p.status || "Activo",
-      category: p.category || (DEFAULT_BOX_PROFS.includes(p.name) ? "Proteína Box" : "Proteína Gym"),
-      noLiquida: typeof p.noLiquida === "boolean" ? p.noLiquida : DEFAULT_NO_LIQUIDA_PROFS.includes(p.name),
-      bg: p.bg || "#FEF9C3",
-      fg: p.fg || "#0A0A0A"
-    }));
+    .map(p => {
+      const isFernanda = p.name.toLowerCase().includes("fernanda");
+      const resolvedCustomRate = p.customRate !== undefined
+        ? (Number(p.customRate) > 0 ? Number(p.customRate) : null)
+        : (isFernanda ? 18000 : null);
+      return {
+        name: p.name,
+        status: p.status || "Activo",
+        category: p.category || (DEFAULT_BOX_PROFS.includes(p.name) ? "Proteína Box" : "Proteína Gym"),
+        noLiquida: typeof p.noLiquida === "boolean" ? p.noLiquida : DEFAULT_NO_LIQUIDA_PROFS.includes(p.name),
+        customRate: resolvedCustomRate,
+        isVendedor: Boolean(p.isVendedor),
+        vendedorPorcentaje: Number(p.vendedorPorcentaje) || 0,
+        vendedorSueldoFijo: Number(p.vendedorSueldoFijo) || 0,
+        bg: p.bg || "#FEF9C3",
+        fg: p.fg || "#0A0A0A"
+      };
+    });
   if (!cleaned.some(p => p.name.toLowerCase() === "yamila")) {
-    cleaned.push({ name: "Yamila", status: "Activo", category: "Proteína Box", noLiquida: false, bg: "#FED7AA", fg: "#9A3412" });
+    cleaned.push({ name: "Yamila", status: "Activo", category: "Proteína Box", noLiquida: false, customRate: null, isVendedor: false, vendedorPorcentaje: 0, vendedorSueldoFijo: 0, bg: "#FED7AA", fg: "#9A3412" });
   }
   return cleaned;
 }
@@ -1049,6 +1082,9 @@ let pagosACuentaLog = [];
 let feriadosNormalesLog = [
   { id: 10122026, monthName: "OCTUBRE 2026", day: 12, unit: "Proteína Gym", prof: "Agustin", horas: 5 }
 ];
+
+// Datos mensuales por vendedor: { [monthName]: { [profName]: { ventas, porcentaje, sueldoFijo, redondeado } } }
+let vendedoresMesData = {};
 
 function getInitialSlotAssignment(unit, jsDay, slotIdx) {
   if (unit === "Proteína Gym") {
@@ -1171,6 +1207,7 @@ function buildPayload() {
     pagosACuentaLog,
     feriadosNormalesLog,
     feriadosNormalesInitialized: true,
+    vendedoresMesData,
     monthsStatus: MONTHS.map(m => ({
       name: m.name,
       status: m.status,
@@ -1246,6 +1283,9 @@ function applyPayload(data) {
     feriadosNormalesLog = data.feriadosNormalesLog;
   } else if (data.feriadosNormalesInitialized) {
     feriadosNormalesLog = [];
+  }
+  if (data.vendedoresMesData && typeof data.vendedoresMesData === "object") {
+    vendedoresMesData = data.vendedoresMesData;
   }
   if (Array.isArray(data.monthsStatus)) {
     data.monthsStatus.forEach(ms => {
@@ -1916,11 +1956,11 @@ function exportAllUnitsToExcel() {
     XLSX.utils.book_append_sheet(wb, ws, tabName);
   });
 
-  // Solapa 3: Liquidación Mensual con Adelantos y Pagos a Cuenta
+  // Solapa 3: Liquidación Mensual con Adelantos, Pagos a Cuenta y Vendedores
   const liqHeaders = [
-    "Profesor", "Categoría", "¿Liquida?", "1. Proteína Gym (Hs)", "2. Proteína Box (Hs)",
+    "Profesor / Vendedor", "Modalidad / Categoría", "¿Liquida?", "1. Proteína Gym (Hs)", "2. Proteína Box (Hs)",
     "Horas Normales", "Horas Dobles (×2)", "Total Horas",
-    "Subtotal Horas ($)", "Adelantos (+/-)", "TOTAL A PAGAR ($)",
+    "Subtotal Base ($)", "Adelantos (+/-)", "TOTAL A PAGAR ($)",
     "Cant. Pagos", "Detalle Pagos a Cuenta", "Pagado a Cuenta ($)", "SALDO RESTANTE ($)"
   ];
   const liqAoa = [
@@ -1941,7 +1981,7 @@ function exportAllUnitsToExcel() {
     const tHs = nHs + dHs;
     const advObj = getNetAdelantoForProfMonth(p.name, m.name);
     const pacObj = getPagosACuentaForProfMonth(p.name, m.name);
-    if (p.status !== "Activo" && tHs === 0 && advObj.net === 0 && pacObj.count === 0) return;
+    if (p.status !== "Activo" && tHs === 0 && !p.isVendedor && advObj.net === 0 && pacObj.count === 0) return;
 
     const subHoras = p.subHoras;
     const impTot = p.noLiquida ? 0 : (subHoras + advObj.net);
@@ -1960,12 +2000,19 @@ function exportAllUnitsToExcel() {
     const pObj = profesores.find(x => x.name === p.name) || { bg: "#F4F4F5", fg: "#0A0A0A" };
     profRowsMeta.push(pObj);
 
+    const catStr = p.isVendedor
+      ? `Vendedor (${(p.vendedorCalc ? p.vendedorCalc.porcentaje : 0)}% + Fijo)`
+      : (p.customRate ? `${p.category} (${formatMoney(p.customRate)}/h)` : (p.category || "Proteína Gym"));
+
     liqAoa.push([
       p.name,
-      p.category || "Proteína Gym",
-      p.noLiquida ? "NO SUMA (Dueño)" : "SÍ LIQUIDA",
-      Number(gHs.toFixed(1)), Number(bHs.toFixed(1)),
-      Number(nHs.toFixed(1)), Number(dHs.toFixed(1)), Number(tHs.toFixed(1)),
+      catStr,
+      p.noLiquida ? "NO SUMAR" : "SÍ LIQUIDA",
+      p.isVendedor ? "-" : Number(gHs.toFixed(1)),
+      p.isVendedor ? "-" : Number(bHs.toFixed(1)),
+      p.isVendedor ? "-" : Number(nHs.toFixed(1)),
+      p.isVendedor ? "-" : Number(dHs.toFixed(1)),
+      p.isVendedor ? "VENDEDOR" : Number(tHs.toFixed(1)),
       formatMoney(subHoras), formatSignedMoney(p.noLiquida ? 0 : advObj.net), formatMoney(impTot),
       pacObj.count, pacDetailStr, formatMoney(pacObj.totalPaid), formatMoney(restante)
     ]);
@@ -1979,13 +2026,38 @@ function exportAllUnitsToExcel() {
     totPacCount, "", formatMoney(totPacPaid), formatMoney(totRestante)
   ]);
 
+  // Si hay vendedores, agregar también el cuadro detallado de Vendedores debajo
+  const vendedoresList = profesores.filter(p => p.isVendedor);
+  if (vendedoresList.length > 0) {
+    liqAoa.push([]);
+    liqAoa.push(["DETALLE DE VENDEDORES (% DE VENTA + SUELDO FIJO + REDONDEO)"]);
+    liqAoa.push(["Vendedor", "¿Liquida?", "Cantidad Vendida ($)", "% Comisión", "Comisión ($)", "Sueldo Fijo ($)", "Total Calculado ($)", "Total Redondeado ($)", "Adelantos (+/-)", "Total a Pagar ($)"]);
+    vendedoresList.forEach(vp => {
+      const vc = getVendedorMonthCalc(vp.name, m.name);
+      const adv = getNetAdelantoForProfMonth(vp.name, m.name);
+      const totFinal = vp.noLiquida ? 0 : (vc.baseElegida + adv.net);
+      liqAoa.push([
+        vp.name,
+        vp.noLiquida ? "NO SUMAR" : "SÍ LIQUIDA",
+        formatMoney(vc.ventas),
+        `${vc.porcentaje}%`,
+        formatMoney(vc.comision),
+        formatMoney(vc.sueldoFijo),
+        formatMoney(vc.totalExacto),
+        vc.hasRedondeo ? formatMoney(vc.totalRedondeado) : formatMoney(vc.totalExacto),
+        formatSignedMoney(vp.noLiquida ? 0 : adv.net),
+        formatMoney(totFinal)
+      ]);
+    });
+  }
+
   const wsLiq = XLSX.utils.aoa_to_sheet(liqAoa);
   wsLiq["!merges"] = [
     { s: { r: 0, c: 0 }, e: { r: 0, c: 14 } },
     { s: { r: 1, c: 0 }, e: { r: 1, c: 14 } }
   ];
   wsLiq["!cols"] = [
-    { wch: 20 }, { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 18 },
+    { wch: 22 }, { wch: 24 }, { wch: 16 }, { wch: 18 }, { wch: 18 },
     { wch: 15 }, { wch: 16 }, { wch: 14 }, { wch: 18 }, { wch: 16 }, { wch: 20 },
     { wch: 13 }, { wch: 30 }, { wch: 18 }, { wch: 20 }
   ];
@@ -2054,7 +2126,7 @@ function exportAllUnitsToExcel() {
 }
 
 // ============================================================================
-// MOTOR DE CÁLCULO (SOPORTA MENSUAL, SEMANAL, DIARIO, VALOR HORA GYM/BOX Y EXCLUSIÓN DE DUEÑOS)
+// MOTOR DE CÁLCULO (SOPORTA MENSUAL, SEMANAL, DIARIO, VALOR HORA ESPECIAL Y VENDEDORES)
 // ============================================================================
 function isDoubleDay(year, month, day) {
   const dt = new Date(year, month - 1, day);
@@ -2133,6 +2205,33 @@ function getSuggestedNormalHoursForProfDay(monthName, unit, day, profName) {
   return 5;
 }
 
+function getVendedorMonthCalc(profName, monthName) {
+  const pObj = profesores.find(x => x.name === profName);
+  const mData = (vendedoresMesData[monthName] && vendedoresMesData[monthName][profName]) || {};
+  const ventas = mData.ventas !== undefined ? (Number(mData.ventas) || 0) : 0;
+  const porcentaje = mData.porcentaje !== undefined
+    ? (Number(mData.porcentaje) || 0)
+    : (pObj ? (Number(pObj.vendedorPorcentaje) || 0) : 0);
+  const sueldoFijo = mData.sueldoFijo !== undefined
+    ? (Number(mData.sueldoFijo) || 0)
+    : (pObj ? (Number(pObj.vendedorSueldoFijo) || 0) : 0);
+  const comision = ventas * (porcentaje / 100);
+  const totalExacto = comision + sueldoFijo;
+  const hasRedondeo = mData.redondeado !== undefined && mData.redondeado !== null && String(mData.redondeado).trim() !== "";
+  const totalRedondeado = hasRedondeo ? (Number(mData.redondeado) || 0) : null;
+  const baseElegida = hasRedondeo ? totalRedondeado : totalExacto;
+  return {
+    ventas,
+    porcentaje,
+    comision,
+    sueldoFijo,
+    totalExacto,
+    hasRedondeo,
+    totalRedondeado,
+    baseElegida
+  };
+}
+
 function calculateMonthData(monthName, startDay = 1, endDay = null) {
   const m = MONTHS.find(x => x.name === monthName);
   const maxDay = endDay || m.days;
@@ -2141,16 +2240,22 @@ function calculateMonthData(monthName, startDay = 1, endDay = null) {
   const byUnit = {};
 
   profesores.forEach(p => {
+    const customRate = p.customRate && Number(p.customRate) > 0 ? Number(p.customRate) : null;
     byProf[p.name] = {
       name: p.name,
       status: p.status,
       category: p.category || "Proteína Gym",
       noLiquida: Boolean(p.noLiquida),
+      customRate,
+      isVendedor: Boolean(p.isVendedor),
+      effRateGym: customRate || rateGym,
+      effRateBox: customRate || rateBox,
       gymNorm: 0, gymDob: 0,
       boxNorm: 0, boxDob: 0,
       costGymNorm: 0, costGymDob: 0, costGym: 0,
       costBoxNorm: 0, costBoxDob: 0, costBox: 0,
-      subHoras: 0
+      subHoras: 0,
+      vendedorCalc: p.isVendedor ? getVendedorMonthCalc(p.name, monthName) : null
     };
   });
   UNITS.forEach(u => {
@@ -2169,23 +2274,27 @@ function calculateMonthData(monthName, startDay = 1, endDay = null) {
       const overriddenProfs = new Set(rulesForDayUnit.map(r => r.prof));
 
       for (let s = 0; s < 32; s++) {
-        const list = (scheduleData[monthName] && scheduleData[monthName][u] && scheduleData[monthName][u][d] && scheduleData[monthName][u][d][s]) || [];
+        const list = (scheduleData[monthName] && scheduleData[monthName][unit_safe(u)] && scheduleData[monthName][u][d] && scheduleData[monthName][u][d][s]) || [];
         const uniqueProfs = [...new Set(list)];
         uniqueProfs.forEach(pName => {
           if (overriddenProfs.has(pName)) return; // Se contabiliza por la regla de feriado normal (×1)
           if (!byProf[pName]) {
             byProf[pName] = {
               name: pName, status: "Activo", category: "Proteína Gym", noLiquida: false,
+              customRate: null, isVendedor: false, effRateGym: rateGym, effRateBox: rateBox,
               gymNorm:0, gymDob:0, boxNorm:0, boxDob:0,
-              costGymNorm:0, costGymDob:0, costGym:0, costBoxNorm:0, costBoxDob:0, costBox:0, subHoras:0
+              costGymNorm:0, costGymDob:0, costGym:0, costBoxNorm:0, costBoxDob:0, costBox:0, subHoras:0,
+              vendedorCalc: null
             };
           }
+          // Los vendedores no tienen conteo de horas
+          if (byProf[pName].isVendedor) return;
+
           if (u === "Proteína Gym") {
             if (dbl) byProf[pName].gymDob += 0.5; else byProf[pName].gymNorm += 0.5;
           } else {
             if (dbl) byProf[pName].boxDob += 0.5; else byProf[pName].boxNorm += 0.5;
           }
-          // Solo sumar a los totales liquidables de la unidad si el profesor NO está excluido de liquidación
           if (!byProf[pName].noLiquida) {
             if (dbl) byUnit[u].dob += 0.5; else byUnit[u].norm += 0.5;
           }
@@ -2200,10 +2309,14 @@ function calculateMonthData(monthName, startDay = 1, endDay = null) {
         if (!byProf[pName]) {
           byProf[pName] = {
             name: pName, status: "Activo", category: "Proteína Gym", noLiquida: false,
+            customRate: null, isVendedor: false, effRateGym: rateGym, effRateBox: rateBox,
             gymNorm:0, gymDob:0, boxNorm:0, boxDob:0,
-            costGymNorm:0, costGymDob:0, costGym:0, costBoxNorm:0, costBoxDob:0, costBox:0, subHoras:0
+            costGymNorm:0, costGymDob:0, costGym:0, costBoxNorm:0, costBoxDob:0, costBox:0, subHoras:0,
+            vendedorCalc: null
           };
         }
+        if (byProf[pName].isVendedor) return;
+
         if (u === "Proteína Gym") {
           byProf[pName].gymNorm += hs;
         } else {
@@ -2216,38 +2329,49 @@ function calculateMonthData(monthName, startDay = 1, endDay = null) {
     }
   });
 
-  // Calcular importes según la unidad trabajada (horas en Gym a rateGym, horas en Box a rateBox)
+  // Calcular importes según la unidad trabajada o el valor hora especial del profesor (o comisión + fijo si es vendedor)
   Object.values(byProf).forEach(bp => {
     if (bp.noLiquida) {
       bp.costGymNorm = 0; bp.costGymDob = 0; bp.costGym = 0;
       bp.costBoxNorm = 0; bp.costBoxDob = 0; bp.costBox = 0;
       bp.subHoras = 0;
+    } else if (bp.isVendedor) {
+      bp.costGymNorm = 0; bp.costGymDob = 0; bp.costGym = 0;
+      bp.costBoxNorm = 0; bp.costBoxDob = 0; bp.costBox = 0;
+      const vc = bp.vendedorCalc || getVendedorMonthCalc(bp.name, monthName);
+      bp.vendedorCalc = vc;
+      bp.subHoras = vc.baseElegida;
     } else {
-      bp.costGymNorm = bp.gymNorm * rateGym;
-      bp.costGymDob = bp.gymDob * rateGym * 2;
+      const rG = bp.customRate && bp.customRate > 0 ? bp.customRate : rateGym;
+      const rB = bp.customRate && bp.customRate > 0 ? bp.customRate : rateBox;
+      bp.effRateGym = rG;
+      bp.effRateBox = rB;
+
+      bp.costGymNorm = bp.gymNorm * rG;
+      bp.costGymDob = bp.gymDob * rG * 2;
       bp.costGym = bp.costGymNorm + bp.costGymDob;
 
-      bp.costBoxNorm = bp.boxNorm * rateBox;
-      bp.costBoxDob = bp.boxDob * rateBox * 2;
+      bp.costBoxNorm = bp.boxNorm * rB;
+      bp.costBoxDob = bp.boxDob * rB * 2;
       bp.costBox = bp.costBoxNorm + bp.costBoxDob;
 
       bp.subHoras = bp.costGym + bp.costBox;
+
+      byUnit["Proteína Gym"].costNorm += bp.costGymNorm;
+      byUnit["Proteína Gym"].costDob += bp.costGymDob;
+      byUnit["Proteína Box"].costNorm += bp.costBoxNorm;
+      byUnit["Proteína Box"].costDob += bp.costBoxDob;
     }
   });
 
   UNITS.forEach(u => {
-    const uRate = byUnit[u].rate;
-    byUnit[u].costNorm = byUnit[u].norm * uRate;
-    byUnit[u].costDob = byUnit[u].dob * uRate * 2;
     byUnit[u].costTotal = byUnit[u].costNorm + byUnit[u].costDob;
   });
 
   return { m, rateGym, rateBox, byProf, byUnit, startDay, endDay: maxDay };
 }
 
-// ============================================================================
-// GESTIÓN DE FERIADOS NO TRABAJADOS (PAGO DE HORAS NORMALES ×1 EN VEZ DE DOBLES ×2)
-// ============================================================================
+function unit_safe(u) { return u; }
 function populateFeriadoNormalSelectors() {
   const m = MONTHS.find(x => x.name === currentMonthName);
   if (!m) return;
@@ -2726,7 +2850,7 @@ function renderHome() {
     <div class="kpi-card"><div class="lbl">Valor Hora Gym / Box</div><div class="val" style="font-size:1.25rem">${formatMoney(calc.rateGym)} / ${formatMoney(calc.rateBox)}</div><div class="sub">Doble ×2: ${formatMoney(calc.rateGym*2)} / ${formatMoney(calc.rateBox*2)}</div></div>
     <div class="kpi-card"><div class="lbl">Profes Liquidables</div><div class="val">${activeCount}</div><div class="sub">${activeWithHours} con horas este mes</div></div>
     <div class="kpi-card"><div class="lbl">Horas Liquidables</div><div class="val">${totHs.toFixed(1)} hs</div><div class="sub">${totNorm.toFixed(1)}h Normales · ${totDob.toFixed(1)}h Dobles</div></div>
-    <div class="kpi-card"><div class="lbl">Total Sueldos ($)</div><div class="val" style="color:#15803d">${formatMoney(totCost)}</div><div class="sub">Suma de las 2 unidades (sin dueños)</div></div>
+    <div class="kpi-card"><div class="lbl">Total Sueldos ($)</div><div class="val" style="color:#15803d">${formatMoney(totCost)}</div><div class="sub">Suma de las 2 unidades</div></div>
   `;
 
   let rowsHtml = "";
@@ -2992,7 +3116,207 @@ function saveCellModal() {
 }
 
 // ============================================================================
-// LIQUIDACIÓN Y REPORTES GENERALES (MENSUAL / SEMANAL / DIARIO + ADELANTOS + A CUENTA)
+// GESTIÓN DE VENDEDORES (% DE VENTA + SUELDO FIJO + COLUMNA DE REDONDEO)
+// ============================================================================
+function ensureVendedorMesEntry(monthName, profName) {
+  if (!vendedoresMesData[monthName]) vendedoresMesData[monthName] = {};
+  if (!vendedoresMesData[monthName][profName]) {
+    const pObj = profesores.find(x => x.name === profName);
+    vendedoresMesData[monthName][profName] = {
+      ventas: 0,
+      porcentaje: pObj ? (Number(pObj.vendedorPorcentaje) || 0) : 0,
+      sueldoFijo: pObj ? (Number(pObj.vendedorSueldoFijo) || 0) : 0,
+      redondeado: null
+    };
+  }
+  return vendedoresMesData[monthName][profName];
+}
+
+function updateVendedorLiveData(profName, field, rawVal, shouldSaveAndRender) {
+  const entry = ensureVendedorMesEntry(currentMonthName, profName);
+  const pObj = profesores.find(x => x.name === profName);
+
+  if (field === "ventas") {
+    entry.ventas = rawVal === "" ? 0 : (Number(rawVal) || 0);
+  } else if (field === "porcentaje") {
+    const pct = rawVal === "" ? 0 : (Number(rawVal) || 0);
+    entry.porcentaje = pct;
+    if (pObj) pObj.vendedorPorcentaje = pct;
+  } else if (field === "sueldoFijo") {
+    const fijo = rawVal === "" ? 0 : (Number(rawVal) || 0);
+    entry.sueldoFijo = fijo;
+    if (pObj) pObj.vendedorSueldoFijo = fijo;
+  } else if (field === "redondeado") {
+    const trimmed = String(rawVal).trim();
+    entry.redondeado = trimmed === "" ? null : (Number(trimmed) || 0);
+  }
+
+  if (shouldSaveAndRender) {
+    saveState();
+    refreshAll();
+    return;
+  }
+
+  // Actualización en vivo sin perder el foco del input mientras escribe
+  const vc = getVendedorMonthCalc(profName, currentMonthName);
+  const advObj = getNetAdelantoForProfMonth(profName, currentMonthName);
+  const pacObj = getPagosACuentaForProfMonth(profName, currentMonthName);
+  const isNoLiq = pObj && pObj.noLiquida;
+  const impTot = isNoLiq ? 0 : (vc.baseElegida + advObj.net);
+  const restante = impTot - pacObj.totalPaid;
+
+  const safeId = profName.replace(/[^a-zA-Z0-9]/g, "_");
+  const elVentasFmt = document.getElementById(`vend-fmt-ventas-${safeId}`);
+  const elComision = document.getElementById(`vend-comision-${safeId}`);
+  const elFijoFmt = document.getElementById(`vend-fmt-fijo-${safeId}`);
+  const elExacto = document.getElementById(`vend-exacto-${safeId}`);
+  const elRedFmt = document.getElementById(`vend-fmt-red-${safeId}`);
+  const elPay = document.getElementById(`vend-pay-${safeId}`);
+  const elRest = document.getElementById(`vend-rest-${safeId}`);
+
+  if (elVentasFmt) elVentasFmt.textContent = formatMoney(vc.ventas);
+  if (elComision) elComision.textContent = formatMoney(vc.comision);
+  if (elFijoFmt) elFijoFmt.textContent = formatMoney(vc.sueldoFijo);
+  if (elExacto) elExacto.textContent = formatMoney(vc.totalExacto);
+  if (elRedFmt) {
+    elRedFmt.textContent = vc.hasRedondeo
+      ? `Redondeado a ${formatMoney(vc.totalRedondeado)}`
+      : `Sin redondear (usa ${formatMoney(vc.totalExacto)})`;
+  }
+  if (elPay) elPay.textContent = formatMoney(impTot);
+  if (elRest) elRest.textContent = formatMoney(restante);
+}
+
+function autoRoundVendedor(profName) {
+  const vc = getVendedorMonthCalc(profName, currentMonthName);
+  const exact = vc.totalExacto;
+  if (exact <= 0) return;
+  // Redondear a múltiplos significativos (ej. 1.569.043 -> 1.600.000 o 15.690.432 -> 16.000.000)
+  let step = 10000;
+  if (exact >= 10000000) step = 500000;
+  else if (exact >= 1000000) step = 100000;
+  else if (exact >= 100000) step = 10000;
+  else step = 1000;
+  const rounded = Math.round(exact / step) * step;
+  const entry = ensureVendedorMesEntry(currentMonthName, profName);
+  entry.redondeado = rounded;
+  saveState();
+  refreshAll();
+}
+
+function clearRoundVendedor(profName) {
+  const entry = ensureVendedorMesEntry(currentMonthName, profName);
+  entry.redondeado = null;
+  saveState();
+  refreshAll();
+}
+
+function addQuickVendedor() {
+  const nameEl = document.getElementById("quick-vend-name");
+  const pctEl = document.getElementById("quick-vend-pct");
+  const fijoEl = document.getElementById("quick-vend-fijo");
+  const name = nameEl ? nameEl.value.trim() : "";
+  if (!name) {
+    alert("Ingrese el nombre del vendedor.");
+    return;
+  }
+  const pct = pctEl ? (Number(pctEl.value) || 0) : 0;
+  const fijo = fijoEl ? (Number(fijoEl.value) || 0) : 0;
+
+  const existing = profesores.find(p => p.name.toLowerCase() === name.toLowerCase());
+  if (existing) {
+    existing.isVendedor = true;
+    existing.status = "Activo";
+    if (pct > 0) existing.vendedorPorcentaje = pct;
+    if (fijo > 0) existing.vendedorSueldoFijo = fijo;
+    const entry = ensureVendedorMesEntry(currentMonthName, existing.name);
+    if (pct > 0) entry.porcentaje = pct;
+    if (fijo > 0) entry.sueldoFijo = fijo;
+  } else {
+    profesores.push({
+      name,
+      status: "Activo",
+      category: "Proteína Gym",
+      noLiquida: false,
+      customRate: null,
+      isVendedor: true,
+      vendedorPorcentaje: pct,
+      vendedorSueldoFijo: fijo,
+      bg: "#FEF08A",
+      fg: "#713F12"
+    });
+    ensureVendedorMesEntry(currentMonthName, name);
+  }
+
+  if (nameEl) nameEl.value = "";
+  if (pctEl) pctEl.value = "";
+  if (fijoEl) fijoEl.value = "";
+  saveState();
+  populateSelects();
+  refreshAll();
+}
+
+function convertExistingProfToVendedor() {
+  const sel = document.getElementById("quick-vend-existing");
+  if (!sel || !sel.value) {
+    alert("Seleccione un profesor de la lista.");
+    return;
+  }
+  const pObj = profesores.find(p => p.name === sel.value);
+  if (!pObj) return;
+  pObj.isVendedor = true;
+  ensureVendedorMesEntry(currentMonthName, pObj.name);
+  saveState();
+  populateSelects();
+  refreshAll();
+}
+
+function toggleProfVendedorByName(profName) {
+  const pObj = profesores.find(p => p.name === profName);
+  if (!pObj) return;
+  pObj.isVendedor = !pObj.isVendedor;
+  if (pObj.isVendedor) ensureVendedorMesEntry(currentMonthName, pObj.name);
+  saveState();
+  populateSelects();
+  refreshAll();
+}
+
+function toggleProfVendedor(idx) {
+  profesores[idx].isVendedor = !profesores[idx].isVendedor;
+  if (profesores[idx].isVendedor) {
+    ensureVendedorMesEntry(currentMonthName, profesores[idx].name);
+  }
+  saveState();
+  populateSelects();
+  refreshAll();
+}
+
+function updateProfCustomRate(idx, rawVal) {
+  const num = Number(rawVal);
+  profesores[idx].customRate = num > 0 ? num : null;
+  saveState();
+  refreshAll();
+}
+
+function updateProfDefaultVendedorCfg(idx, field, rawVal) {
+  const p = profesores[idx];
+  if (!p) return;
+  const val = Number(rawVal) || 0;
+  if (field === "pct") {
+    p.vendedorPorcentaje = val;
+    const entry = ensureVendedorMesEntry(currentMonthName, p.name);
+    entry.porcentaje = val;
+  } else if (field === "fijo") {
+    p.vendedorSueldoFijo = val;
+    const entry = ensureVendedorMesEntry(currentMonthName, p.name);
+    entry.sueldoFijo = val;
+  }
+  saveState();
+  refreshAll();
+}
+
+// ============================================================================
+// LIQUIDACIÓN Y REPORTES GENERALES (MENSUAL / SEMANAL / DIARIO + VENDEDORES + ADELANTOS + A CUENTA)
 // ============================================================================
 function renderResumenMensual() {
   const m = MONTHS.find(x => x.name === currentMonthName);
@@ -3000,6 +3324,15 @@ function renderResumenMensual() {
   const subVal = document.getElementById("res-general-sub").value;
 
   renderFeriadoNormalLists();
+
+  // Poblar selector rápido para pasar un profe existente a vendedor
+  const existingSel = document.getElementById("quick-vend-existing");
+  if (existingSel) {
+    const nonVend = profesores.filter(p => !p.isVendedor);
+    existingSel.innerHTML = nonVend.length > 0
+      ? nonVend.map(p => `<option value="${p.name}">${p.name}</option>`).join("")
+      : `<option value="">(Todos son vendedores)</option>`;
+  }
 
   let startDay = 1, endDay = m.days;
   let periodLabel = `${currentMonthName} (Mes Completo)`;
@@ -3018,13 +3351,15 @@ function renderResumenMensual() {
     periodLabel = `${DAYS_ES[dt.getDay()]} ${String(dNum).padStart(2,"0")}/${String(m.month).padStart(2,"0")}/${m.year}`;
   }
 
-  document.getElementById("res-table-title").textContent = `1. Liquidación por Profesor — ${periodLabel}`;
+  document.getElementById("res-table-title").textContent = `1. Liquidación por Profesor (Por Hora) — ${periodLabel}`;
 
   const calc = calculateMonthData(currentMonthName, startDay, endDay);
   let totGym = 0, totBox = 0, totNorm = 0, totDob = 0, totSub = 0, totAdv = 0, totPay = 0, totPacCount = 0, totPacPaid = 0, totRestante = 0, workedCount = 0;
 
   let rowsHtml = "";
   Object.values(calc.byProf).forEach(p => {
+    if (p.isVendedor) return; // Los vendedores se liquidan en la tabla 2 de Vendedores (sin conteo de horas)
+
     const gHs = p.gymNorm + p.gymDob;
     const bHs = p.boxNorm + p.boxDob;
     const nHs = p.gymNorm + p.boxNorm;
@@ -3054,12 +3389,16 @@ function renderResumenMensual() {
       ? `<div style="font-size:0.75rem;color:#14532d;margin-top:2px">${pacObj.list.map((it, idx) => `#${idx+1}: ${formatMoney(it.monto)}`).join(" · ")}</div>`
       : "";
 
-    const catBadge = p.category === "Proteína Box"
+    const customRateTag = p.customRate > 0
+      ? `<div style="margin-top:3px"><span class="chip" style="background:#fef08a;color:#854d0e;font-size:0.72rem">⭐ Hora Esp.: ${formatMoney(p.customRate)}/h</span></div>`
+      : "";
+
+    const catBadge = (p.category === "Proteína Box"
       ? `<span class="chip" style="background:#d1fae5;color:#065f46;font-size:0.74rem">🥊 Box</span>`
-      : `<span class="chip" style="background:#f4f4f5;color:#18181b;font-size:0.74rem">🏋️ Gym</span>`;
+      : `<span class="chip" style="background:#f4f4f5;color:#18181b;font-size:0.74rem">🏋️ Gym</span>`) + customRateTag;
 
     const liqStatusHtml = p.noLiquida
-      ? `<span class="chip" style="background:#fee2e2;color:#991b1b;font-size:0.74rem">🚫 No suma (Dueño)</span>`
+      ? `<span class="chip" style="background:#fee2e2;color:#991b1b;font-size:0.74rem">🚫 No sumar</span>`
       : `<span style="font-size:0.78rem;font-weight:700;color:#166534">Sí liquida</span>`;
 
     rowsHtml += `<tr style="${p.noLiquida ? 'opacity:0.72;background:#fafafa' : ''}">
@@ -3071,7 +3410,7 @@ function renderResumenMensual() {
       <td class="num">${nHs.toFixed(1)}</td>
       <td class="num">${dHs.toFixed(1)}</td>
       <td class="num"><strong>${tHs.toFixed(1)}</strong></td>
-      <td class="num">${p.noLiquida ? '<span style="color:var(--muted)">$0 (No suma)</span>' : formatMoney(subHoras)}</td>
+      <td class="num">${p.noLiquida ? '<span style="color:var(--muted)">$0 (No sumar)</span>' : formatMoney(subHoras)}</td>
       <td class="num" style="font-weight:800;color:${advColor}">${p.noLiquida ? '$0' : formatSignedMoney(advObj.net)}</td>
       <td class="num" style="background:${p.noLiquida ? '#f4f4f5' : 'var(--yellow-soft)'}"><strong>${formatMoney(impTot)}</strong></td>
       <td class="center"><strong>${pacObj.count}</strong></td>
@@ -3080,25 +3419,17 @@ function renderResumenMensual() {
     </tr>`;
   });
 
-  document.getElementById("res-mensual-kpis").innerHTML = `
-    <div class="kpi-card"><div class="lbl">Período</div><div class="val" style="font-size:1.15rem">${periodLabel}</div><div class="sub">Gym: ${formatMoney(calc.rateGym)} · Box: ${formatMoney(calc.rateBox)}</div></div>
-    <div class="kpi-card"><div class="lbl">Horas Liquidables</div><div class="val">${totNorm.toFixed(1)}h / ${totDob.toFixed(1)}h</div><div class="sub">Total: ${(totNorm+totDob).toFixed(1)} hs (${workedCount} profes liquidables)</div></div>
-    <div class="kpi-card"><div class="lbl">Total Sueldos a Pagar</div><div class="val">${formatMoney(totPay)}</div><div class="sub">Excluye dueños / no liquidables</div></div>
-    <div class="kpi-card"><div class="lbl">Pagado a Cuenta (${totPacCount} pagos)</div><div class="val" style="color:#15803d">${formatMoney(totPacPaid)}</div><div class="sub">Entregas parciales registradas</div></div>
-    <div class="kpi-card"><div class="lbl">Saldo Restante a Pagar</div><div class="val" style="color:${totRestante > 0 ? '#991b1b' : '#15803d'}">${formatMoney(totRestante)}</div><div class="sub">Pendiente de abonar</div></div>
-  `;
-
   document.getElementById("res-mensual-table").innerHTML = `
     <table>
       <thead><tr>
-        <th>Profesor</th><th>Categoría</th><th>¿Liquida?</th><th>1. Proteína Gym (${formatMoney(calc.rateGym)}/h)</th><th>2. Proteína Box (${formatMoney(calc.rateBox)}/h)</th>
+        <th>Profesor</th><th>Categoría / Valor Hora</th><th>¿Liquida?</th><th>1. Proteína Gym (${formatMoney(calc.rateGym)}/h)</th><th>2. Proteína Box (${formatMoney(calc.rateBox)}/h)</th>
         <th>Hs Norm</th><th>Hs Dobles (×2)</th><th>Total Hs</th>
         <th>Subtotal Horas ($)</th><th>Adelanto (+/-)</th><th>Total a Pagar ($)</th>
         <th>Cant. Pagos</th><th>Pagado a Cuenta ($)</th><th>Saldo Restante ($)</th>
       </tr></thead>
       <tbody>${rowsHtml}</tbody>
       <tfoot><tr class="tot-row">
-        <td>TOTAL LIQUIDACIÓN</td>
+        <td>TOTAL PROFES POR HORA</td>
         <td class="center" colspan="2">${workedCount} profes liquidables</td>
         <td class="num">${totGym.toFixed(1)} hs</td>
         <td class="num">${totBox.toFixed(1)} hs</td>
@@ -3115,7 +3446,155 @@ function renderResumenMensual() {
     </table>
   `;
 
-  // Tabla 2: Horas y Costos por Unidad en el rango seleccionado
+  // Tabla 2: Liquidación de Vendedores (% de Venta + Sueldo Fijo + Columna de Redondeo — Sin Conteo de Horas)
+  const vendedoresProfs = profesores.filter(p => p.isVendedor);
+  let totVendVentas = 0, totVendComision = 0, totVendFijo = 0, totVendExacto = 0, totVendRedondeado = 0, totVendAdv = 0, totVendPay = 0, totVendPacCount = 0, totVendPacPaid = 0, totVendRestante = 0;
+
+  const vendTableContainer = document.getElementById("res-vendedores-table");
+  if (vendTableContainer) {
+    if (vendedoresProfs.length === 0) {
+      vendTableContainer.innerHTML = `
+        <div style="background:#f8fafc;border:1px dashed #94a3b8;border-radius:8px;padding:14px;text-align:center;color:#475569;font-size:0.9rem">
+          No hay vendedores cargados aún. Usá la barra superior <strong>"➕ Agregar Vendedor"</strong> o <strong>"💼 Pasar a Vendedor"</strong> para cargar vendedores con <strong>Cantidad Vendida ($) + % Comisión + Sueldo Fijo + Columna de Redondeo</strong>.
+        </div>
+      `;
+    } else {
+      let vendRowsHtml = "";
+      vendedoresProfs.forEach(vp => {
+        const vc = getVendedorMonthCalc(vp.name, currentMonthName);
+        const advObj = mode === "mensual" ? getNetAdelantoForProfMonth(vp.name, currentMonthName) : { net: 0 };
+        const pacObj = mode === "mensual" ? getPagosACuentaForProfMonth(vp.name, currentMonthName) : { list: [], count: 0, totalPaid: 0 };
+        const impTot = vp.noLiquida ? 0 : (vc.baseElegida + advObj.net);
+        const restante = impTot - pacObj.totalPaid;
+        const safeId = vp.name.replace(/[^a-zA-Z0-9]/g, "_");
+        const safeNameJs = vp.name.replace(/'/g, "\\'");
+
+        if (!vp.noLiquida) {
+          totVendVentas += vc.ventas;
+          totVendComision += vc.comision;
+          totVendFijo += vc.sueldoFijo;
+          totVendExacto += vc.totalExacto;
+          totVendRedondeado += vc.baseElegida;
+          totVendAdv += advObj.net;
+          totVendPay += impTot;
+          totVendPacCount += pacObj.count;
+          totVendPacPaid += pacObj.totalPaid;
+          totVendRestante += restante;
+        }
+
+        const advColor = advObj.net > 0 ? "#166534" : (advObj.net < 0 ? "#991b1b" : "#52525b");
+        const liqBadge = vp.noLiquida
+          ? `<span class="chip" style="background:#fee2e2;color:#991b1b;font-size:0.74rem">🚫 No sumar</span>`
+          : `<span style="font-size:0.78rem;font-weight:700;color:#166534">Sí liquida</span>`;
+
+        vendRowsHtml += `
+          <tr style="${vp.noLiquida ? 'opacity:0.72;background:#fafafa' : ''}">
+            <td>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap">
+                ${renderChip(vp.name)}
+                <button class="btn btn-outline no-print" style="padding:2px 8px;min-height:28px;font-size:0.72rem" title="Volver a modalidad por hora" onclick="toggleProfVendedorByName('${safeNameJs}')">⏱️ A Hora</button>
+              </div>
+            </td>
+            <td class="center">${liqBadge}</td>
+            <td class="num">
+              <input type="number" value="${vc.ventas || ''}" placeholder="Ej: 10000000" step="10000" min="0"
+                style="width:135px;min-height:36px;padding:4px 8px;text-align:right;font-weight:700;background:#fff"
+                oninput="updateVendedorLiveData('${safeNameJs}', 'ventas', this.value, false)"
+                onchange="updateVendedorLiveData('${safeNameJs}', 'ventas', this.value, true)" />
+              <div id="vend-fmt-ventas-${safeId}" style="font-size:0.74rem;color:var(--muted);margin-top:2px">${formatMoney(vc.ventas)}</div>
+            </td>
+            <td class="num">
+              <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px">
+                <input type="number" value="${vc.porcentaje || ''}" placeholder="%" step="0.1" min="0"
+                  style="width:75px;min-height:36px;padding:4px 6px;text-align:right;font-weight:700;background:#fff"
+                  oninput="updateVendedorLiveData('${safeNameJs}', 'porcentaje', this.value, false)"
+                  onchange="updateVendedorLiveData('${safeNameJs}', 'porcentaje', this.value, true)" />
+                <strong>%</strong>
+              </div>
+            </td>
+            <td class="num" style="font-weight:700;color:#1e3a8a" id="vend-comision-${safeId}">${formatMoney(vc.comision)}</td>
+            <td class="num">
+              <input type="number" value="${vc.sueldoFijo || ''}" placeholder="Sueldo fijo ($)" step="5000" min="0"
+                style="width:125px;min-height:36px;padding:4px 8px;text-align:right;font-weight:700;background:#fff"
+                oninput="updateVendedorLiveData('${safeNameJs}', 'sueldoFijo', this.value, false)"
+                onchange="updateVendedorLiveData('${safeNameJs}', 'sueldoFijo', this.value, true)" />
+              <div id="vend-fmt-fijo-${safeId}" style="font-size:0.74rem;color:var(--muted);margin-top:2px">${formatMoney(vc.sueldoFijo)}</div>
+            </td>
+            <td class="num" style="background:#f8fafc;font-weight:800;font-size:0.96rem" id="vend-exacto-${safeId}">${formatMoney(vc.totalExacto)}</td>
+            <td class="num" style="background:#fefce8;border-left:2px solid #eab308;border-right:2px solid #eab308">
+              <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:wrap">
+                <input type="number" value="${vc.hasRedondeo ? vc.totalRedondeado : ''}" placeholder="${Math.round(vc.totalExacto)}" step="10000" min="0"
+                  style="width:130px;min-height:36px;padding:4px 8px;text-align:right;font-weight:800;background:#fff;border-color:#ca8a04"
+                  oninput="updateVendedorLiveData('${safeNameJs}', 'redondeado', this.value, false)"
+                  onchange="updateVendedorLiveData('${safeNameJs}', 'redondeado', this.value, true)" />
+                <button class="btn btn-outline no-print" style="padding:3px 7px;min-height:30px;font-size:0.72rem;background:#fef08a" title="Redondear automáticamente" onclick="autoRoundVendedor('${safeNameJs}')">≈ Redondear</button>
+                ${vc.hasRedondeo ? `<button class="btn btn-outline no-print" style="padding:3px 6px;min-height:30px;font-size:0.72rem" title="Usar total exacto sin redondeo" onclick="clearRoundVendedor('${safeNameJs}')">✕</button>` : ''}
+              </div>
+              <div id="vend-fmt-red-${safeId}" style="font-size:0.74rem;font-weight:700;color:#854d0e;margin-top:2px">
+                ${vc.hasRedondeo ? `Redondeado a ${formatMoney(vc.totalRedondeado)}` : `Sin redondear (usa ${formatMoney(vc.totalExacto)})`}
+              </div>
+            </td>
+            <td class="num" style="font-weight:800;color:${advColor}">${vp.noLiquida ? '$0' : formatSignedMoney(advObj.net)}</td>
+            <td class="num" style="background:var(--yellow-soft);font-weight:800" id="vend-pay-${safeId}">${formatMoney(impTot)}</td>
+            <td class="num" style="color:#15803d;font-weight:800">${formatMoney(pacObj.totalPaid)}</td>
+            <td class="num" style="background:${restante > 0 ? '#fef2f2' : '#f0fdf4'};color:${restante > 0 ? '#991b1b' : '#166534'};font-weight:800" id="vend-rest-${safeId}">${formatMoney(restante)}</td>
+          </tr>
+        `;
+      });
+
+      vendTableContainer.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Vendedor</th>
+              <th>¿Liquida?</th>
+              <th>Cantidad Vendida ($)</th>
+              <th>% de Venta</th>
+              <th>Comisión ($)</th>
+              <th>Sueldo Fijo ($)</th>
+              <th>Total Calculado ($)</th>
+              <th style="background:#854d0e;color:#fef08a">Total Redondeado ($)</th>
+              <th>Adelanto (+/-)</th>
+              <th>Total a Pagar ($)</th>
+              <th>Pagado a Cuenta ($)</th>
+              <th>Saldo Restante ($)</th>
+            </tr>
+          </thead>
+          <tbody>${vendRowsHtml}</tbody>
+          <tfoot>
+            <tr class="tot-row">
+              <td colspan="2">TOTAL VENDEDORES (${vendedoresProfs.length})</td>
+              <td class="num">${formatMoney(totVendVentas)}</td>
+              <td class="center">—</td>
+              <td class="num">${formatMoney(totVendComision)}</td>
+              <td class="num">${formatMoney(totVendFijo)}</td>
+              <td class="num">${formatMoney(totVendExacto)}</td>
+              <td class="num">${formatMoney(totVendRedondeado)}</td>
+              <td class="num">${formatSignedMoney(totVendAdv)}</td>
+              <td class="num">${formatMoney(totVendPay)}</td>
+              <td class="num">${formatMoney(totVendPacPaid)}</td>
+              <td class="num">${formatMoney(totVendRestante)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      `;
+    }
+  }
+
+  const grandTotPay = totPay + totVendPay;
+  const grandTotPacCount = totPacCount + totVendPacCount;
+  const grandTotPacPaid = totPacPaid + totVendPacPaid;
+  const grandTotRestante = totRestante + totVendRestante;
+
+  document.getElementById("res-mensual-kpis").innerHTML = `
+    <div class="kpi-card"><div class="lbl">Período</div><div class="val" style="font-size:1.15rem">${periodLabel}</div><div class="sub">Gym: ${formatMoney(calc.rateGym)} · Box: ${formatMoney(calc.rateBox)}</div></div>
+    <div class="kpi-card"><div class="lbl">Horas Liquidables</div><div class="val">${totNorm.toFixed(1)}h / ${totDob.toFixed(1)}h</div><div class="sub">Total: ${(totNorm+totDob).toFixed(1)} hs (${workedCount} profes + ${vendedoresProfs.length} vend.)</div></div>
+    <div class="kpi-card"><div class="lbl">Total Sueldos a Pagar</div><div class="val">${formatMoney(grandTotPay)}</div><div class="sub">Solo personal que liquida</div></div>
+    <div class="kpi-card"><div class="lbl">Pagado a Cuenta (${grandTotPacCount} pagos)</div><div class="val" style="color:#15803d">${formatMoney(grandTotPacPaid)}</div><div class="sub">Entregas parciales registradas</div></div>
+    <div class="kpi-card"><div class="lbl">Saldo Restante a Pagar</div><div class="val" style="color:${grandTotRestante > 0 ? '#991b1b' : '#15803d'}">${formatMoney(grandTotRestante)}</div><div class="sub">Pendiente de abonar</div></div>
+  `;
+
+  // Tabla 3: Horas y Costos por Unidad en el rango seleccionado
   let unitRowsHtml = "";
   let totUnitCostNorm = 0, totUnitCostDob = 0, totUnitCost = 0;
   UNITS.forEach(u => {
@@ -3143,7 +3622,7 @@ function renderResumenMensual() {
 
   document.getElementById("res-mensual-units").innerHTML = `
     <table>
-      <thead><tr><th>Unidad</th><th>Valor Hora</th><th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Importe Normal</th><th>Importe Doble</th><th>Costo Total</th><th>%</th></tr></thead>
+      <thead><tr><th>Unidad</th><th>Valor Hora Base</th><th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Importe Normal</th><th>Importe Doble</th><th>Costo Total</th><th>%</th></tr></thead>
       <tbody>${unitRowsHtml}</tbody>
       <tfoot><tr class="tot-row">
         <td>TOTAL UNIDADES (LIQUIDABLES)</td>
@@ -3163,7 +3642,7 @@ function renderResumenMensual() {
 }
 
 // ============================================================================
-// DETALLE INDIVIDUAL POR PROFESOR (MENSUAL / SEMANAL / DIARIO + A CUENTA + CRONOGRAMA CUBIERTO)
+// DETALLE INDIVIDUAL POR PROFESOR / VENDEDOR (MENSUAL / SEMANAL / DIARIO + A CUENTA + CAPTURA)
 // ============================================================================
 function getGroupedTimeRanges(slotIndices) {
   if (!slotIndices || slotIndices.length === 0) return [];
@@ -3222,16 +3701,131 @@ function renderIndividualDetail() {
 
   const calc = calculateMonthData(currentMonthName, startDay, endDay);
   const p = calc.byProf[profName] || {
-    category: "Proteína Gym", noLiquida: false,
+    category: "Proteína Gym", noLiquida: false, customRate: null, isVendedor: false,
+    effRateGym: calc.rateGym, effRateBox: calc.rateBox,
     gymNorm:0, gymDob:0, boxNorm:0, boxDob:0,
     costGymNorm:0, costGymDob:0, costGym:0, costBoxNorm:0, costBoxDob:0, costBox:0, subHoras:0
   };
   const advObj = (mode === "mensual" && !p.noLiquida) ? getNetAdelantoForProfMonth(profName, currentMonthName) : { net: 0, sumActual: 0, subTarget: 0 };
   const pacObj = getPagosACuentaForProfMonth(profName, currentMonthName);
 
+  const subTotalMoney = p.subHoras;
+  const finalTotalMoney = p.noLiquida ? 0 : (subTotalMoney + advObj.net);
+  const remainingMoney = finalTotalMoney - pacObj.totalPaid;
+
+  // Bloque de Pagos a Cuenta del Profesor / Vendedor
+  const pacItemsHtml = pacObj.count > 0
+    ? pacObj.list.map((it, idx) => `
+        <tr>
+          <td class="center"><strong>Pago #${idx + 1}</strong></td>
+          <td class="center">${it.fecha}</td>
+          <td>Entrega a cuenta (${currentMonthName})</td>
+          <td class="num" style="color:#15803d;font-weight:800">${formatMoney(it.monto)}</td>
+          <td class="center no-print">
+            <button class="btn btn-danger" style="padding:2px 8px;font-size:0.75rem;min-height:28px" onclick="deletePagoACuenta(${it.id})">🗑️ Quitar</button>
+          </td>
+        </tr>
+      `).join("")
+    : `<tr><td colspan="5" class="center" style="color:var(--muted);padding:10px">No registra pagos a cuenta en ${currentMonthName}.</td></tr>`;
+
+  // Si es VENDEDOR, renderizar vista especial de Vendedor (sin conteo de horas)
+  if (p.isVendedor) {
+    const vc = p.vendedorCalc || getVendedorMonthCalc(profName, currentMonthName);
+    const advColor = advObj.net > 0 ? "#166534" : (advObj.net < 0 ? "#991b1b" : "#52525b");
+    const noLiqBadge = p.noLiquida
+      ? ` · <span class="chip" style="background:#fee2e2;color:#991b1b">🚫 NO SUMAR</span>`
+      : ` · Modalidad: <strong style="color:#fff">💼 VENDEDOR (% Venta + Sueldo Fijo)</strong>`;
+
+    document.getElementById("res-individual-detail").innerHTML = `
+      <div class="capture-header">
+        <div>
+          <div style="font-size:1.15rem;font-weight:800">PROTEÍNA GYM — DETALLE DE LIQUIDACIÓN DE VENDEDOR</div>
+          <div style="font-size:0.9rem;color:#e4e4e7">Vendedor/a: <strong style="color:var(--yellow)">${profName.toUpperCase()}</strong> · ${currentMonthName}${noLiqBadge}</div>
+        </div>
+        <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;text-align:right">
+          <div>
+            <div style="font-size:0.76rem;color:#e4e4e7">TOTAL SUELDO</div>
+            <div style="font-size:1.25rem;font-weight:800;color:#fff">${formatMoney(finalTotalMoney)}</div>
+          </div>
+          <div>
+            <div style="font-size:0.76rem;color:#86efac">PAGADO A CUENTA (${pacObj.count})</div>
+            <div style="font-size:1.25rem;font-weight:800;color:#86efac">${formatMoney(pacObj.totalPaid)}</div>
+          </div>
+          <div>
+            <div style="font-size:0.76rem;color:var(--yellow)">SALDO RESTANTE</div>
+            <div style="font-size:1.4rem;font-weight:800;color:var(--yellow)">${formatMoney(remainingMoney)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="margin-bottom:16px">
+        <table>
+          <thead>
+            <tr>
+              <th>Cantidad Vendida ($)</th>
+              <th>% de Comisión</th>
+              <th>Comisión por Venta ($)</th>
+              <th>Sueldo Fijo ($)</th>
+              <th>Total Calculado ($)</th>
+              <th style="background:#854d0e;color:#fef08a">Total Redondeado ($)</th>
+              <th>Adelantos (+/-)</th>
+              <th>TOTAL A COBRAR ($)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="num"><strong>${formatMoney(vc.ventas)}</strong></td>
+              <td class="center"><strong>${vc.porcentaje}%</strong></td>
+              <td class="num" style="color:#1e3a8a;font-weight:800">${formatMoney(vc.comision)}</td>
+              <td class="num"><strong>${formatMoney(vc.sueldoFijo)}</strong></td>
+              <td class="num" style="font-weight:800">${formatMoney(vc.totalExacto)}</td>
+              <td class="num" style="background:#fefce8;font-weight:800;color:#854d0e">${vc.hasRedondeo ? formatMoney(vc.totalRedondeado) : `${formatMoney(vc.totalExacto)} (Sin redondear)`}</td>
+              <td class="num" style="font-weight:800;color:${advColor}">${formatSignedMoney(advObj.net)}</td>
+              <td class="num" style="background:var(--yellow-soft);font-weight:800;font-size:1.05rem">${formatMoney(finalTotalMoney)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 style="font-size:0.98rem;font-weight:800;margin-bottom:8px">💵 Registro de Pagos a Cuenta — ${profName} (${currentMonthName}: ${pacObj.count} ${pacObj.count === 1 ? 'pago registrado' : 'pagos registrados'})</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>N° de Pago</th>
+              <th>Fecha</th>
+              <th>Concepto</th>
+              <th>Valor del Pago ($)</th>
+              <th class="no-print">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pacItemsHtml}
+          </tbody>
+          <tfoot>
+            <tr style="background:#f0fdf4;font-weight:800">
+              <td colspan="3">TOTAL PAGADO A CUENTA (${pacObj.count} ${pacObj.count === 1 ? 'pago' : 'pagos'})</td>
+              <td class="num" style="color:#15803d">${formatMoney(pacObj.totalPaid)}</td>
+              <td class="no-print"></td>
+            </tr>
+            <tr class="tot-row">
+              <td colspan="3">SALDO RESTANTE A PAGAR A ${profName.toUpperCase()}</td>
+              <td class="num">${formatMoney(remainingMoney)}</td>
+              <td class="no-print"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    `;
+    return;
+  }
+
+  const effGym = p.effRateGym || (p.customRate > 0 ? p.customRate : calc.rateGym);
+  const effBox = p.effRateBox || (p.customRate > 0 ? p.customRate : calc.rateBox);
+
   const rows = [
-    { u: "1. Proteína Gym", rate: calc.rateGym, n: p.gymNorm, d: p.gymDob, inorm: p.costGymNorm, idob: p.costGymDob, itot: p.costGym },
-    { u: "2. Proteína Box", rate: calc.rateBox, n: p.boxNorm, d: p.boxDob, inorm: p.costBoxNorm, idob: p.costBoxDob, itot: p.costBox }
+    { u: "1. Proteína Gym", rate: effGym, n: p.gymNorm, d: p.gymDob, inorm: p.costGymNorm, idob: p.costGymDob, itot: p.costGym },
+    { u: "2. Proteína Box", rate: effBox, n: p.boxNorm, d: p.boxDob, inorm: p.costBoxNorm, idob: p.costBoxDob, itot: p.costBox }
   ];
   let tn = 0, td = 0, totInorm = 0, totIdob = 0;
   const body = rows.map(r => {
@@ -3240,7 +3834,7 @@ function renderIndividualDetail() {
     const t = r.n + r.d;
     return `<tr>
       <td><strong>${r.u}</strong></td>
-      <td class="num">${formatMoney(r.rate)}/h</td>
+      <td class="num">${formatMoney(r.rate)}/h${p.customRate > 0 ? ' <span style="font-size:0.72rem;color:#854d0e">(Hora Esp.)</span>' : ''}</td>
       <td class="num">${r.n.toFixed(1)} hs</td>
       <td class="num">${r.d.toFixed(1)} hs</td>
       <td class="num"><strong>${t.toFixed(1)} hs</strong></td>
@@ -3249,10 +3843,6 @@ function renderIndividualDetail() {
       <td class="num"><strong>${formatMoney(r.itot)}</strong></td>
     </tr>`;
   }).join("");
-
-  const subTotalMoney = p.subHoras;
-  const finalTotalMoney = p.noLiquida ? 0 : (subTotalMoney + advObj.net);
-  const remainingMoney = finalTotalMoney - pacObj.totalPaid;
 
   // Construir cronograma de días y horarios cubiertos por este profesor en el período
   const coveredRows = [];
@@ -3272,9 +3862,10 @@ function renderIndividualDetail() {
         }
       }
 
+      const unitRate = p.customRate > 0 ? p.customRate : (u === "Proteína Gym" ? calc.rateGym : calc.rateBox);
+
       if (fnRule) {
         const dayHs = Number(fnRule.horas) || 0;
-        const unitRate = u === "Proteína Gym" ? calc.rateGym : calc.rateBox;
         const dayPay = p.noLiquida ? 0 : (dayHs * unitRate);
         const ranges = getGroupedTimeRanges(slotsWorked);
         const rangesText = ranges.length > 0
@@ -3288,13 +3879,12 @@ function renderIndividualDetail() {
             <td>${rangesText}</td>
             <td class="center"><span class="badge-normal" style="background:#dbeafe;color:#1e3a8a">🏳️ FERIADO NORMAL ×1</span></td>
             <td class="num"><strong>${dayHs.toFixed(1)} hs</strong></td>
-            <td class="num"><strong>${p.noLiquida ? '$0 (No suma)' : formatMoney(dayPay)}</strong></td>
+            <td class="num"><strong>${p.noLiquida ? '$0 (No sumar)' : formatMoney(dayPay)}</strong></td>
           </tr>
         `);
       } else if (slotsWorked.length > 0) {
         const ranges = getGroupedTimeRanges(slotsWorked);
         const dayHs = slotsWorked.length * 0.5;
-        const unitRate = u === "Proteína Gym" ? calc.rateGym : calc.rateBox;
         const dayPay = p.noLiquida ? 0 : (dayHs * unitRate * (dbl ? 2 : 1));
         coveredRows.push(`
           <tr>
@@ -3303,7 +3893,7 @@ function renderIndividualDetail() {
             <td>${ranges.map(rg => `<span class="chip" style="background:#fef9c3;color:#0a0a0a">${rg.text} (${rg.hs.toFixed(1)}h)</span>`).join(" ")}</td>
             <td class="center"><span class="${dbl?'badge-double':'badge-normal'}">${dbl?'DOBLE ×2':'NORMAL'}</span></td>
             <td class="num"><strong>${dayHs.toFixed(1)} hs</strong></td>
-            <td class="num"><strong>${p.noLiquida ? '$0 (No suma)' : formatMoney(dayPay)}</strong></td>
+            <td class="num"><strong>${p.noLiquida ? '$0 (No sumar)' : formatMoney(dayPay)}</strong></td>
           </tr>
         `);
       }
@@ -3331,24 +3921,10 @@ function renderIndividualDetail() {
     `;
   }
 
-  // Bloque de Pagos a Cuenta del Profesor
-  const pacItemsHtml = pacObj.count > 0
-    ? pacObj.list.map((it, idx) => `
-        <tr>
-          <td class="center"><strong>Pago #${idx + 1}</strong></td>
-          <td class="center">${it.fecha}</td>
-          <td>Entrega a cuenta (${currentMonthName})</td>
-          <td class="num" style="color:#15803d;font-weight:800">${formatMoney(it.monto)}</td>
-          <td class="center no-print">
-            <button class="btn btn-danger" style="padding:2px 8px;font-size:0.75rem;min-height:28px" onclick="deletePagoACuenta(${it.id})">🗑️ Quitar</button>
-          </td>
-        </tr>
-      `).join("")
-    : `<tr><td colspan="5" class="center" style="color:var(--muted);padding:10px">No registra pagos a cuenta en ${currentMonthName}.</td></tr>`;
-
+  const customHeaderNote = p.customRate > 0 ? ` · <span class="chip" style="background:#fef08a;color:#854d0e">⭐ Valor Hora Especial: ${formatMoney(p.customRate)}/h</span>` : "";
   const noLiqHeaderBadge = p.noLiquida
-    ? ` · <span class="chip" style="background:#fee2e2;color:#991b1b">🚫 NO SUMA A LIQUIDACIÓN (Dueño)</span>`
-    : ` · Categoría: <strong style="color:#fff">${p.category || 'Proteína Gym'}</strong>`;
+    ? ` · <span class="chip" style="background:#fee2e2;color:#991b1b">🚫 NO SUMAR</span>`
+    : ` · Categoría: <strong style="color:#fff">${p.category || 'Proteína Gym'}</strong>${customHeaderNote}`;
 
   document.getElementById("res-individual-detail").innerHTML = `
     <div class="capture-header">
@@ -3377,7 +3953,7 @@ function renderIndividualDetail() {
         <thead>
           <tr>
             <th>Unidad Trabajada</th>
-            <th>Valor Hora Unidad</th>
+            <th>Valor Hora</th>
             <th>Horas Normales</th>
             <th>Horas Dobles (×2)</th>
             <th>Total Horas</th>
@@ -3466,6 +4042,7 @@ function renderReportesPorUnidad() {
   let gN=0, gD=0, gC=0, bN=0, bD=0, bC=0;
 
   Object.values(calc.byProf).forEach(p => {
+    if (p.isVendedor) return; // Los vendedores no tienen conteo de horas por unidad
     const cGym = p.costGym;
     const cBox = p.costBox;
     const cTot = p.subHoras;
@@ -3475,10 +4052,11 @@ function renderReportesPorUnidad() {
       bN += p.boxNorm; bD += p.boxDob; bC += cBox;
     }
 
-    const noLiqBadge = p.noLiquida ? ` <span class="chip" style="background:#fee2e2;color:#991b1b;font-size:0.72rem">🚫 No suma</span>` : "";
+    const noLiqBadge = p.noLiquida ? ` <span class="chip" style="background:#fee2e2;color:#991b1b;font-size:0.72rem">🚫 No sumar</span>` : "";
+    const customBadge = p.customRate > 0 ? ` <span class="chip" style="background:#fef08a;color:#854d0e;font-size:0.72rem">⭐ ${formatMoney(p.customRate)}/h</span>` : "";
 
     rows += `<tr style="${p.noLiquida ? 'opacity:0.7;background:#fafafa' : ''}">
-      <td>${renderChip(p.name)}${noLiqBadge}</td>
+      <td>${renderChip(p.name)}${customBadge}${noLiqBadge}</td>
       <td class="num">${p.gymNorm.toFixed(1)}</td><td class="num">${p.gymDob.toFixed(1)}</td><td class="num"><strong>${(p.gymNorm+p.gymDob).toFixed(1)}</strong></td><td class="num">${formatMoney(cGym)}</td>
       <td class="num">${p.boxNorm.toFixed(1)}</td><td class="num">${p.boxDob.toFixed(1)}</td><td class="num"><strong>${(p.boxNorm+p.boxDob).toFixed(1)}</strong></td><td class="num">${formatMoney(cBox)}</td>
       <td class="num" style="background:${p.noLiquida ? '#f4f4f5' : 'var(--yellow-soft)'}"><strong>${formatMoney(cTot)}</strong></td>
@@ -3514,7 +4092,7 @@ function renderResumenAnual() {
   const allCalcs = MONTHS.map(m => calculateMonthData(m.name, 1, m.days));
   const profAcc = {};
   profesores.forEach(p => {
-    profAcc[p.name] = { name: p.name, status: p.status, noLiquida: Boolean(p.noLiquida), norm: 0, dob: 0, pay: 0, perMonth: [] };
+    profAcc[p.name] = { name: p.name, status: p.status, noLiquida: Boolean(p.noLiquida), isVendedor: Boolean(p.isVendedor), norm: 0, dob: 0, pay: 0, perMonth: [] };
   });
 
   const unitAcc = {
@@ -3551,20 +4129,20 @@ function renderResumenAnual() {
       if (ths > topProf.hs) topProf = { name: pa.name, hs: ths };
       totAnualNorm += pa.norm; totAnualDob += pa.dob; totAnualPay += pa.pay;
     }
-    const mCells = pa.perMonth.map(v => `<td class="num">${v > 0 ? v.toFixed(1) : '-'}</td>`).join("");
-    const noLiqTag = pa.noLiquida ? ` <span class="chip" style="background:#fee2e2;color:#991b1b;font-size:0.7rem">🚫 No suma</span>` : "";
+    const mCells = pa.perMonth.map(v => `<td class="num">${pa.isVendedor ? 'Vend.' : (v > 0 ? v.toFixed(1) : '-')}</td>`).join("");
+    const noLiqTag = pa.noLiquida ? ` <span class="chip" style="background:#fee2e2;color:#991b1b;font-size:0.7rem">🚫 No sumar</span>` : "";
     pRows += `<tr style="${pa.noLiquida ? 'opacity:0.72;background:#fafafa' : ''}">
       <td>${renderChip(pa.name)}${noLiqTag}</td>
-      <td class="num">${pa.norm.toFixed(1)}</td>
-      <td class="num">${pa.dob.toFixed(1)}</td>
-      <td class="num"><strong>${ths.toFixed(1)}</strong></td>
+      <td class="num">${pa.isVendedor ? '-' : pa.norm.toFixed(1)}</td>
+      <td class="num">${pa.isVendedor ? '-' : pa.dob.toFixed(1)}</td>
+      <td class="num"><strong>${pa.isVendedor ? 'Vendedor' : ths.toFixed(1)}</strong></td>
       <td class="num" style="background:${pa.noLiquida ? '#f4f4f5' : 'var(--yellow-soft)'}"><strong>${formatMoney(pa.pay)}</strong></td>
       ${mCells}
     </tr>`;
   });
 
   document.getElementById("anual-kpis").innerHTML = `
-    <div class="kpi-card"><div class="lbl">Total Acumulado Liquidable</div><div class="val" style="color:#15803d">${formatMoney(totAnualPay)}</div><div class="sub">Oct 2026 – Dic 2027 (sin dueños)</div></div>
+    <div class="kpi-card"><div class="lbl">Total Acumulado Liquidable</div><div class="val" style="color:#15803d">${formatMoney(totAnualPay)}</div><div class="sub">Oct 2026 – Dic 2027</div></div>
     <div class="kpi-card"><div class="lbl">Total Horas Liquidables</div><div class="val">${(totAnualNorm+totAnualDob).toFixed(1)} hs</div><div class="sub">${totAnualNorm.toFixed(1)}h Norm · ${totAnualDob.toFixed(1)}h Dobles</div></div>
     <div class="kpi-card"><div class="lbl">Mayor Carga Horaria</div><div class="val">${topProf.name}</div><div class="sub">${topProf.hs.toFixed(1)} horas</div></div>
   `;
@@ -3572,16 +4150,17 @@ function renderResumenAnual() {
   const mHeaders = MONTHS.map(m => `<th>${m.name.slice(0,3)} ${String(m.year).slice(2)}</th>`).join("");
   document.getElementById("anual-prof-table").innerHTML = `
     <table>
-      <thead><tr><th>Profesor</th><th>Hs Normales</th><th>Hs Dobles</th><th>Total Horas</th><th>Total Cobrado ($)</th>${mHeaders}</tr></thead>
+      <thead><tr><th>Profesor / Vendedor</th><th>Hs Normales</th><th>Hs Dobles</th><th>Total Horas</th><th>Total Cobrado ($)</th>${mHeaders}</tr></thead>
       <tbody>${pRows}</tbody>
     </table>
   `;
 
   let uRows = "";
+  let totUnitCostAnual = unitAcc["Proteína Gym"].cost + unitAcc["Proteína Box"].cost;
   UNITS.forEach((u, i) => {
     const ua = unitAcc[u];
     const ut = ua.norm + ua.dob;
-    const pct = totAnualPay > 0 ? ((ua.cost / totAnualPay)*100).toFixed(1)+"%" : "0.0%";
+    const pct = totUnitCostAnual > 0 ? ((ua.cost / totUnitCostAnual)*100).toFixed(1)+"%" : "0.0%";
     uRows += `<tr>
       <td><strong>${i+1}. ${u}</strong></td>
       <td class="num">${ua.norm.toFixed(1)} hs</td>
@@ -3601,7 +4180,7 @@ function renderResumenAnual() {
         <td class="num">${totAnualNorm.toFixed(1)} hs</td>
         <td class="num">${totAnualDob.toFixed(1)} hs</td>
         <td class="num">${(totAnualNorm+totAnualDob).toFixed(1)} hs</td>
-        <td class="num">${formatMoney(totAnualPay)}</td>
+        <td class="num">${formatMoney(totUnitCostAnual)}</td>
         <td class="center">100.0%</td>
       </tr></tfoot>
     </table>
@@ -3616,6 +4195,24 @@ function renderProfes() {
     const mHs = bp.gymNorm + bp.gymDob + bp.boxNorm + bp.boxDob;
     const mPay = bp.subHoras;
     const isBox = p.category === "Proteína Box";
+    const isVend = Boolean(p.isVendedor);
+
+    const rateOrVendConfigHtml = isVend
+      ? `<div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap">
+           <label style="font-size:0.78rem"><strong>% Venta:</strong>
+             <input type="number" value="${p.vendedorPorcentaje || ''}" placeholder="%" step="0.1" min="0" style="width:68px;min-height:34px;padding:3px 6px;text-align:right" onchange="updateProfDefaultVendedorCfg(${idx}, 'pct', this.value)" />
+           </label>
+           <label style="font-size:0.78rem"><strong>Fijo ($):</strong>
+             <input type="number" value="${p.vendedorSueldoFijo || ''}" placeholder="Sueldo Fijo" step="5000" min="0" style="width:110px;min-height:34px;padding:3px 6px;text-align:right" onchange="updateProfDefaultVendedorCfg(${idx}, 'fijo', this.value)" />
+           </label>
+         </div>`
+      : `<div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap">
+           <input type="number" value="${p.customRate && p.customRate > 0 ? p.customRate : ''}" placeholder="General (${formatMoney(isBox ? calc.rateBox : calc.rateGym)})" step="500" min="0"
+             style="width:145px;min-height:36px;padding:4px 8px;text-align:right;font-weight:700;background:${p.customRate > 0 ? '#fefce8' : '#fff'};border-color:${p.customRate > 0 ? '#ca8a04' : '#d4d4d8'}"
+             onchange="updateProfCustomRate(${idx}, this.value)" />
+           ${p.customRate > 0 ? `<span class="chip" style="background:#fef08a;color:#854d0e;font-size:0.74rem">⭐ ${formatMoney(p.customRate)}/h</span>` : `<span style="font-size:0.75rem;color:var(--muted)">Usa general</span>`}
+         </div>`;
+
     return `<tr>
       <td>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
@@ -3625,13 +4222,19 @@ function renderProfes() {
       </td>
       <td class="center">${renderChip(p.name)}</td>
       <td class="center">
+        <button class="btn btn-outline" style="padding:5px 10px;font-size:0.82rem;min-height:36px;background:${isVend?'#fef08a':'#f4f4f5'};color:${isVend?'#854d0e':'#18181b'};border-color:${isVend?'#ca8a04':'#a1a1aa'}" onclick="toggleProfVendedor(${idx})">
+          ${isVend ? '💼 Vendedor (% + Fijo)' : '⏱️ Cobra por Hora'}
+        </button>
+      </td>
+      <td class="center">
         <button class="btn btn-outline" style="padding:5px 12px;font-size:0.82rem;min-height:36px;background:${isBox?'#d1fae5':'#f4f4f5'};color:${isBox?'#065f46':'#18181b'};border-color:${isBox?'#059669':'#a1a1aa'}" onclick="toggleProfCategory(${idx})">
           ${isBox ? '🥊 2. Proteína Box' : '🏋️ 1. Proteína Gym'}
         </button>
       </td>
+      <td class="center">${rateOrVendConfigHtml}</td>
       <td class="center">
         <button class="btn ${p.noLiquida?'btn-danger':'btn-success'}" style="padding:5px 12px;font-size:0.82rem;min-height:36px" onclick="toggleProfNoLiquida(${idx})">
-          ${p.noLiquida ? '🚫 No sumar (Dueño)' : '💰 Sí sumar a liquidación'}
+          ${p.noLiquida ? '🚫 No sumar' : '💰 Sí sumar a liquidación'}
         </button>
       </td>
       <td class="center">
@@ -3639,14 +4242,14 @@ function renderProfes() {
           ${p.status}
         </button>
       </td>
-      <td class="num">${mHs.toFixed(1)} hs <span style="font-size:0.75rem;color:var(--muted)">(G:${(bp.gymNorm+bp.gymDob).toFixed(1)} / B:${(bp.boxNorm+bp.boxDob).toFixed(1)})</span></td>
-      <td class="num"><strong>${p.noLiquida ? '$0 (No suma)' : formatMoney(mPay)}</strong></td>
+      <td class="num">${isVend ? '<span class="chip" style="background:#fef08a;color:#854d0e;font-size:0.74rem">Sin conteo de hs (Vendedor)</span>' : `${mHs.toFixed(1)} hs <span style="font-size:0.75rem;color:var(--muted)">(G:${(bp.gymNorm+bp.gymDob).toFixed(1)} / B:${(bp.boxNorm+bp.boxDob).toFixed(1)})</span>`}</td>
+      <td class="num"><strong>${p.noLiquida ? '$0 (No sumar)' : formatMoney(mPay)}</strong></td>
     </tr>`;
   }).join("");
 
   document.getElementById("profes-table").innerHTML = `
     <table>
-      <thead><tr><th>Nombre del Profesor</th><th>Color</th><th>Categoría (Click para cambiar)</th><th>¿Sumar a Liquidación? (Click para cambiar)</th><th>Estado</th><th>Horas (${currentMonthName})</th><th>Liquidación (${currentMonthName})</th></tr></thead>
+      <thead><tr><th>Nombre</th><th>Color</th><th>Modalidad (Click para cambiar)</th><th>Categoría</th><th>Valor Hora Especial ($) / Config. Vendedor</th><th>¿Sumar a Liquidación?</th><th>Estado</th><th>Horas (${currentMonthName})</th><th>Liquidación (${currentMonthName})</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
@@ -3689,6 +4292,10 @@ function renameProfesor(idx) {
         }
       }
     });
+    if (vendedoresMesData[m.name] && vendedoresMesData[m.name][oldName]) {
+      vendedoresMesData[m.name][newName] = vendedoresMesData[m.name][oldName];
+      delete vendedoresMesData[m.name][oldName];
+    }
   });
 
   reemplazosLog.forEach(r => {
@@ -3715,24 +4322,36 @@ function renameProfesor(idx) {
 
 function addNewProfesor() {
   const nameInput = document.getElementById("new-prof-name");
+  const modeInput = document.getElementById("new-prof-mode");
   const catInput = document.getElementById("new-prof-category");
+  const customRateInput = document.getElementById("new-prof-custom-rate");
   const liqInput = document.getElementById("new-prof-liquida");
   const colorInput = document.getElementById("new-prof-color");
   const name = nameInput.value.trim();
-  if (!name) { alert("Ingrese el nombre del profesor."); return; }
+  if (!name) { alert("Ingrese el nombre del profesor o vendedor."); return; }
   if (profesores.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-    alert("⚠️ Ya existe un profesor con ese nombre.");
+    alert("⚠️ Ya existe una persona con ese nombre.");
     return;
   }
+  const customRateVal = customRateInput && Number(customRateInput.value) > 0 ? Number(customRateInput.value) : null;
+  const isVend = modeInput ? (modeInput.value === "vendedor") : false;
   profesores.push({
     name,
     status: "Activo",
     category: catInput ? catInput.value : "Proteína Gym",
     noLiquida: liqInput ? (liqInput.value === "no") : false,
+    customRate: customRateVal,
+    isVendedor: isVend,
+    vendedorPorcentaje: 0,
+    vendedorSueldoFijo: 0,
     bg: colorInput.value,
     fg: "#0a0a0a"
   });
+  if (isVend) {
+    ensureVendedorMesEntry(currentMonthName, name);
+  }
   nameInput.value = "";
+  if (customRateInput) customRateInput.value = "";
   saveState();
   populateSelects();
   refreshAll();
