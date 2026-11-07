@@ -767,9 +767,17 @@
   <section id="view-profes" class="view">
     <div class="card">
       <div class="card-hdr">
-        <h2>Profesores</h2>
+        <h2>Profesores (Categoría y Liquidación)</h2>
         <div class="toolbar" style="margin-bottom:0">
           <input type="text" id="new-prof-name" placeholder="Nombre del profesor..." />
+          <select id="new-prof-category" title="Categoría habitual">
+            <option value="Proteína Gym">Categoría: 1. Proteína Gym</option>
+            <option value="Proteína Box">Categoría: 2. Proteína Box</option>
+          </select>
+          <select id="new-prof-liquida" title="¿Incluir en liquidación?">
+            <option value="si">💰 Sí sumar a liquidación</option>
+            <option value="no">🚫 No sumar (Dueño / Excluido)</option>
+          </select>
           <input type="color" id="new-prof-color" value="#fde047" title="Elegir color" style="height:44px;width:58px;padding:2px;cursor:pointer" />
           <button class="btn btn-primary" onclick="addNewProfesor()">➕ Agregar Profesor</button>
         </div>
@@ -784,15 +792,27 @@
   <section id="view-config" class="view">
     <div class="card">
       <div class="card-hdr">
-        <h2>Valor de la Hora</h2>
+        <h2>Valor de la Hora por Unidad (Gym y Box)</h2>
       </div>
-      <div class="toolbar">
-        <label><strong>Valor de la Hora Normal ($):</strong>
-          <input type="number" id="cfg-rate" value="5000" step="500" onchange="updateHourlyRate(this.value)" />
-        </label>
-        <span style="font-size:0.95rem;font-weight:800;color:#991b1b;background:#fee2e2;padding:10px 14px;border-radius:8px">
-          Valor Hora Doble (Domingos y Feriados ×2): <span id="cfg-double-rate">$10.000</span>
-        </span>
+      <div style="background:var(--yellow-soft);border:2px solid var(--yellow-border);border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <div style="font-size:0.95rem;font-weight:800;margin-bottom:10px">
+          💡 Cada hora trabajada en <strong>1. Proteína Gym</strong> se paga al Valor Hora Gym y cada hora trabajada en <strong>2. Proteína Box</strong> se paga al Valor Hora Box (incluso si un profe de Gym hace un reemplazo en Box).
+        </div>
+        <div class="toolbar" style="margin-bottom:0">
+          <label><strong>🏋️ Valor Hora 1. Proteína Gym ($):</strong>
+            <input type="number" id="cfg-rate-gym" value="5000" step="500" onchange="updateHourlyRates()" />
+          </label>
+          <span style="font-size:0.9rem;font-weight:800;color:#991b1b;background:#fee2e2;padding:10px 14px;border-radius:8px">
+            Gym Doble (Dom/Feriados ×2): <span id="cfg-double-rate-gym">$10.000</span>
+          </span>
+
+          <label><strong>🥊 Valor Hora 2. Proteína Box ($):</strong>
+            <input type="number" id="cfg-rate-box" value="5000" step="500" onchange="updateHourlyRates()" />
+          </label>
+          <span style="font-size:0.9rem;font-weight:800;color:#065f46;background:#d1fae5;padding:10px 14px;border-radius:8px">
+            Box Doble (Dom/Feriados ×2): <span id="cfg-double-rate-box">$10.000</span>
+          </span>
+        </div>
       </div>
       <div class="table-wrap" id="cfg-months-table"></div>
     </div>
@@ -801,7 +821,7 @@
       <div class="card-hdr">
         <h2>Feriados (Pago Doble ×2)</h2>
         <div class="toolbar" style="margin-bottom:0">
-          <input type="date" id="new-fer-date" min="2026-11-01" max="2027-12-31" />
+          <input type="date" id="new-fer-date" min="2026-10-01" max="2027-12-31" />
           <input type="text" id="new-fer-desc" placeholder="Nombre del feriado..." />
           <button class="btn btn-primary" onclick="addFeriado()">➕ Agregar Feriado</button>
         </div>
@@ -856,7 +876,7 @@
 
 <!-- Librería xlsx-js-style para generar archivos Excel (.xlsx) con colores, bordes y diseño de tabla -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-<!-- Librería html2canvas para tomar capturas en PNG / JPG de horarios y liquidaciones -->
+<!-- Librería html2canvas para tomar capturas de horarios y liquidaciones -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <script>
@@ -869,20 +889,21 @@ const CLOUD_DB_URL = "https://proteina-gym-cronograma-profes-default-rtdb.fireba
 // 2 UNIDADES DE NEGOCIO UNIFICADAS (Proteína Box absorbió a Boxeo)
 const UNITS = ["Proteína Gym", "Proteína Box"];
 const MONTHS = [
-  { name: "NOVIEMBRE 2026", year: 2026, month: 11, days: 30, status: "ABIERTO", closedRate: 5000 },
-  { name: "DICIEMBRE 2026", year: 2026, month: 12, days: 31, status: "ABIERTO", closedRate: 5000 },
-  { name: "ENERO 2027", year: 2027, month: 1, days: 31, status: "ABIERTO", closedRate: 5000 },
-  { name: "FEBRERO 2027", year: 2027, month: 2, days: 28, status: "ABIERTO", closedRate: 5000 },
-  { name: "MARZO 2027", year: 2027, month: 3, days: 31, status: "ABIERTO", closedRate: 5000 },
-  { name: "ABRIL 2027", year: 2027, month: 4, days: 30, status: "ABIERTO", closedRate: 5000 },
-  { name: "MAYO 2027", year: 2027, month: 5, days: 31, status: "ABIERTO", closedRate: 5000 },
-  { name: "JUNIO 2027", year: 2027, month: 6, days: 30, status: "ABIERTO", closedRate: 5000 },
-  { name: "JULIO 2027", year: 2027, month: 7, days: 31, status: "ABIERTO", closedRate: 5000 },
-  { name: "AGOSTO 2027", year: 2027, month: 8, days: 31, status: "ABIERTO", closedRate: 5000 },
-  { name: "SEPTIEMBRE 2027", year: 2027, month: 9, days: 30, status: "ABIERTO", closedRate: 5000 },
-  { name: "OCTUBRE 2027", year: 2027, month: 10, days: 31, status: "ABIERTO", closedRate: 5000 },
-  { name: "NOVIEMBRE 2027", year: 2027, month: 11, days: 30, status: "ABIERTO", closedRate: 5000 },
-  { name: "DICIEMBRE 2027", year: 2027, month: 12, days: 31, status: "ABIERTO", closedRate: 5000 }
+  { name: "OCTUBRE 2026", year: 2026, month: 10, days: 31, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 },
+  { name: "NOVIEMBRE 2026", year: 2026, month: 11, days: 30, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 },
+  { name: "DICIEMBRE 2026", year: 2026, month: 12, days: 31, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 },
+  { name: "ENERO 2027", year: 2027, month: 1, days: 31, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 },
+  { name: "FEBRERO 2027", year: 2027, month: 2, days: 28, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 },
+  { name: "MARZO 2027", year: 2027, month: 3, days: 31, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 },
+  { name: "ABRIL 2027", year: 2027, month: 4, days: 30, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 },
+  { name: "MAYO 2027", year: 2027, month: 5, days: 31, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 },
+  { name: "JUNIO 2027", year: 2027, month: 6, days: 30, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 },
+  { name: "JULIO 2027", year: 2027, month: 7, days: 31, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 },
+  { name: "AGOSTO 2027", year: 2027, month: 8, days: 31, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 },
+  { name: "SEPTIEMBRE 2027", year: 2027, month: 9, days: 30, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 },
+  { name: "OCTUBRE 2027", year: 2027, month: 10, days: 31, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 },
+  { name: "NOVIEMBRE 2027", year: 2027, month: 11, days: 30, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 },
+  { name: "DICIEMBRE 2027", year: 2027, month: 12, days: 31, status: "ABIERTO", closedRateGym: 5000, closedRateBox: 5000 }
 ];
 
 const DAYS_ES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
@@ -895,28 +916,51 @@ for (let h = 7; h < 23; h++) {
   TIME_SLOTS.push(`${hh}:30 a ${hhNext}:00`);
 }
 
-let currentRate = 5000;
-let currentMonthName = "NOVIEMBRE 2026";
+let currentRateGym = 5000;
+let currentRateBox = 5000;
+let currentMonthName = "OCTUBRE 2026";
 let lastLoadedTimestamp = 0;
 
+const DEFAULT_BOX_PROFS = ["Cande", "Agustin Castro", "Alejandra Stefani", "Fernanda Firpo", "Nahuel", "Yamila"];
+const DEFAULT_NO_LIQUIDA_PROFS = ["Sil", "Robert"];
+
 let profesores = [
-  { name: "Sil", status: "Activo", bg: "#D9FBFB", fg: "#004D4D" },
-  { name: "Robert", status: "Activo", bg: "#DEFBE6", fg: "#0E6027" },
-  { name: "Ceci", status: "Activo", bg: "#E0E7FF", fg: "#3730A3" },
-  { name: "Jesi", status: "Activo", bg: "#FFF2D6", fg: "#8E5A00" },
-  { name: "Valentin", status: "Activo", bg: "#FFD6E8", fg: "#9F1853" },
-  { name: "Agustin", status: "Activo", bg: "#D0E2FF", fg: "#002D9C" },
-  { name: "Oscar", status: "Activo", bg: "#ECFCCB", fg: "#3F6212" },
-  { name: "Irina", status: "Activo", bg: "#FFD7D9", fg: "#A2191F" },
-  { name: "Luna", status: "Activo", bg: "#E8DAFF", fg: "#491D8B" },
-  { name: "Cande", status: "Activo", bg: "#CFFAFE", fg: "#155E75" },
-  { name: "Agustin Castro", status: "Activo", bg: "#FDE68A", fg: "#78350F" },
-  { name: "Alejandra Stefani", status: "Activo", bg: "#FBCFE8", fg: "#831843" },
-  { name: "Fernanda Firpo", status: "Activo", bg: "#DDD6FE", fg: "#4C1D95" },
-  { name: "Nahuel", status: "Activo", bg: "#CCFBF1", fg: "#115E59" }
+  { name: "Sil", status: "Activo", category: "Proteína Gym", noLiquida: true, bg: "#D9FBFB", fg: "#004D4D" },
+  { name: "Robert", status: "Activo", category: "Proteína Gym", noLiquida: true, bg: "#DEFBE6", fg: "#0E6027" },
+  { name: "Ceci", status: "Activo", category: "Proteína Gym", noLiquida: false, bg: "#E0E7FF", fg: "#3730A3" },
+  { name: "Jesi", status: "Activo", category: "Proteína Gym", noLiquida: false, bg: "#FFF2D6", fg: "#8E5A00" },
+  { name: "Valentin", status: "Activo", category: "Proteína Gym", noLiquida: false, bg: "#FFD6E8", fg: "#9F1853" },
+  { name: "Agustin", status: "Activo", category: "Proteína Gym", noLiquida: false, bg: "#D0E2FF", fg: "#002D9C" },
+  { name: "Oscar", status: "Activo", category: "Proteína Gym", noLiquida: false, bg: "#ECFCCB", fg: "#3F6212" },
+  { name: "Irina", status: "Activo", category: "Proteína Gym", noLiquida: false, bg: "#FFD7D9", fg: "#A2191F" },
+  { name: "Luna", status: "Activo", category: "Proteína Gym", noLiquida: false, bg: "#E8DAFF", fg: "#491D8B" },
+  { name: "Cande", status: "Activo", category: "Proteína Box", noLiquida: false, bg: "#CFFAFE", fg: "#155E75" },
+  { name: "Agustin Castro", status: "Activo", category: "Proteína Box", noLiquida: false, bg: "#FDE68A", fg: "#78350F" },
+  { name: "Alejandra Stefani", status: "Activo", category: "Proteína Box", noLiquida: false, bg: "#FBCFE8", fg: "#831843" },
+  { name: "Fernanda Firpo", status: "Activo", category: "Proteína Box", noLiquida: false, bg: "#DDD6FE", fg: "#4C1D95" },
+  { name: "Nahuel", status: "Activo", category: "Proteína Box", noLiquida: false, bg: "#CCFBF1", fg: "#115E59" },
+  { name: "Yamila", status: "Activo", category: "Proteína Box", noLiquida: false, bg: "#FED7AA", fg: "#9A3412" }
 ];
 
+function normalizeProfesoresList(list) {
+  const cleaned = list
+    .filter(p => p && p.name && p.name.toLowerCase() !== "santi plani")
+    .map(p => ({
+      name: p.name,
+      status: p.status || "Activo",
+      category: p.category || (DEFAULT_BOX_PROFS.includes(p.name) ? "Proteína Box" : "Proteína Gym"),
+      noLiquida: typeof p.noLiquida === "boolean" ? p.noLiquida : DEFAULT_NO_LIQUIDA_PROFS.includes(p.name),
+      bg: p.bg || "#FEF9C3",
+      fg: p.fg || "#0A0A0A"
+    }));
+  if (!cleaned.some(p => p.name.toLowerCase() === "yamila")) {
+    cleaned.push({ name: "Yamila", status: "Activo", category: "Proteína Box", noLiquida: false, bg: "#FED7AA", fg: "#9A3412" });
+  }
+  return cleaned;
+}
+
 let feriados = [
+  { date: "2026-10-12", desc: "Día del Respeto a la Diversidad Cultural" },
   { date: "2026-11-23", desc: "Día de la Soberanía Nacional (Trasladado)" },
   { date: "2026-12-08", desc: "Inmaculada Concepción de María" },
   { date: "2026-12-25", desc: "Navidad" },
@@ -1037,8 +1081,8 @@ function initScheduleData() {
         scheduleData[m.name][u][d] = {};
         const dt = new Date(m.year, m.month - 1, d);
         const jsDay = dt.getDay();
-        // Solo pre-cargar días 1 al 6 de Noviembre 2026; del Sábado 7/11/2026 en adelante vacío
-        const preload = (m.name === "NOVIEMBRE 2026" && d <= 6);
+        // Pre-cargar Octubre 2026 y días 1 al 6 de Noviembre 2026; del Sábado 7/11/2026 en adelante vacío
+        const preload = (m.name === "OCTUBRE 2026") || (m.name === "NOVIEMBRE 2026" && d <= 6);
         for (let s = 0; s < 32; s++) {
           let arr = preload ? [...getInitialSlotAssignment(u, jsDay, s)] : [];
           if (m.name === "NOVIEMBRE 2026" && d === 2 && u === "Proteína Box" && (s === 22 || s === 23)) {
@@ -1059,13 +1103,20 @@ function buildPayload() {
   lastLoadedTimestamp = ts;
   return {
     updatedAt: ts,
-    currentRate,
+    currentRateGym,
+    currentRateBox,
+    currentRate: currentRateGym,
     profesores,
     feriados,
     reemplazosLog,
     adelantosLog,
     pagosACuentaLog,
-    monthsStatus: MONTHS.map(m => ({ name: m.name, status: m.status, closedRate: m.closedRate })),
+    monthsStatus: MONTHS.map(m => ({
+      name: m.name,
+      status: m.status,
+      closedRateGym: m.closedRateGym,
+      closedRateBox: m.closedRateBox
+    })),
     scheduleData
   };
 }
@@ -1092,18 +1143,37 @@ function ensureScheduleStructure() {
   });
 }
 
+function syncRateInputsUI() {
+  const rgEl = document.getElementById("cfg-rate-gym");
+  const rbEl = document.getElementById("cfg-rate-box");
+  const dgEl = document.getElementById("cfg-double-rate-gym");
+  const dbEl = document.getElementById("cfg-double-rate-box");
+  if (rgEl) rgEl.value = currentRateGym;
+  if (rbEl) rbEl.value = currentRateBox;
+  if (dgEl) dgEl.textContent = formatMoney(currentRateGym * 2);
+  if (dbEl) dbEl.textContent = formatMoney(currentRateBox * 2);
+}
+
 function applyPayload(data) {
   if (!data) return;
   if (data.updatedAt) lastLoadedTimestamp = data.updatedAt;
-  if (data.currentRate) {
-    currentRate = data.currentRate;
-    const rateEl = document.getElementById("cfg-rate");
-    if (rateEl) rateEl.value = currentRate;
-    const dblEl = document.getElementById("cfg-double-rate");
-    if (dblEl) dblEl.textContent = formatMoney(currentRate * 2);
+  if (data.currentRateGym || data.currentRate) {
+    currentRateGym = Number(data.currentRateGym || data.currentRate) || 5000;
   }
-  if (Array.isArray(data.profesores) && data.profesores.length > 0) profesores = data.profesores;
-  if (Array.isArray(data.feriados) && data.feriados.length > 0) feriados = data.feriados;
+  if (data.currentRateBox || data.currentRate) {
+    currentRateBox = Number(data.currentRateBox || data.currentRate) || 5000;
+  }
+  syncRateInputsUI();
+
+  if (Array.isArray(data.profesores) && data.profesores.length > 0) {
+    profesores = normalizeProfesoresList(data.profesores);
+  }
+  if (Array.isArray(data.feriados) && data.feriados.length > 0) {
+    feriados = data.feriados;
+    if (!feriados.some(f => f.date === "2026-10-12")) {
+      feriados.unshift({ date: "2026-10-12", desc: "Día del Respeto a la Diversidad Cultural" });
+    }
+  }
   if (Array.isArray(data.reemplazosLog)) {
     reemplazosLog = data.reemplazosLog.map(r => ({
       ...r,
@@ -1117,18 +1187,20 @@ function applyPayload(data) {
       const m = MONTHS.find(x => x.name === ms.name);
       if (m) {
         m.status = ms.status;
-        m.closedRate = ms.closedRate;
+        m.closedRateGym = ms.closedRateGym || ms.closedRate || currentRateGym;
+        m.closedRateBox = ms.closedRateBox || ms.closedRate || currentRateBox;
       }
     });
   }
   if (data.scheduleData && typeof data.scheduleData === "object") {
     MONTHS.forEach(m => {
       if (!scheduleData[m.name]) scheduleData[m.name] = {};
-      const remMonth = data.scheduleData[m.name] || {};
+      const remMonth = data.scheduleData[m.name];
+      // Si el mes (ej: OCTUBRE 2026 recién agregado) aún no existe en la nube, conservar la plantilla inicial
+      if (!remMonth) return;
       UNITS.forEach(u => {
         if (!scheduleData[m.name][u]) scheduleData[m.name][u] = {};
         const remUnit = remMonth[u] || {};
-        // Si hubiera datos residuales bajo "Boxeo", unificarlos dentro de "Proteína Box"
         const remLegacyBoxeo = (u === "Proteína Box" && remMonth["Boxeo"]) ? remMonth["Boxeo"] : {};
         for (let d = 1; d <= m.days; d++) {
           if (!scheduleData[m.name][u][d]) scheduleData[m.name][u][d] = {};
@@ -1327,12 +1399,10 @@ function getProfMonthlyTotalToPay(profName, monthName) {
   const m = MONTHS.find(x => x.name === monthName);
   if (!m) return 0;
   const calc = calculateMonthData(monthName, 1, m.days);
-  const p = calc.byProf[profName] || { gymNorm: 0, gymDob: 0, boxNorm: 0, boxDob: 0 };
-  const nHs = p.gymNorm + p.boxNorm;
-  const dHs = p.gymDob + p.boxDob;
-  const subHoras = (nHs * calc.rate) + (dHs * calc.rate * 2);
+  const p = calc.byProf[profName];
+  if (!p || p.noLiquida) return 0;
   const advObj = getNetAdelantoForProfMonth(profName, monthName);
-  return subHoras + advObj.net;
+  return p.subHoras + advObj.net;
 }
 
 function registerPagoACuentaEntry(prof, mes, monto) {
@@ -1398,6 +1468,7 @@ function updatePacHelperInfo() {
   const profEl = document.getElementById("pac-prof");
   if (!helperEl || !profEl) return;
   const prof = profEl.value || (profesores[0] ? profesores[0].name : "");
+  const pObj = profesores.find(x => x.name === prof);
   const totalSueldo = getProfMonthlyTotalToPay(prof, currentMonthName);
   const pacObj = getPagosACuentaForProfMonth(prof, currentMonthName);
   const restante = totalSueldo - pacObj.totalPaid;
@@ -1406,9 +1477,11 @@ function updatePacHelperInfo() {
     ? pacObj.list.map((item, idx) => `Pago #${idx + 1}: ${formatMoney(item.monto)} (${item.fecha})`).join(" · ")
     : "Ningún pago registrado aún";
 
+  const noLiqTag = (pObj && pObj.noLiquida) ? ` <span class="chip" style="background:#fee2e2;color:#991b1b">🚫 No suma a liquidación</span>` : "";
+
   helperEl.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
-      <div>👤 <strong>${prof}</strong> (${currentMonthName})</div>
+      <div>👤 <strong>${prof}</strong> (${currentMonthName})${noLiqTag}</div>
       <div>💰 Total Sueldo a Pagar: <strong>${formatMoney(totalSueldo)}</strong></div>
       <div>🔢 Cantidad de Pagos: <strong>${pacObj.count} ${pacObj.count === 1 ? 'pago' : 'pagos'}</strong></div>
       <div style="color:#15803d">💵 Total Pagado a Cuenta: <strong>${formatMoney(pacObj.totalPaid)}</strong></div>
@@ -1444,10 +1517,12 @@ function renderPagosACuenta() {
     const tHs = nHs + dHs;
     const advObj = getNetAdelantoForProfMonth(p.name, currentMonthName);
     const pacObj = getPagosACuentaForProfMonth(p.name, currentMonthName);
-    const totalToPay = (nHs * calc.rate) + (dHs * calc.rate * 2) + advObj.net;
-    const remaining = totalToPay - pacObj.totalPaid;
 
+    if (p.noLiquida && pacObj.count === 0 && advObj.net === 0) return;
     if (p.status !== "Activo" && tHs === 0 && advObj.net === 0 && pacObj.count === 0) return;
+
+    const totalToPay = p.noLiquida ? 0 : (p.subHoras + advObj.net);
+    const remaining = totalToPay - pacObj.totalPaid;
 
     sumTotalToPay += totalToPay;
     sumTotalPaid += pacObj.totalPaid;
@@ -1554,7 +1629,7 @@ function renderPagosACuenta() {
 }
 
 // ============================================================================
-// CAPTURA DE PANTALLA EN PNG / JPG (PARA ENVIAR POR WHATSAPP AL PROFESOR)
+// CAPTURA DE PANTALLA (PARA ENVIAR POR WHATSAPP AL PROFESOR)
 // ============================================================================
 async function captureElementAsImage(elementId, baseFilename, format = "png") {
   const el = document.getElementById(elementId);
@@ -1623,14 +1698,14 @@ function exportAllUnitsToExcel() {
   };
 
   const sheetTabs = [
-    { unit: "Proteína Gym", tabName: "1. Proteina Gym", bannerColor: "18181B", accentText: "F5E600" },
-    { unit: "Proteína Box", tabName: "2. Proteina Box", bannerColor: "065F46", accentText: "FFFFFF" }
+    { unit: "Proteína Gym", tabName: "1. Proteina Gym", bannerColor: "18181B", accentText: "F5E600", unitRate: calc.rateGym },
+    { unit: "Proteína Box", tabName: "2. Proteina Box", bannerColor: "065F46", accentText: "FFFFFF", unitRate: calc.rateBox }
   ];
 
-  sheetTabs.forEach(({ unit, tabName, bannerColor, accentText }) => {
+  sheetTabs.forEach(({ unit, tabName, bannerColor, accentText, unitRate }) => {
     const aoa = [];
     aoa.push([`PROTEÍNA GYM — ${unit.toUpperCase()} (${m.name})`]);
-    aoa.push([`Valor Hora Normal: ${formatMoney(calc.rate)}   |   Valor Hora Doble (Domingos y Feriados ×2): ${formatMoney(calc.rate * 2)}`]);
+    aoa.push([`Valor Hora Normal (${unit}): ${formatMoney(unitRate)}   |   Valor Hora Doble (Domingos y Feriados ×2): ${formatMoney(unitRate * 2)}`]);
     aoa.push([]);
 
     const headerRow = ["HORARIO"];
@@ -1778,14 +1853,14 @@ function exportAllUnitsToExcel() {
 
   // Solapa 3: Liquidación Mensual con Adelantos y Pagos a Cuenta
   const liqHeaders = [
-    "Profesor", "Estado", "1. Proteína Gym (Hs)", "2. Proteína Box (Hs)",
-    "Horas Normales", "Horas Dobles (×2)", "Total Horas", "Valor Hora",
+    "Profesor", "Categoría", "¿Liquida?", "1. Proteína Gym (Hs)", "2. Proteína Box (Hs)",
+    "Horas Normales", "Horas Dobles (×2)", "Total Horas",
     "Subtotal Horas ($)", "Adelantos (+/-)", "TOTAL A PAGAR ($)",
     "Cant. Pagos", "Detalle Pagos a Cuenta", "Pagado a Cuenta ($)", "SALDO RESTANTE ($)"
   ];
   const liqAoa = [
     [`PROTEÍNA GYM — LIQUIDACIÓN MENSUAL (${m.name})`],
-    [`Valor Hora Normal: ${formatMoney(calc.rate)}   |   Valor Hora Doble (×2): ${formatMoney(calc.rate * 2)}`],
+    [`Valor Hora Gym: ${formatMoney(calc.rateGym)} (Doble: ${formatMoney(calc.rateGym * 2)})   |   Valor Hora Box: ${formatMoney(calc.rateBox)} (Doble: ${formatMoney(calc.rateBox * 2)})`],
     [],
     liqHeaders
   ];
@@ -1803,35 +1878,39 @@ function exportAllUnitsToExcel() {
     const pacObj = getPagosACuentaForProfMonth(p.name, m.name);
     if (p.status !== "Activo" && tHs === 0 && advObj.net === 0 && pacObj.count === 0) return;
 
-    const subHoras = (nHs * calc.rate) + (dHs * calc.rate * 2);
-    const impTot = subHoras + advObj.net;
+    const subHoras = p.subHoras;
+    const impTot = p.noLiquida ? 0 : (subHoras + advObj.net);
     const restante = impTot - pacObj.totalPaid;
     const pacDetailStr = pacObj.count > 0
       ? pacObj.list.map((it, idx) => `#${idx + 1}: ${formatMoney(it.monto)}`).join(" | ")
       : "-";
 
-    totGym += gHs; totBox += bHs;
-    totNorm += nHs; totDob += dHs;
-    totSub += subHoras; totAdv += advObj.net; totPay += impTot;
-    totPacCount += pacObj.count; totPacPaid += pacObj.totalPaid; totRestante += restante;
+    if (!p.noLiquida) {
+      totGym += gHs; totBox += bHs;
+      totNorm += nHs; totDob += dHs;
+      totSub += subHoras; totAdv += advObj.net; totPay += impTot;
+      totPacCount += pacObj.count; totPacPaid += pacObj.totalPaid; totRestante += restante;
+    }
 
     const pObj = profesores.find(x => x.name === p.name) || { bg: "#F4F4F5", fg: "#0A0A0A" };
     profRowsMeta.push(pObj);
 
     liqAoa.push([
-      p.name, p.status,
+      p.name,
+      p.category || "Proteína Gym",
+      p.noLiquida ? "NO SUMA (Dueño)" : "SÍ LIQUIDA",
       Number(gHs.toFixed(1)), Number(bHs.toFixed(1)),
       Number(nHs.toFixed(1)), Number(dHs.toFixed(1)), Number(tHs.toFixed(1)),
-      formatMoney(calc.rate), formatMoney(subHoras), formatSignedMoney(advObj.net), formatMoney(impTot),
+      formatMoney(subHoras), formatSignedMoney(p.noLiquida ? 0 : advObj.net), formatMoney(impTot),
       pacObj.count, pacDetailStr, formatMoney(pacObj.totalPaid), formatMoney(restante)
     ]);
   });
 
   liqAoa.push([
-    "TOTAL GENERAL", "",
+    "TOTAL LIQUIDACIÓN", "", "SOLO LIQUIDABLES",
     Number(totGym.toFixed(1)), Number(totBox.toFixed(1)),
     Number(totNorm.toFixed(1)), Number(totDob.toFixed(1)), Number((totNorm + totDob).toFixed(1)),
-    formatMoney(calc.rate), formatMoney(totSub), formatSignedMoney(totAdv), formatMoney(totPay),
+    formatMoney(totSub), formatSignedMoney(totAdv), formatMoney(totPay),
     totPacCount, "", formatMoney(totPacPaid), formatMoney(totRestante)
   ]);
 
@@ -1841,9 +1920,9 @@ function exportAllUnitsToExcel() {
     { s: { r: 1, c: 0 }, e: { r: 1, c: 14 } }
   ];
   wsLiq["!cols"] = [
-    { wch: 22 }, { wch: 12 }, { wch: 20 }, { wch: 20 },
-    { wch: 16 }, { wch: 18 }, { wch: 15 }, { wch: 15 }, { wch: 18 }, { wch: 18 }, { wch: 20 },
-    { wch: 14 }, { wch: 32 }, { wch: 20 }, { wch: 20 }
+    { wch: 20 }, { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 18 },
+    { wch: 15 }, { wch: 16 }, { wch: 14 }, { wch: 18 }, { wch: 16 }, { wch: 20 },
+    { wch: 13 }, { wch: 30 }, { wch: 18 }, { wch: 20 }
   ];
 
   const liqRowsH = [{ hpt: 30 }, { hpt: 22 }, { hpt: 10 }, { hpt: 26 }];
@@ -1886,8 +1965,8 @@ function exportAllUnitsToExcel() {
       const isTotalCol = c === 10 || c === 14;
       wsLiq[ref].s = {
         fill: { fgColor: { rgb: isNameCol ? cleanHex(pObj.bg, "FFFFFF") : (isTotalCol ? "FEFCE8" : (idx % 2 === 0 ? "FFFFFF" : "F8FAFC")) } },
-        font: { name: "Segoe UI", sz: 10, bold: (isNameCol || isTotalCol || c === 6 || c === 13), color: { rgb: isNameCol ? cleanHex(pObj.fg, "0A0A0A") : "0A0A0A" } },
-        alignment: { vertical: "center", horizontal: c === 0 || c === 12 ? "left" : (c === 1 || c === 11 ? "center" : "right") },
+        font: { name: "Segoe UI", sz: 10, bold: (isNameCol || isTotalCol || c === 7 || c === 13), color: { rgb: isNameCol ? cleanHex(pObj.fg, "0A0A0A") : "0A0A0A" } },
+        alignment: { vertical: "center", horizontal: c === 0 || c === 12 ? "left" : (c === 1 || c === 2 || c === 11 ? "center" : "right") },
         border: borderThin
       };
     });
@@ -1897,7 +1976,7 @@ function exportAllUnitsToExcel() {
       wsLiq[rTot].s = {
         fill: { fgColor: { rgb: "F5E600" } },
         font: { name: "Segoe UI", sz: 11, bold: true, color: { rgb: "0A0A0A" } },
-        alignment: { vertical: "center", horizontal: c <= 1 ? "left" : (c === 11 ? "center" : "right") },
+        alignment: { vertical: "center", horizontal: c <= 2 ? "left" : (c === 11 ? "center" : "right") },
         border: borderStrong
       };
     }
@@ -1910,7 +1989,7 @@ function exportAllUnitsToExcel() {
 }
 
 // ============================================================================
-// MOTOR DE CÁLCULO (SOPORTA MENSUAL, SEMANAL Y DIARIO)
+// MOTOR DE CÁLCULO (SOPORTA MENSUAL, SEMANAL, DIARIO, VALOR HORA GYM/BOX Y EXCLUSIÓN DE DUEÑOS)
 // ============================================================================
 function isDoubleDay(year, month, day) {
   const dt = new Date(year, month - 1, day);
@@ -1919,10 +1998,16 @@ function isDoubleDay(year, month, day) {
   return feriados.some(f => f.date === iso);
 }
 
-function getEffectiveRate(monthName) {
+function getEffectiveRates(monthName) {
   const m = MONTHS.find(x => x.name === monthName);
-  if (!m) return currentRate;
-  return m.status === "LIQUIDADO" ? m.closedRate : currentRate;
+  if (!m) return { rateGym: currentRateGym, rateBox: currentRateBox };
+  if (m.status === "LIQUIDADO") {
+    return {
+      rateGym: m.closedRateGym || m.closedRate || currentRateGym,
+      rateBox: m.closedRateBox || m.closedRate || currentRateBox
+    };
+  }
+  return { rateGym: currentRateGym, rateBox: currentRateBox };
 }
 
 function formatMoney(n) {
@@ -1946,19 +2031,26 @@ function renderChip(profName) {
 function calculateMonthData(monthName, startDay = 1, endDay = null) {
   const m = MONTHS.find(x => x.name === monthName);
   const maxDay = endDay || m.days;
-  const rate = getEffectiveRate(monthName);
+  const { rateGym, rateBox } = getEffectiveRates(monthName);
   const byProf = {};
   const byUnit = {};
 
   profesores.forEach(p => {
     byProf[p.name] = {
-      name: p.name, status: p.status,
+      name: p.name,
+      status: p.status,
+      category: p.category || "Proteína Gym",
+      noLiquida: Boolean(p.noLiquida),
       gymNorm: 0, gymDob: 0,
-      boxNorm: 0, boxDob: 0
+      boxNorm: 0, boxDob: 0,
+      costGymNorm: 0, costGymDob: 0, costGym: 0,
+      costBoxNorm: 0, costBoxDob: 0, costBox: 0,
+      subHoras: 0
     };
   });
   UNITS.forEach(u => {
-    byUnit[u] = { norm: 0, dob: 0 };
+    const uRate = u === "Proteína Gym" ? rateGym : rateBox;
+    byUnit[u] = { norm: 0, dob: 0, rate: uRate, costNorm: 0, costDob: 0, costTotal: 0 };
   });
 
   UNITS.forEach(u => {
@@ -1969,20 +2061,53 @@ function calculateMonthData(monthName, startDay = 1, endDay = null) {
         const uniqueProfs = [...new Set(list)];
         uniqueProfs.forEach(pName => {
           if (!byProf[pName]) {
-            byProf[pName] = { name: pName, status: "Activo", gymNorm:0, gymDob:0, boxNorm:0, boxDob:0 };
+            byProf[pName] = {
+              name: pName, status: "Activo", category: "Proteína Gym", noLiquida: false,
+              gymNorm:0, gymDob:0, boxNorm:0, boxDob:0,
+              costGymNorm:0, costGymDob:0, costGym:0, costBoxNorm:0, costBoxDob:0, costBox:0, subHoras:0
+            };
           }
           if (u === "Proteína Gym") {
             if (dbl) byProf[pName].gymDob += 0.5; else byProf[pName].gymNorm += 0.5;
           } else {
             if (dbl) byProf[pName].boxDob += 0.5; else byProf[pName].boxNorm += 0.5;
           }
-          if (dbl) byUnit[u].dob += 0.5; else byUnit[u].norm += 0.5;
+          // Solo sumar a los totales liquidables de la unidad si el profesor NO está excluido de liquidación
+          if (!byProf[pName].noLiquida) {
+            if (dbl) byUnit[u].dob += 0.5; else byUnit[u].norm += 0.5;
+          }
         });
       }
     }
   });
 
-  return { m, rate, byProf, byUnit, startDay, endDay: maxDay };
+  // Calcular importes según la unidad trabajada (horas en Gym a rateGym, horas en Box a rateBox)
+  Object.values(byProf).forEach(bp => {
+    if (bp.noLiquida) {
+      bp.costGymNorm = 0; bp.costGymDob = 0; bp.costGym = 0;
+      bp.costBoxNorm = 0; bp.costBoxDob = 0; bp.costBox = 0;
+      bp.subHoras = 0;
+    } else {
+      bp.costGymNorm = bp.gymNorm * rateGym;
+      bp.costGymDob = bp.gymDob * rateGym * 2;
+      bp.costGym = bp.costGymNorm + bp.costGymDob;
+
+      bp.costBoxNorm = bp.boxNorm * rateBox;
+      bp.costBoxDob = bp.boxDob * rateBox * 2;
+      bp.costBox = bp.costBoxNorm + bp.costBoxDob;
+
+      bp.subHoras = bp.costGym + bp.costBox;
+    }
+  });
+
+  UNITS.forEach(u => {
+    const uRate = byUnit[u].rate;
+    byUnit[u].costNorm = byUnit[u].norm * uRate;
+    byUnit[u].costDob = byUnit[u].dob * uRate * 2;
+    byUnit[u].costTotal = byUnit[u].costNorm + byUnit[u].costDob;
+  });
+
+  return { m, rateGym, rateBox, byProf, byUnit, startDay, endDay: maxDay };
 }
 
 // ============================================================================
@@ -2001,7 +2126,7 @@ function populateSelects() {
   const pacProfEl = document.getElementById("pac-prof");
   if (pacProfEl) {
     const curPacProf = pacProfEl.value || (profesores[0] ? profesores[0].name : "");
-    pacProfEl.innerHTML = profesores.map(p => `<option value="${p.name}" ${p.name===curPacProf?'selected':''}>${p.name}</option>`).join("");
+    pacProfEl.innerHTML = profesores.map(p => `<option value="${p.name}" ${p.name===curPacProf?'selected':''}>${p.name}${p.noLiquida ? ' (No liquida)' : ''}</option>`).join("");
   }
 
   // Selectores de Adelantos
@@ -2021,7 +2146,7 @@ function populateSelects() {
 
   const profSel = document.getElementById("res-prof-select");
   const curProf = profSel.value || (profesores[0] ? profesores[0].name : "");
-  profSel.innerHTML = profesores.map(p => `<option value="${p.name}" ${p.name===curProf?'selected':''}>${p.name}</option>`).join("");
+  profSel.innerHTML = profesores.map(p => `<option value="${p.name}" ${p.name===curProf?'selected':''}>${p.name}${p.noLiquida ? ' (No liquida)' : ''}</option>`).join("");
 
   const bulkProfEl = document.getElementById("bulk-prof");
   if (bulkProfEl) {
@@ -2258,55 +2383,63 @@ function syncMonthSelect(val) {
 function renderHome() {
   const m = MONTHS.find(x => x.name === currentMonthName);
   const calc = calculateMonthData(currentMonthName, 1, m.days);
-  let totNorm = 0, totDob = 0, activeWithHours = 0;
-  Object.values(calc.byProf).forEach(p => {
-    const n = p.gymNorm + p.boxNorm;
-    const d = p.gymDob + p.boxDob;
-    totNorm += n; totDob += d;
-    if (n + d > 0) activeWithHours++;
+  let totNorm = 0, totDob = 0, totCostNorm = 0, totCostDob = 0, totCost = 0, activeWithHours = 0;
+
+  UNITS.forEach(u => {
+    totNorm += calc.byUnit[u].norm;
+    totDob += calc.byUnit[u].dob;
+    totCostNorm += calc.byUnit[u].costNorm;
+    totCostDob += calc.byUnit[u].costDob;
+    totCost += calc.byUnit[u].costTotal;
   });
+
+  Object.values(calc.byProf).forEach(p => {
+    if (!p.noLiquida && (p.gymNorm + p.gymDob + p.boxNorm + p.boxDob > 0)) {
+      activeWithHours++;
+    }
+  });
+
   const totHs = totNorm + totDob;
-  const totCost = (totNorm * calc.rate) + (totDob * calc.rate * 2);
-  const activeCount = profesores.filter(p => p.status === "Activo").length;
+  const activeCount = profesores.filter(p => p.status === "Activo" && !p.noLiquida).length;
 
   document.getElementById("home-kpis").innerHTML = `
     <div class="kpi-card"><div class="lbl">Mes Actual</div><div class="val">${currentMonthName}</div><div class="sub">Estado: <strong>${calc.m.status}</strong></div></div>
-    <div class="kpi-card"><div class="lbl">Valor Hora</div><div class="val">${formatMoney(calc.rate)}</div><div class="sub">Doble (Dom/Feriados): ${formatMoney(calc.rate*2)}</div></div>
-    <div class="kpi-card"><div class="lbl">Profes Activos</div><div class="val">${activeCount}</div><div class="sub">${activeWithHours} con horas este mes</div></div>
-    <div class="kpi-card"><div class="lbl">Total Horas del Mes</div><div class="val">${totHs.toFixed(1)} hs</div><div class="sub">${totNorm.toFixed(1)}h Normales · ${totDob.toFixed(1)}h Dobles</div></div>
-    <div class="kpi-card"><div class="lbl">Total Horas ($)</div><div class="val" style="color:#15803d">${formatMoney(totCost)}</div><div class="sub">Suma de las 2 unidades</div></div>
+    <div class="kpi-card"><div class="lbl">Valor Hora Gym / Box</div><div class="val" style="font-size:1.25rem">${formatMoney(calc.rateGym)} / ${formatMoney(calc.rateBox)}</div><div class="sub">Doble ×2: ${formatMoney(calc.rateGym*2)} / ${formatMoney(calc.rateBox*2)}</div></div>
+    <div class="kpi-card"><div class="lbl">Profes Liquidables</div><div class="val">${activeCount}</div><div class="sub">${activeWithHours} con horas este mes</div></div>
+    <div class="kpi-card"><div class="lbl">Horas Liquidables</div><div class="val">${totHs.toFixed(1)} hs</div><div class="sub">${totNorm.toFixed(1)}h Normales · ${totDob.toFixed(1)}h Dobles</div></div>
+    <div class="kpi-card"><div class="lbl">Total Sueldos ($)</div><div class="val" style="color:#15803d">${formatMoney(totCost)}</div><div class="sub">Suma de las 2 unidades (sin dueños)</div></div>
   `;
 
   let rowsHtml = "";
   UNITS.forEach((u, i) => {
-    const un = calc.byUnit[u].norm;
-    const ud = calc.byUnit[u].dob;
-    const ut = un + ud;
-    const uCost = (un * calc.rate) + (ud * calc.rate * 2);
-    const pct = totCost > 0 ? ((uCost / totCost) * 100).toFixed(1) + "%" : "0.0%";
+    const uObj = calc.byUnit[u];
+    const ut = uObj.norm + uObj.dob;
+    const pct = totCost > 0 ? ((uObj.costTotal / totCost) * 100).toFixed(1) + "%" : "0.0%";
     rowsHtml += `<tr>
       <td><strong>${i+1}. ${u}</strong></td>
-      <td class="num">${un.toFixed(1)} hs</td>
-      <td class="num">${ud.toFixed(1)} hs</td>
+      <td class="num">${formatMoney(uObj.rate)}</td>
+      <td class="num">${uObj.norm.toFixed(1)} hs</td>
+      <td class="num">${uObj.dob.toFixed(1)} hs</td>
       <td class="num"><strong>${ut.toFixed(1)} hs</strong></td>
-      <td class="num">${formatMoney(un * calc.rate)}</td>
-      <td class="num">${formatMoney(ud * calc.rate * 2)}</td>
-      <td class="num"><strong>${formatMoney(uCost)}</strong></td>
+      <td class="num">${formatMoney(uObj.costNorm)}</td>
+      <td class="num">${formatMoney(uObj.costDob)}</td>
+      <td class="num"><strong>${formatMoney(uObj.costTotal)}</strong></td>
       <td class="center">${pct}</td>
     </tr>`;
   });
 
   document.getElementById("home-unit-summary").innerHTML = `
     <table>
-      <thead><tr><th>Unidad</th><th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Importe Normal</th><th>Importe Doble</th><th>Costo Total</th><th>%</th></tr></thead>
+      <thead><tr><th>Unidad</th><th>Valor Hora</th><th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Importe Normal</th><th>Importe Doble</th><th>Costo Total</th><th>%</th></tr></thead>
       <tbody>${rowsHtml}</tbody>
       <tfoot><tr class="tot-row">
         <td>TOTAL GENERAL (2 UNIDADES)</td>
+        <td class="center">—</td>
         <td class="num">${totNorm.toFixed(1)} hs</td>
         <td class="num">${totDob.toFixed(1)} hs</td>
         <td class="num">${totHs.toFixed(1)} hs</td>
-        <td class="num">${formatMoney(totNorm * calc.rate)}</td>
-        <td class="num">${formatMoney(totDob * calc.rate * 2)}</td>
+        <td class="num">${formatMoney(totCostNorm)}</td>
+        <td class="num">${formatMoney(totCostDob)}</td>
         <td class="num">${formatMoney(totCost)}</td>
         <td class="center">100.0%</td>
       </tr></tfoot>
@@ -2515,36 +2648,45 @@ function renderResumenMensual() {
     const pacObj = mode === "mensual" ? getPagosACuentaForProfMonth(p.name, currentMonthName) : { list: [], count: 0, totalPaid: 0 };
 
     if (p.status !== "Activo" && tHs === 0 && advObj.net === 0 && pacObj.count === 0) return;
-    if (tHs > 0) workedCount++;
+    if (p.noLiquida && tHs === 0 && advObj.net === 0 && pacObj.count === 0) return;
 
-    const impNorm = nHs * calc.rate;
-    const impDob = dHs * calc.rate * 2;
-    const subHoras = impNorm + impDob;
-    const impTot = subHoras + advObj.net;
+    const subHoras = p.subHoras;
+    const impTot = p.noLiquida ? 0 : (subHoras + advObj.net);
     const restante = impTot - pacObj.totalPaid;
 
-    totGym += gHs; totBox += bHs;
-    totNorm += nHs; totDob += dHs;
-    totSub += subHoras; totAdv += advObj.net; totPay += impTot;
-    totPacCount += pacObj.count; totPacPaid += pacObj.totalPaid; totRestante += restante;
+    if (!p.noLiquida) {
+      if (tHs > 0) workedCount++;
+      totGym += gHs; totBox += bHs;
+      totNorm += nHs; totDob += dHs;
+      totSub += subHoras; totAdv += advObj.net; totPay += impTot;
+      totPacCount += pacObj.count; totPacPaid += pacObj.totalPaid; totRestante += restante;
+    }
 
     const advColor = advObj.net > 0 ? "#166534" : (advObj.net < 0 ? "#991b1b" : "#52525b");
     const pacMiniDetail = pacObj.count > 0
       ? `<div style="font-size:0.75rem;color:#14532d;margin-top:2px">${pacObj.list.map((it, idx) => `#${idx+1}: ${formatMoney(it.monto)}`).join(" · ")}</div>`
       : "";
 
-    rowsHtml += `<tr>
+    const catBadge = p.category === "Proteína Box"
+      ? `<span class="chip" style="background:#d1fae5;color:#065f46;font-size:0.74rem">🥊 Box</span>`
+      : `<span class="chip" style="background:#f4f4f5;color:#18181b;font-size:0.74rem">🏋️ Gym</span>`;
+
+    const liqStatusHtml = p.noLiquida
+      ? `<span class="chip" style="background:#fee2e2;color:#991b1b;font-size:0.74rem">🚫 No suma (Dueño)</span>`
+      : `<span style="font-size:0.78rem;font-weight:700;color:#166534">Sí liquida</span>`;
+
+    rowsHtml += `<tr style="${p.noLiquida ? 'opacity:0.72;background:#fafafa' : ''}">
       <td>${renderChip(p.name)}</td>
-      <td class="center">${p.status}</td>
-      <td class="num">${gHs.toFixed(1)}</td>
-      <td class="num">${bHs.toFixed(1)}</td>
+      <td class="center">${catBadge}</td>
+      <td class="center">${liqStatusHtml}</td>
+      <td class="num">${gHs.toFixed(1)} hs</td>
+      <td class="num">${bHs.toFixed(1)} hs</td>
       <td class="num">${nHs.toFixed(1)}</td>
       <td class="num">${dHs.toFixed(1)}</td>
       <td class="num"><strong>${tHs.toFixed(1)}</strong></td>
-      <td class="num">${formatMoney(calc.rate)}</td>
-      <td class="num">${formatMoney(subHoras)}</td>
-      <td class="num" style="font-weight:800;color:${advColor}">${formatSignedMoney(advObj.net)}</td>
-      <td class="num" style="background:var(--yellow-soft)"><strong>${formatMoney(impTot)}</strong></td>
+      <td class="num">${p.noLiquida ? '<span style="color:var(--muted)">$0 (No suma)</span>' : formatMoney(subHoras)}</td>
+      <td class="num" style="font-weight:800;color:${advColor}">${p.noLiquida ? '$0' : formatSignedMoney(advObj.net)}</td>
+      <td class="num" style="background:${p.noLiquida ? '#f4f4f5' : 'var(--yellow-soft)'}"><strong>${formatMoney(impTot)}</strong></td>
       <td class="center"><strong>${pacObj.count}</strong></td>
       <td class="num" style="color:#15803d;font-weight:800">${formatMoney(pacObj.totalPaid)}${pacMiniDetail}</td>
       <td class="num" style="background:${restante > 0 ? '#fef2f2' : '#f0fdf4'};color:${restante > 0 ? '#991b1b' : '#166534'};font-weight:800">${formatMoney(restante)}</td>
@@ -2552,9 +2694,9 @@ function renderResumenMensual() {
   });
 
   document.getElementById("res-mensual-kpis").innerHTML = `
-    <div class="kpi-card"><div class="lbl">Período</div><div class="val" style="font-size:1.15rem">${periodLabel}</div><div class="sub">Estado: <strong>${calc.m.status}</strong></div></div>
-    <div class="kpi-card"><div class="lbl">Horas Normales / Dobles</div><div class="val">${totNorm.toFixed(1)}h / ${totDob.toFixed(1)}h</div><div class="sub">Total: ${(totNorm+totDob).toFixed(1)} hs (${workedCount} profes)</div></div>
-    <div class="kpi-card"><div class="lbl">Total Sueldos a Pagar</div><div class="val">${formatMoney(totPay)}</div><div class="sub">Incluye adelantos del período</div></div>
+    <div class="kpi-card"><div class="lbl">Período</div><div class="val" style="font-size:1.15rem">${periodLabel}</div><div class="sub">Gym: ${formatMoney(calc.rateGym)} · Box: ${formatMoney(calc.rateBox)}</div></div>
+    <div class="kpi-card"><div class="lbl">Horas Liquidables</div><div class="val">${totNorm.toFixed(1)}h / ${totDob.toFixed(1)}h</div><div class="sub">Total: ${(totNorm+totDob).toFixed(1)} hs (${workedCount} profes liquidables)</div></div>
+    <div class="kpi-card"><div class="lbl">Total Sueldos a Pagar</div><div class="val">${formatMoney(totPay)}</div><div class="sub">Excluye dueños / no liquidables</div></div>
     <div class="kpi-card"><div class="lbl">Pagado a Cuenta (${totPacCount} pagos)</div><div class="val" style="color:#15803d">${formatMoney(totPacPaid)}</div><div class="sub">Entregas parciales registradas</div></div>
     <div class="kpi-card"><div class="lbl">Saldo Restante a Pagar</div><div class="val" style="color:${totRestante > 0 ? '#991b1b' : '#15803d'}">${formatMoney(totRestante)}</div><div class="sub">Pendiente de abonar</div></div>
   `;
@@ -2562,21 +2704,20 @@ function renderResumenMensual() {
   document.getElementById("res-mensual-table").innerHTML = `
     <table>
       <thead><tr>
-        <th>Profesor</th><th>Estado</th><th>1. Proteína Gym</th><th>2. Proteína Box</th>
-        <th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Valor Hora</th>
+        <th>Profesor</th><th>Categoría</th><th>¿Liquida?</th><th>1. Proteína Gym (${formatMoney(calc.rateGym)}/h)</th><th>2. Proteína Box (${formatMoney(calc.rateBox)}/h)</th>
+        <th>Hs Norm</th><th>Hs Dobles (×2)</th><th>Total Hs</th>
         <th>Subtotal Horas ($)</th><th>Adelanto (+/-)</th><th>Total a Pagar ($)</th>
         <th>Cant. Pagos</th><th>Pagado a Cuenta ($)</th><th>Saldo Restante ($)</th>
       </tr></thead>
       <tbody>${rowsHtml}</tbody>
       <tfoot><tr class="tot-row">
-        <td>TOTAL GENERAL</td>
-        <td class="center">${workedCount} profes</td>
-        <td class="num">${totGym.toFixed(1)}</td>
-        <td class="num">${totBox.toFixed(1)}</td>
+        <td>TOTAL LIQUIDACIÓN</td>
+        <td class="center" colspan="2">${workedCount} profes liquidables</td>
+        <td class="num">${totGym.toFixed(1)} hs</td>
+        <td class="num">${totBox.toFixed(1)} hs</td>
         <td class="num">${totNorm.toFixed(1)}</td>
         <td class="num">${totDob.toFixed(1)}</td>
         <td class="num">${(totNorm+totDob).toFixed(1)}</td>
-        <td class="num">${formatMoney(calc.rate)}</td>
         <td class="num">${formatMoney(totSub)}</td>
         <td class="num">${formatSignedMoney(totAdv)}</td>
         <td class="num">${formatMoney(totPay)}</td>
@@ -2589,36 +2730,42 @@ function renderResumenMensual() {
 
   // Tabla 2: Horas y Costos por Unidad en el rango seleccionado
   let unitRowsHtml = "";
-  const totUnitCost = (totNorm * calc.rate) + (totDob * calc.rate * 2);
+  let totUnitCostNorm = 0, totUnitCostDob = 0, totUnitCost = 0;
+  UNITS.forEach(u => {
+    totUnitCostNorm += calc.byUnit[u].costNorm;
+    totUnitCostDob += calc.byUnit[u].costDob;
+    totUnitCost += calc.byUnit[u].costTotal;
+  });
+
   UNITS.forEach((u, i) => {
-    const un = calc.byUnit[u].norm;
-    const ud = calc.byUnit[u].dob;
-    const ut = un + ud;
-    const uCost = (un * calc.rate) + (ud * calc.rate * 2);
-    const pct = totUnitCost > 0 ? ((uCost / totUnitCost) * 100).toFixed(1) + "%" : "0.0%";
+    const uObj = calc.byUnit[u];
+    const ut = uObj.norm + uObj.dob;
+    const pct = totUnitCost > 0 ? ((uObj.costTotal / totUnitCost) * 100).toFixed(1) + "%" : "0.0%";
     unitRowsHtml += `<tr>
       <td><strong>${i+1}. ${u}</strong></td>
-      <td class="num">${un.toFixed(1)} hs</td>
-      <td class="num">${ud.toFixed(1)} hs</td>
+      <td class="num">${formatMoney(uObj.rate)}</td>
+      <td class="num">${uObj.norm.toFixed(1)} hs</td>
+      <td class="num">${uObj.dob.toFixed(1)} hs</td>
       <td class="num"><strong>${ut.toFixed(1)} hs</strong></td>
-      <td class="num">${formatMoney(un * calc.rate)}</td>
-      <td class="num">${formatMoney(ud * calc.rate * 2)}</td>
-      <td class="num"><strong>${formatMoney(uCost)}</strong></td>
+      <td class="num">${formatMoney(uObj.costNorm)}</td>
+      <td class="num">${formatMoney(uObj.costDob)}</td>
+      <td class="num"><strong>${formatMoney(uObj.costTotal)}</strong></td>
       <td class="center">${pct}</td>
     </tr>`;
   });
 
   document.getElementById("res-mensual-units").innerHTML = `
     <table>
-      <thead><tr><th>Unidad</th><th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Importe Normal</th><th>Importe Doble</th><th>Costo Total</th><th>%</th></tr></thead>
+      <thead><tr><th>Unidad</th><th>Valor Hora</th><th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Importe Normal</th><th>Importe Doble</th><th>Costo Total</th><th>%</th></tr></thead>
       <tbody>${unitRowsHtml}</tbody>
       <tfoot><tr class="tot-row">
-        <td>TOTAL UNIDADES</td>
+        <td>TOTAL UNIDADES (LIQUIDABLES)</td>
+        <td class="center">—</td>
         <td class="num">${totNorm.toFixed(1)} hs</td>
         <td class="num">${totDob.toFixed(1)} hs</td>
         <td class="num">${(totNorm+totDob).toFixed(1)} hs</td>
-        <td class="num">${formatMoney(totNorm * calc.rate)}</td>
-        <td class="num">${formatMoney(totDob * calc.rate * 2)}</td>
+        <td class="num">${formatMoney(totUnitCostNorm)}</td>
+        <td class="num">${formatMoney(totUnitCostDob)}</td>
         <td class="num">${formatMoney(totUnitCost)}</td>
         <td class="center">100.0%</td>
       </tr></tfoot>
@@ -2687,33 +2834,37 @@ function renderIndividualDetail() {
   }
 
   const calc = calculateMonthData(currentMonthName, startDay, endDay);
-  const p = calc.byProf[profName] || { gymNorm:0, gymDob:0, boxNorm:0, boxDob:0 };
-  const advObj = mode === "mensual" ? getNetAdelantoForProfMonth(profName, currentMonthName) : { net: 0, sumActual: 0, subTarget: 0 };
+  const p = calc.byProf[profName] || {
+    category: "Proteína Gym", noLiquida: false,
+    gymNorm:0, gymDob:0, boxNorm:0, boxDob:0,
+    costGymNorm:0, costGymDob:0, costGym:0, costBoxNorm:0, costBoxDob:0, costBox:0, subHoras:0
+  };
+  const advObj = (mode === "mensual" && !p.noLiquida) ? getNetAdelantoForProfMonth(profName, currentMonthName) : { net: 0, sumActual: 0, subTarget: 0 };
   const pacObj = getPagosACuentaForProfMonth(profName, currentMonthName);
 
   const rows = [
-    { u: "1. Proteína Gym", n: p.gymNorm, d: p.gymDob },
-    { u: "2. Proteína Box", n: p.boxNorm, d: p.boxDob }
+    { u: "1. Proteína Gym", rate: calc.rateGym, n: p.gymNorm, d: p.gymDob, inorm: p.costGymNorm, idob: p.costGymDob, itot: p.costGym },
+    { u: "2. Proteína Box", rate: calc.rateBox, n: p.boxNorm, d: p.boxDob, inorm: p.costBoxNorm, idob: p.costBoxDob, itot: p.costBox }
   ];
-  let tn = 0, td = 0;
+  let tn = 0, td = 0, totInorm = 0, totIdob = 0;
   const body = rows.map(r => {
     tn += r.n; td += r.d;
+    totInorm += r.inorm; totIdob += r.idob;
     const t = r.n + r.d;
-    const inorm = r.n * calc.rate;
-    const idob = r.d * calc.rate * 2;
     return `<tr>
       <td><strong>${r.u}</strong></td>
+      <td class="num">${formatMoney(r.rate)}/h</td>
       <td class="num">${r.n.toFixed(1)} hs</td>
       <td class="num">${r.d.toFixed(1)} hs</td>
       <td class="num"><strong>${t.toFixed(1)} hs</strong></td>
-      <td class="num">${formatMoney(inorm)}</td>
-      <td class="num">${formatMoney(idob)}</td>
-      <td class="num"><strong>${formatMoney(inorm + idob)}</strong></td>
+      <td class="num">${formatMoney(r.inorm)}</td>
+      <td class="num">${formatMoney(r.idob)}</td>
+      <td class="num"><strong>${formatMoney(r.itot)}</strong></td>
     </tr>`;
   }).join("");
 
-  const subTotalMoney = (tn * calc.rate) + (td * calc.rate * 2);
-  const finalTotalMoney = subTotalMoney + advObj.net;
+  const subTotalMoney = p.subHoras;
+  const finalTotalMoney = p.noLiquida ? 0 : (subTotalMoney + advObj.net);
   const remainingMoney = finalTotalMoney - pacObj.totalPaid;
 
   // Construir cronograma de días y horarios cubiertos por este profesor en el período
@@ -2735,15 +2886,16 @@ function renderIndividualDetail() {
       if (slotsWorked.length > 0) {
         const ranges = getGroupedTimeRanges(slotsWorked);
         const dayHs = slotsWorked.length * 0.5;
-        const dayPay = dayHs * calc.rate * (dbl ? 2 : 1);
+        const unitRate = u === "Proteína Gym" ? calc.rateGym : calc.rateBox;
+        const dayPay = p.noLiquida ? 0 : (dayHs * unitRate * (dbl ? 2 : 1));
         coveredRows.push(`
           <tr>
             <td class="center"><strong>${dayName} ${ddStr}</strong></td>
-            <td><strong>${uIdx+1}. ${u}</strong></td>
+            <td><strong>${uIdx+1}. ${u}</strong> <span style="font-size:0.75rem;color:var(--muted)">(${formatMoney(unitRate)}/h)</span></td>
             <td>${ranges.map(rg => `<span class="chip" style="background:#fef9c3;color:#0a0a0a">${rg.text} (${rg.hs.toFixed(1)}h)</span>`).join(" ")}</td>
             <td class="center"><span class="${dbl?'badge-double':'badge-normal'}">${dbl?'DOBLE ×2':'NORMAL'}</span></td>
             <td class="num"><strong>${dayHs.toFixed(1)} hs</strong></td>
-            <td class="num"><strong>${formatMoney(dayPay)}</strong></td>
+            <td class="num"><strong>${p.noLiquida ? '$0 (No suma)' : formatMoney(dayPay)}</strong></td>
           </tr>
         `);
       }
@@ -2751,7 +2903,7 @@ function renderIndividualDetail() {
   }
 
   let advRowHtml = "";
-  if (mode === "mensual") {
+  if (mode === "mensual" && !p.noLiquida) {
     const advColor = advObj.net > 0 ? "#166534" : (advObj.net < 0 ? "#991b1b" : "#52525b");
     let advDetailText = "Sin adelantos en este mes";
     if (advObj.sumActual > 0 && advObj.subTarget > 0) {
@@ -2764,7 +2916,7 @@ function renderIndividualDetail() {
 
     advRowHtml = `
       <tr>
-        <td colspan="4"><strong>💸 Adelantos (${advDetailText})</strong></td>
+        <td colspan="5"><strong>💸 Adelantos (${advDetailText})</strong></td>
         <td colspan="2" class="center">Ajuste por Adelanto</td>
         <td class="num" style="font-weight:800;color:${advColor}">${formatSignedMoney(advObj.net)}</td>
       </tr>
@@ -2786,11 +2938,15 @@ function renderIndividualDetail() {
       `).join("")
     : `<tr><td colspan="5" class="center" style="color:var(--muted);padding:10px">No registra pagos a cuenta en ${currentMonthName}.</td></tr>`;
 
+  const noLiqHeaderBadge = p.noLiquida
+    ? ` · <span class="chip" style="background:#fee2e2;color:#991b1b">🚫 NO SUMA A LIQUIDACIÓN (Dueño)</span>`
+    : ` · Categoría: <strong style="color:#fff">${p.category || 'Proteína Gym'}</strong>`;
+
   document.getElementById("res-individual-detail").innerHTML = `
     <div class="capture-header">
       <div>
         <div style="font-size:1.15rem;font-weight:800">PROTEÍNA GYM — DETALLE DE HORAS Y LIQUIDACIÓN</div>
-        <div style="font-size:0.9rem;color:#e4e4e7">Profesor/a: <strong style="color:var(--yellow)">${profName.toUpperCase()}</strong> · ${periodTitle}</div>
+        <div style="font-size:0.9rem;color:#e4e4e7">Profesor/a: <strong style="color:var(--yellow)">${profName.toUpperCase()}</strong> · ${periodTitle}${noLiqHeaderBadge}</div>
       </div>
       <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;text-align:right">
         <div>
@@ -2812,7 +2968,8 @@ function renderIndividualDetail() {
       <table>
         <thead>
           <tr>
-            <th>Unidad</th>
+            <th>Unidad Trabajada</th>
+            <th>Valor Hora Unidad</th>
             <th>Horas Normales</th>
             <th>Horas Dobles (×2)</th>
             <th>Total Horas</th>
@@ -2828,11 +2985,12 @@ function renderIndividualDetail() {
         <tfoot>
           <tr class="tot-row">
             <td>TOTAL A COBRAR (${profName.toUpperCase()})</td>
+            <td class="center">—</td>
             <td class="num">${tn.toFixed(1)} hs</td>
             <td class="num">${td.toFixed(1)} hs</td>
             <td class="num">${(tn+td).toFixed(1)} hs</td>
-            <td class="num">${formatMoney(tn * calc.rate)}</td>
-            <td class="num">${formatMoney(td * calc.rate * 2)}</td>
+            <td class="num">${formatMoney(totInorm)}</td>
+            <td class="num">${formatMoney(totIdob)}</td>
             <td class="num">${formatMoney(finalTotalMoney)}</td>
           </tr>
         </tfoot>
@@ -2900,17 +3058,22 @@ function renderReportesPorUnidad() {
   let gN=0, gD=0, gC=0, bN=0, bD=0, bC=0;
 
   Object.values(calc.byProf).forEach(p => {
-    const cGym = (p.gymNorm + p.gymDob * 2) * calc.rate;
-    const cBox = (p.boxNorm + p.boxDob * 2) * calc.rate;
-    const cTot = cGym + cBox;
-    gN += p.gymNorm; gD += p.gymDob; gC += cGym;
-    bN += p.boxNorm; bD += p.boxDob; bC += cBox;
+    const cGym = p.costGym;
+    const cBox = p.costBox;
+    const cTot = p.subHoras;
 
-    rows += `<tr>
-      <td>${renderChip(p.name)}</td>
+    if (!p.noLiquida) {
+      gN += p.gymNorm; gD += p.gymDob; gC += cGym;
+      bN += p.boxNorm; bD += p.boxDob; bC += cBox;
+    }
+
+    const noLiqBadge = p.noLiquida ? ` <span class="chip" style="background:#fee2e2;color:#991b1b;font-size:0.72rem">🚫 No suma</span>` : "";
+
+    rows += `<tr style="${p.noLiquida ? 'opacity:0.7;background:#fafafa' : ''}">
+      <td>${renderChip(p.name)}${noLiqBadge}</td>
       <td class="num">${p.gymNorm.toFixed(1)}</td><td class="num">${p.gymDob.toFixed(1)}</td><td class="num"><strong>${(p.gymNorm+p.gymDob).toFixed(1)}</strong></td><td class="num">${formatMoney(cGym)}</td>
       <td class="num">${p.boxNorm.toFixed(1)}</td><td class="num">${p.boxDob.toFixed(1)}</td><td class="num"><strong>${(p.boxNorm+p.boxDob).toFixed(1)}</strong></td><td class="num">${formatMoney(cBox)}</td>
-      <td class="num" style="background:var(--yellow-soft)"><strong>${formatMoney(cTot)}</strong></td>
+      <td class="num" style="background:${p.noLiquida ? '#f4f4f5' : 'var(--yellow-soft)'}"><strong>${formatMoney(cTot)}</strong></td>
     </tr>`;
   });
 
@@ -2919,9 +3082,9 @@ function renderReportesPorUnidad() {
       <thead>
         <tr>
           <th rowspan="2">Profesor</th>
-          <th colspan="4" style="background:#18181b">1. PROTEÍNA GYM</th>
-          <th colspan="4" style="background:#065f46">2. PROTEÍNA BOX</th>
-          <th rowspan="2">TOTAL ($)</th>
+          <th colspan="4" style="background:#18181b">1. PROTEÍNA GYM (${formatMoney(calc.rateGym)}/h)</th>
+          <th colspan="4" style="background:#065f46">2. PROTEÍNA BOX (${formatMoney(calc.rateBox)}/h)</th>
+          <th rowspan="2">TOTAL LIQUIDABLE ($)</th>
         </tr>
         <tr>
           <th>Norm</th><th>Dob</th><th>Tot Hs</th><th>Costo</th>
@@ -2930,7 +3093,7 @@ function renderReportesPorUnidad() {
       </thead>
       <tbody>${rows}</tbody>
       <tfoot><tr class="tot-row">
-        <td>TOTALES</td>
+        <td>TOTALES LIQUIDABLES</td>
         <td class="num">${gN.toFixed(1)}</td><td class="num">${gD.toFixed(1)}</td><td class="num">${(gN+gD).toFixed(1)}</td><td class="num">${formatMoney(gC)}</td>
         <td class="num">${bN.toFixed(1)}</td><td class="num">${bD.toFixed(1)}</td><td class="num">${(bN+bD).toFixed(1)}</td><td class="num">${formatMoney(bC)}</td>
         <td class="num">${formatMoney(gC+bC)}</td>
@@ -2943,7 +3106,7 @@ function renderResumenAnual() {
   const allCalcs = MONTHS.map(m => calculateMonthData(m.name, 1, m.days));
   const profAcc = {};
   profesores.forEach(p => {
-    profAcc[p.name] = { name: p.name, status: p.status, norm: 0, dob: 0, pay: 0, perMonth: [] };
+    profAcc[p.name] = { name: p.name, status: p.status, noLiquida: Boolean(p.noLiquida), norm: 0, dob: 0, pay: 0, perMonth: [] };
   });
 
   const unitAcc = {
@@ -2953,21 +3116,20 @@ function renderResumenAnual() {
 
   allCalcs.forEach(c => {
     profesores.forEach(p => {
-      const bp = c.byProf[p.name] || { gymNorm:0, gymDob:0, boxNorm:0, boxDob:0 };
+      const bp = c.byProf[p.name] || { gymNorm:0, gymDob:0, boxNorm:0, boxDob:0, subHoras:0 };
       const n = bp.gymNorm + bp.boxNorm;
       const d = bp.gymDob + bp.boxDob;
-      const pay = (n + d * 2) * c.rate;
+      const pay = bp.subHoras;
       profAcc[p.name].norm += n;
       profAcc[p.name].dob += d;
       profAcc[p.name].pay += pay;
       profAcc[p.name].perMonth.push(n + d);
     });
     UNITS.forEach(u => {
-      const un = c.byUnit[u].norm;
-      const ud = c.byUnit[u].dob;
-      unitAcc[u].norm += un;
-      unitAcc[u].dob += ud;
-      unitAcc[u].cost += (un + ud * 2) * c.rate;
+      const uObj = c.byUnit[u];
+      unitAcc[u].norm += uObj.norm;
+      unitAcc[u].dob += uObj.dob;
+      unitAcc[u].cost += uObj.costTotal;
     });
   });
 
@@ -2977,22 +3139,25 @@ function renderResumenAnual() {
   let pRows = "";
   Object.values(profAcc).forEach(pa => {
     const ths = pa.norm + pa.dob;
-    if (ths > topProf.hs) topProf = { name: pa.name, hs: ths };
-    totAnualNorm += pa.norm; totAnualDob += pa.dob; totAnualPay += pa.pay;
+    if (!pa.noLiquida) {
+      if (ths > topProf.hs) topProf = { name: pa.name, hs: ths };
+      totAnualNorm += pa.norm; totAnualDob += pa.dob; totAnualPay += pa.pay;
+    }
     const mCells = pa.perMonth.map(v => `<td class="num">${v > 0 ? v.toFixed(1) : '-'}</td>`).join("");
-    pRows += `<tr>
-      <td>${renderChip(pa.name)}</td>
+    const noLiqTag = pa.noLiquida ? ` <span class="chip" style="background:#fee2e2;color:#991b1b;font-size:0.7rem">🚫 No suma</span>` : "";
+    pRows += `<tr style="${pa.noLiquida ? 'opacity:0.72;background:#fafafa' : ''}">
+      <td>${renderChip(pa.name)}${noLiqTag}</td>
       <td class="num">${pa.norm.toFixed(1)}</td>
       <td class="num">${pa.dob.toFixed(1)}</td>
       <td class="num"><strong>${ths.toFixed(1)}</strong></td>
-      <td class="num" style="background:var(--yellow-soft)"><strong>${formatMoney(pa.pay)}</strong></td>
+      <td class="num" style="background:${pa.noLiquida ? '#f4f4f5' : 'var(--yellow-soft)'}"><strong>${formatMoney(pa.pay)}</strong></td>
       ${mCells}
     </tr>`;
   });
 
   document.getElementById("anual-kpis").innerHTML = `
-    <div class="kpi-card"><div class="lbl">Total Acumulado</div><div class="val" style="color:#15803d">${formatMoney(totAnualPay)}</div><div class="sub">Nov 2026 – Dic 2027</div></div>
-    <div class="kpi-card"><div class="lbl">Total Horas</div><div class="val">${(totAnualNorm+totAnualDob).toFixed(1)} hs</div><div class="sub">${totAnualNorm.toFixed(1)}h Norm · ${totAnualDob.toFixed(1)}h Dobles</div></div>
+    <div class="kpi-card"><div class="lbl">Total Acumulado Liquidable</div><div class="val" style="color:#15803d">${formatMoney(totAnualPay)}</div><div class="sub">Oct 2026 – Dic 2027 (sin dueños)</div></div>
+    <div class="kpi-card"><div class="lbl">Total Horas Liquidables</div><div class="val">${(totAnualNorm+totAnualDob).toFixed(1)} hs</div><div class="sub">${totAnualNorm.toFixed(1)}h Norm · ${totAnualDob.toFixed(1)}h Dobles</div></div>
     <div class="kpi-card"><div class="lbl">Mayor Carga Horaria</div><div class="val">${topProf.name}</div><div class="sub">${topProf.hs.toFixed(1)} horas</div></div>
   `;
 
@@ -3039,9 +3204,10 @@ function renderProfes() {
   const m = MONTHS.find(x => x.name === currentMonthName);
   const calc = calculateMonthData(currentMonthName, 1, m.days);
   const rows = profesores.map((p, idx) => {
-    const bp = calc.byProf[p.name] || { gymNorm:0, gymDob:0, boxNorm:0, boxDob:0 };
+    const bp = calc.byProf[p.name] || { gymNorm:0, gymDob:0, boxNorm:0, boxDob:0, subHoras:0 };
     const mHs = bp.gymNorm + bp.gymDob + bp.boxNorm + bp.boxDob;
-    const mPay = ((bp.gymNorm + bp.boxNorm) + (bp.gymDob + bp.boxDob)*2) * calc.rate;
+    const mPay = bp.subHoras;
+    const isBox = p.category === "Proteína Box";
     return `<tr>
       <td>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
@@ -3051,21 +3217,44 @@ function renderProfes() {
       </td>
       <td class="center">${renderChip(p.name)}</td>
       <td class="center">
+        <button class="btn btn-outline" style="padding:5px 12px;font-size:0.82rem;min-height:36px;background:${isBox?'#d1fae5':'#f4f4f5'};color:${isBox?'#065f46':'#18181b'};border-color:${isBox?'#059669':'#a1a1aa'}" onclick="toggleProfCategory(${idx})">
+          ${isBox ? '🥊 2. Proteína Box' : '🏋️ 1. Proteína Gym'}
+        </button>
+      </td>
+      <td class="center">
+        <button class="btn ${p.noLiquida?'btn-danger':'btn-success'}" style="padding:5px 12px;font-size:0.82rem;min-height:36px" onclick="toggleProfNoLiquida(${idx})">
+          ${p.noLiquida ? '🚫 No sumar (Dueño)' : '💰 Sí sumar a liquidación'}
+        </button>
+      </td>
+      <td class="center">
         <button class="btn ${p.status==='Activo'?'btn-success':'btn-outline'}" style="padding:5px 12px;font-size:0.84rem;min-height:36px" onclick="toggleProfStatus(${idx})">
           ${p.status}
         </button>
       </td>
-      <td class="num">${mHs.toFixed(1)} hs</td>
-      <td class="num"><strong>${formatMoney(mPay)}</strong></td>
+      <td class="num">${mHs.toFixed(1)} hs <span style="font-size:0.75rem;color:var(--muted)">(G:${(bp.gymNorm+bp.gymDob).toFixed(1)} / B:${(bp.boxNorm+bp.boxDob).toFixed(1)})</span></td>
+      <td class="num"><strong>${p.noLiquida ? '$0 (No suma)' : formatMoney(mPay)}</strong></td>
     </tr>`;
   }).join("");
 
   document.getElementById("profes-table").innerHTML = `
     <table>
-      <thead><tr><th>Nombre del Profesor</th><th>Color</th><th>Estado</th><th>Horas (${currentMonthName})</th><th>Liquidación (${currentMonthName})</th></tr></thead>
+      <thead><tr><th>Nombre del Profesor</th><th>Color</th><th>Categoría (Click para cambiar)</th><th>¿Sumar a Liquidación? (Click para cambiar)</th><th>Estado</th><th>Horas (${currentMonthName})</th><th>Liquidación (${currentMonthName})</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
+}
+
+function toggleProfCategory(idx) {
+  profesores[idx].category = profesores[idx].category === "Proteína Box" ? "Proteína Gym" : "Proteína Box";
+  saveState();
+  refreshAll();
+}
+
+function toggleProfNoLiquida(idx) {
+  profesores[idx].noLiquida = !profesores[idx].noLiquida;
+  saveState();
+  populateSelects();
+  refreshAll();
 }
 
 function renameProfesor(idx) {
@@ -3114,6 +3303,8 @@ function renameProfesor(idx) {
 
 function addNewProfesor() {
   const nameInput = document.getElementById("new-prof-name");
+  const catInput = document.getElementById("new-prof-category");
+  const liqInput = document.getElementById("new-prof-liquida");
   const colorInput = document.getElementById("new-prof-color");
   const name = nameInput.value.trim();
   if (!name) { alert("Ingrese el nombre del profesor."); return; }
@@ -3124,6 +3315,8 @@ function addNewProfesor() {
   profesores.push({
     name,
     status: "Activo",
+    category: catInput ? catInput.value : "Proteína Gym",
+    noLiquida: liqInput ? (liqInput.value === "no") : false,
     bg: colorInput.value,
     fg: "#0a0a0a"
   });
@@ -3140,14 +3333,21 @@ function toggleProfStatus(idx) {
   refreshAll();
 }
 
-function updateHourlyRate(val) {
-  const num = Number(val);
-  if (num > 0) {
-    currentRate = num;
-    document.getElementById("cfg-double-rate").textContent = formatMoney(currentRate * 2);
-    saveState();
-    refreshAll();
-  }
+function updateHourlyRates() {
+  const gEl = document.getElementById("cfg-rate-gym");
+  const bEl = document.getElementById("cfg-rate-box");
+  const gNum = gEl ? Number(gEl.value) : currentRateGym;
+  const bNum = bEl ? Number(bEl.value) : currentRateBox;
+  if (gNum > 0) currentRateGym = gNum;
+  if (bNum > 0) currentRateBox = bNum;
+
+  const gdEl = document.getElementById("cfg-double-rate-gym");
+  const bdEl = document.getElementById("cfg-double-rate-box");
+  if (gdEl) gdEl.textContent = formatMoney(currentRateGym * 2);
+  if (bdEl) bdEl.textContent = formatMoney(currentRateBox * 2);
+
+  saveState();
+  refreshAll();
 }
 
 function toggleCloseMonth() {
@@ -3155,7 +3355,8 @@ function toggleCloseMonth() {
   if (!m) return;
   if (m.status === "ABIERTO") {
     m.status = "LIQUIDADO";
-    m.closedRate = currentRate;
+    m.closedRateGym = currentRateGym;
+    m.closedRateBox = currentRateBox;
   } else {
     m.status = "ABIERTO";
   }
@@ -3167,14 +3368,17 @@ function toggleCloseMonth() {
 function renderConfigAndFeriados() {
   const mRows = MONTHS.map((m, idx) => {
     const c = calculateMonthData(m.name, 1, m.days);
-    let n = 0, d = 0;
-    UNITS.forEach(u => { n += c.byUnit[u].norm; d += c.byUnit[u].dob; });
-    const cost = (n + d * 2) * c.rate;
+    let n = 0, d = 0, cost = 0;
+    UNITS.forEach(u => {
+      n += c.byUnit[u].norm;
+      d += c.byUnit[u].dob;
+      cost += c.byUnit[u].costTotal;
+    });
     return `<tr>
       <td><strong>${m.name}</strong></td>
       <td class="center"><span class="chip" style="background:${m.status==='LIQUIDADO'?'#fee2e2':'#dcfce7'};color:${m.status==='LIQUIDADO'?'#991b1b':'#166534'}">${m.status}</span></td>
-      <td class="num">${formatMoney(c.rate)}</td>
-      <td class="num">${formatMoney(c.rate * 2)}</td>
+      <td class="num">${formatMoney(c.rateGym)} <span style="font-size:0.75rem;color:var(--muted)">(×2: ${formatMoney(c.rateGym*2)})</span></td>
+      <td class="num">${formatMoney(c.rateBox)} <span style="font-size:0.75rem;color:var(--muted)">(×2: ${formatMoney(c.rateBox*2)})</span></td>
       <td class="num">${(n+d).toFixed(1)} hs</td>
       <td class="num"><strong>${formatMoney(cost)}</strong></td>
       <td class="center"><button class="btn btn-outline" style="padding:4px 10px;font-size:0.8rem;min-height:36px" onclick="toggleCloseMonthByIndex(${idx})">${m.status==='ABIERTO'?'🔒 Cerrar Mes':'🔓 Reabrir'}</button></td>
@@ -3183,7 +3387,7 @@ function renderConfigAndFeriados() {
 
   document.getElementById("cfg-months-table").innerHTML = `
     <table>
-      <thead><tr><th>Mes</th><th>Estado</th><th>Valor Hora</th><th>Valor Doble (×2)</th><th>Total Horas</th><th>Total ($)</th><th>Acción</th></tr></thead>
+      <thead><tr><th>Mes</th><th>Estado</th><th>Valor Hora Gym</th><th>Valor Hora Box</th><th>Horas Liquidables</th><th>Total Sueldos ($)</th><th>Acción</th></tr></thead>
       <tbody>${mRows}</tbody>
     </table>
   `;
@@ -3204,8 +3408,13 @@ function renderConfigAndFeriados() {
 
 function toggleCloseMonthByIndex(idx) {
   const m = MONTHS[idx];
-  if (m.status === "ABIERTO") { m.status = "LIQUIDADO"; m.closedRate = currentRate; }
-  else { m.status = "ABIERTO"; }
+  if (m.status === "ABIERTO") {
+    m.status = "LIQUIDADO";
+    m.closedRateGym = currentRateGym;
+    m.closedRateBox = currentRateBox;
+  } else {
+    m.status = "ABIERTO";
+  }
   saveState();
   populateSelects();
   refreshAll();
