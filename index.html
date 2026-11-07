@@ -567,6 +567,35 @@
         </div>
       </div>
 
+      <!-- FERIADOS NO TRABAJADOS (PAGAR HORAS NORMALES ×1 EN VEZ DE DOBLES ×2) -->
+      <div style="background:#eff6ff;border:2px solid #2563eb;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <div style="font-size:1.02rem;font-weight:800;color:#1e3a8a;margin-bottom:4px">
+          🏳️ Feriado No Trabajado — Pagar Horas Normales (×1) en vez de Dobles (×2)
+        </div>
+        <div style="font-size:0.84rem;color:#1e40af;margin-bottom:10px">
+          Si a un profesor le correspondía trabajar un feriado pero no fue por ser feriado (ej: Agustín el Lunes 12/10 con 5 hs), agréguelo acá para que ese día se le liquide como <strong>Hora Normal (×1)</strong> y no doble.
+        </div>
+        <div class="toolbar" style="margin-bottom:8px">
+          <label><strong>Profesor:</strong>
+            <select id="fn-prof" onchange="onFeriadoNormalProfChange('sched')"></select>
+          </label>
+          <label><strong>Día Feriado:</strong>
+            <select id="fn-day" onchange="onFeriadoNormalInputChange('sched')"></select>
+          </label>
+          <label><strong>Unidad:</strong>
+            <select id="fn-unit" onchange="onFeriadoNormalInputChange('sched')">
+              <option value="Proteína Gym">1. Proteína Gym</option>
+              <option value="Proteína Box">2. Proteína Box</option>
+            </select>
+          </label>
+          <label><strong>Horas Normales (×1):</strong>
+            <input type="number" id="fn-hours" step="0.5" min="0.5" max="16" value="5" style="width:90px;background:#fff" />
+          </label>
+          <button class="btn btn-primary" style="background:#1d4ed8;color:#fff;border-color:#1e3a8a" onclick="saveFeriadoNormalRule('sched')">✅ Pagar Normal (×1)</button>
+        </div>
+        <div id="fn-list-cronograma" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      </div>
+
       <div id="schedule-capture-area" style="background:#fff;padding:6px;border-radius:10px">
         <div class="table-wrap" id="schedule-container"></div>
       </div>
@@ -598,6 +627,26 @@
           <button class="btn btn-excel" onclick="exportAllUnitsToExcel()">📥 Descargar Excel</button>
           <button class="btn btn-amber" onclick="toggleCloseMonth()">🔒 Cerrar / Reabrir Mes</button>
         </div>
+      </div>
+
+      <!-- Acceso rápido para Feriados No Trabajados (Hora Normal ×1) desde Liquidación -->
+      <div class="no-print" style="background:#eff6ff;border:2px solid #2563eb;border-radius:10px;padding:12px 16px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <div style="font-size:0.94rem;font-weight:800;color:#1e3a8a">
+            🏳️ Feriados No Trabajados en <span id="fn-liq-month-lbl"></span> (Pagar Horas Normales ×1 en vez de Dobles ×2):
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <select id="fn-liq-prof" onchange="onFeriadoNormalProfChange('liq')"></select>
+            <select id="fn-liq-day" onchange="onFeriadoNormalInputChange('liq')"></select>
+            <select id="fn-liq-unit" onchange="onFeriadoNormalInputChange('liq')">
+              <option value="Proteína Gym">1. Proteína Gym</option>
+              <option value="Proteína Box">2. Proteína Box</option>
+            </select>
+            <input type="number" id="fn-liq-hours" step="0.5" min="0.5" max="16" value="5" placeholder="Hs" style="width:85px;background:#fff" />
+            <button class="btn btn-primary" style="background:#1d4ed8;color:#fff;border-color:#1e3a8a;padding:6px 12px;min-height:38px" onclick="saveFeriadoNormalRule('liq')">✅ Pagar Normal (×1)</button>
+          </div>
+        </div>
+        <div id="fn-list-liq" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       </div>
 
       <div id="general-liq-capture-area" style="background:#fff;padding:8px;border-radius:10px">
@@ -859,6 +908,9 @@
       </label>
     </div>
 
+    <!-- Opción rápida en días feriados / dobles para pagar hora normal (×1) si no fue a trabajar por feriado -->
+    <div id="modal-feriado-normal-box" style="display:none;background:#eff6ff;border:2px solid #2563eb;border-radius:8px;padding:10px;margin-top:10px"></div>
+
     <div style="background:#f4f4f5;border:2px solid #d4d4d8;border-radius:8px;padding:10px;margin-top:10px">
       <div style="font-size:0.92rem;font-weight:800;color:var(--black);margin-bottom:8px">🔄 ¿Es un Reemplazo?</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -992,6 +1044,12 @@ let adelantosLog = [];
 // Lista de pagos a cuenta (pagos parciales de sueldo): { id, fecha, prof, mes, monto }
 let pagosACuentaLog = [];
 
+// Lista de feriados no trabajados que se abonan como Hora Normal (×1) en vez de Doble (×2):
+// { id, monthName, day, unit, prof, horas }
+let feriadosNormalesLog = [
+  { id: 10122026, monthName: "OCTUBRE 2026", day: 12, unit: "Proteína Gym", prof: "Agustin", horas: 5 }
+];
+
 function getInitialSlotAssignment(unit, jsDay, slotIdx) {
   if (unit === "Proteína Gym") {
     if (jsDay === 1) {
@@ -1111,6 +1169,8 @@ function buildPayload() {
     reemplazosLog,
     adelantosLog,
     pagosACuentaLog,
+    feriadosNormalesLog,
+    feriadosNormalesInitialized: true,
     monthsStatus: MONTHS.map(m => ({
       name: m.name,
       status: m.status,
@@ -1182,6 +1242,11 @@ function applyPayload(data) {
   }
   if (Array.isArray(data.adelantosLog)) adelantosLog = data.adelantosLog;
   if (Array.isArray(data.pagosACuentaLog)) pagosACuentaLog = data.pagosACuentaLog;
+  if (Array.isArray(data.feriadosNormalesLog)) {
+    feriadosNormalesLog = data.feriadosNormalesLog;
+  } else if (data.feriadosNormalesInitialized) {
+    feriadosNormalesLog = [];
+  }
   if (Array.isArray(data.monthsStatus)) {
     data.monthsStatus.forEach(ms => {
       const m = MONTHS.find(x => x.name === ms.name);
@@ -2028,6 +2093,46 @@ function renderChip(profName) {
   return `<span class="chip" style="background:${p.bg};color:${p.fg}">${profName}</span>`;
 }
 
+function getFeriadoNormalRule(monthName, day, unit, profName) {
+  return feriadosNormalesLog.find(r =>
+    r.monthName === monthName &&
+    Number(r.day) === Number(day) &&
+    r.unit === unit &&
+    r.prof === profName
+  ) || null;
+}
+
+function getProfScheduleHoursOnDay(monthName, unit, day, profName) {
+  let hs = 0;
+  for (let s = 0; s < 32; s++) {
+    const arr = (scheduleData[monthName] && scheduleData[monthName][unit] && scheduleData[monthName][unit][day] && scheduleData[monthName][unit][day][s]) || [];
+    if (arr.includes(profName)) hs += 0.5;
+  }
+  return hs;
+}
+
+function getSuggestedNormalHoursForProfDay(monthName, unit, day, profName) {
+  const existing = getFeriadoNormalRule(monthName, day, unit, profName);
+  if (existing && Number(existing.horas) > 0) return Number(existing.horas);
+
+  const hsOnDay = getProfScheduleHoursOnDay(monthName, unit, day, profName);
+  if (hsOnDay > 0) return hsOnDay;
+
+  const m = MONTHS.find(x => x.name === monthName);
+  if (m && day >= 1 && day <= m.days) {
+    const targetDow = new Date(m.year, m.month - 1, day).getDay();
+    for (let d = 1; d <= m.days; d++) {
+      if (d === Number(day)) continue;
+      const dow = new Date(m.year, m.month - 1, d).getDay();
+      if (dow === targetDow) {
+        const hOther = getProfScheduleHoursOnDay(monthName, unit, d, profName);
+        if (hOther > 0) return hOther;
+      }
+    }
+  }
+  return 5;
+}
+
 function calculateMonthData(monthName, startDay = 1, endDay = null) {
   const m = MONTHS.find(x => x.name === monthName);
   const maxDay = endDay || m.days;
@@ -2056,10 +2161,18 @@ function calculateMonthData(monthName, startDay = 1, endDay = null) {
   UNITS.forEach(u => {
     for (let d = startDay; d <= maxDay; d++) {
       const dbl = isDoubleDay(m.year, m.month, d);
+      const rulesForDayUnit = feriadosNormalesLog.filter(r =>
+        r.monthName === monthName &&
+        Number(r.day) === d &&
+        r.unit === u
+      );
+      const overriddenProfs = new Set(rulesForDayUnit.map(r => r.prof));
+
       for (let s = 0; s < 32; s++) {
         const list = (scheduleData[monthName] && scheduleData[monthName][u] && scheduleData[monthName][u][d] && scheduleData[monthName][u][d][s]) || [];
         const uniqueProfs = [...new Set(list)];
         uniqueProfs.forEach(pName => {
+          if (overriddenProfs.has(pName)) return; // Se contabiliza por la regla de feriado normal (×1)
           if (!byProf[pName]) {
             byProf[pName] = {
               name: pName, status: "Activo", category: "Proteína Gym", noLiquida: false,
@@ -2078,6 +2191,28 @@ function calculateMonthData(monthName, startDay = 1, endDay = null) {
           }
         });
       }
+
+      // Sumar las horas normales (×1) correspondientes a feriados no trabajados en este día y unidad
+      rulesForDayUnit.forEach(rule => {
+        const pName = rule.prof;
+        const hs = Number(rule.horas) || 0;
+        if (hs <= 0) return;
+        if (!byProf[pName]) {
+          byProf[pName] = {
+            name: pName, status: "Activo", category: "Proteína Gym", noLiquida: false,
+            gymNorm:0, gymDob:0, boxNorm:0, boxDob:0,
+            costGymNorm:0, costGymDob:0, costGym:0, costBoxNorm:0, costBoxDob:0, costBox:0, subHoras:0
+          };
+        }
+        if (u === "Proteína Gym") {
+          byProf[pName].gymNorm += hs;
+        } else {
+          byProf[pName].boxNorm += hs;
+        }
+        if (!byProf[pName].noLiquida) {
+          byUnit[u].norm += hs;
+        }
+      });
     }
   });
 
@@ -2108,6 +2243,188 @@ function calculateMonthData(monthName, startDay = 1, endDay = null) {
   });
 
   return { m, rateGym, rateBox, byProf, byUnit, startDay, endDay: maxDay };
+}
+
+// ============================================================================
+// GESTIÓN DE FERIADOS NO TRABAJADOS (PAGO DE HORAS NORMALES ×1 EN VEZ DE DOBLES ×2)
+// ============================================================================
+function populateFeriadoNormalSelectors() {
+  const m = MONTHS.find(x => x.name === currentMonthName);
+  if (!m) return;
+
+  const liquidableProfs = profesores.filter(p => p.status === "Activo" && !p.noLiquida);
+  const profList = liquidableProfs.length > 0 ? liquidableProfs : profesores;
+
+  ["fn-prof", "fn-liq-prof"].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const prev = el.value || (profList.find(p => p.name === "Agustin") ? "Agustin" : (profList[0] ? profList[0].name : ""));
+    el.innerHTML = profList.map(p => `<option value="${p.name}" ${p.name === prev ? 'selected' : ''}>${p.name}</option>`).join("");
+  });
+
+  // Armar opciones de días priorizando los Feriados Nacionales y Domingos del mes actual
+  let ferOptions = "";
+  let otherOptions = "";
+  let firstFeriadoDay = null;
+
+  for (let d = 1; d <= m.days; d++) {
+    const dt = new Date(m.year, m.month - 1, d);
+    const dayName = DAYS_ES[dt.getDay()];
+    const ddStr = `${String(d).padStart(2, "0")}/${String(m.month).padStart(2, "0")}`;
+    const iso = `${m.year}-${String(m.month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const ferObj = feriados.find(f => f.date === iso);
+    if (ferObj) {
+      if (firstFeriadoDay === null) firstFeriadoDay = String(d);
+      ferOptions += `<option value="${d}">⭐ ${dayName} ${ddStr} — FERIADO (${ferObj.desc})</option>`;
+    } else if (dt.getDay() === 0) {
+      ferOptions += `<option value="${d}">☀️ ${dayName} ${ddStr} (Domingo ×2)</option>`;
+    } else {
+      otherOptions += `<option value="${d}">${dayName} ${ddStr}</option>`;
+    }
+  }
+
+  const dayHtml = `
+    <optgroup label="Feriados y Domingos de ${m.name}">
+      ${ferOptions || '<option value="1">Sin feriados cargados</option>'}
+    </optgroup>
+    <optgroup label="Otros días del mes">
+      ${otherOptions}
+    </optgroup>
+  `;
+
+  ["fn-day", "fn-liq-day"].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const prev = el.value;
+    el.innerHTML = dayHtml;
+    if (prev && [...el.options].some(o => o.value === prev)) {
+      el.value = prev;
+    } else if (firstFeriadoDay) {
+      el.value = firstFeriadoDay;
+    }
+  });
+
+  onFeriadoNormalInputChange("sched");
+  onFeriadoNormalInputChange("liq");
+}
+
+function onFeriadoNormalProfChange(source) {
+  const profEl = document.getElementById(source === "liq" ? "fn-liq-prof" : "fn-prof");
+  const unitEl = document.getElementById(source === "liq" ? "fn-liq-unit" : "fn-unit");
+  if (profEl && unitEl) {
+    const pObj = profesores.find(p => p.name === profEl.value);
+    if (pObj && pObj.category) {
+      unitEl.value = pObj.category;
+    }
+  }
+  onFeriadoNormalInputChange(source);
+}
+
+function onFeriadoNormalInputChange(source) {
+  const profEl = document.getElementById(source === "liq" ? "fn-liq-prof" : "fn-prof");
+  const dayEl = document.getElementById(source === "liq" ? "fn-liq-day" : "fn-day");
+  const unitEl = document.getElementById(source === "liq" ? "fn-liq-unit" : "fn-unit");
+  const hsEl = document.getElementById(source === "liq" ? "fn-liq-hours" : "fn-hours");
+  if (!profEl || !dayEl || !unitEl || !hsEl) return;
+
+  const suggested = getSuggestedNormalHoursForProfDay(
+    currentMonthName,
+    unitEl.value,
+    Number(dayEl.value || 1),
+    profEl.value
+  );
+  hsEl.value = suggested;
+}
+
+function saveFeriadoNormalRule(source) {
+  const m = MONTHS.find(x => x.name === currentMonthName);
+  if (m && m.status === "LIQUIDADO") {
+    alert(`⚠️ El mes ${currentMonthName} está cerrado (LIQUIDADO). Reábralo primero para editar.`);
+    return;
+  }
+  const profEl = document.getElementById(source === "liq" ? "fn-liq-prof" : "fn-prof");
+  const dayEl = document.getElementById(source === "liq" ? "fn-liq-day" : "fn-day");
+  const unitEl = document.getElementById(source === "liq" ? "fn-liq-unit" : "fn-unit");
+  const hsEl = document.getElementById(source === "liq" ? "fn-liq-hours" : "fn-hours");
+
+  const prof = profEl ? profEl.value : "";
+  const day = dayEl ? Number(dayEl.value) : 0;
+  const unit = unitEl ? unitEl.value : "Proteína Gym";
+  const horas = hsEl ? Number(hsEl.value) : 0;
+
+  if (!prof || !day) { alert("Seleccione el profesor y el día feriado."); return; }
+  if (!horas || horas <= 0) { alert("Ingrese la cantidad de horas normales a reconocer (ej: 5)."); return; }
+
+  const existing = getFeriadoNormalRule(currentMonthName, day, unit, prof);
+  if (existing) {
+    existing.horas = horas;
+  } else {
+    feriadosNormalesLog.push({
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      monthName: currentMonthName,
+      day,
+      unit,
+      prof,
+      horas
+    });
+  }
+
+  saveState();
+  refreshAll();
+}
+
+function deleteFeriadoNormalRule(id) {
+  feriadosNormalesLog = feriadosNormalesLog.filter(r => r.id !== id);
+  saveState();
+  refreshAll();
+}
+
+function toggleFeriadoNormalInModal(mName, uName, day, profName) {
+  const existing = getFeriadoNormalRule(mName, day, uName, profName);
+  if (existing) {
+    feriadosNormalesLog = feriadosNormalesLog.filter(r => r.id !== existing.id);
+  } else {
+    const hs = getSuggestedNormalHoursForProfDay(mName, uName, day, profName);
+    feriadosNormalesLog.push({
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      monthName: mName,
+      day: Number(day),
+      unit: uName,
+      prof: profName,
+      horas: hs
+    });
+  }
+  saveState();
+  renderModalFeriadoNormalBox();
+  refreshAll();
+}
+
+function renderFeriadoNormalLists() {
+  const m = MONTHS.find(x => x.name === currentMonthName);
+  if (!m) return;
+
+  const lblLiq = document.getElementById("fn-liq-month-lbl");
+  if (lblLiq) lblLiq.textContent = currentMonthName;
+
+  const monthRules = feriadosNormalesLog.filter(r => r.monthName === currentMonthName);
+  const html = monthRules.length > 0
+    ? monthRules.map(r => {
+        const dt = new Date(m.year, m.month - 1, r.day);
+        const dayName = DAYS_ES[dt.getDay()];
+        const ddStr = `${String(r.day).padStart(2, "0")}/${String(m.month).padStart(2, "0")}`;
+        return `
+          <div style="display:inline-flex;align-items:center;gap:8px;background:#fff;border:2px solid #2563eb;border-radius:8px;padding:6px 10px;font-size:0.84rem;box-shadow:0 1px 2px rgba(0,0,0,0.05)">
+            <span>🏳️ <strong>${dayName} ${ddStr}</strong> · ${renderChip(r.prof)} · <strong>${Number(r.horas).toFixed(1)} hs NORMALES (×1)</strong> en ${r.unit}</span>
+            <button class="btn btn-danger" style="padding:2px 8px;font-size:0.74rem;min-height:26px" onclick="deleteFeriadoNormalRule(${r.id})" title="Quitar y volver a cálculo normal/doble">✕ Quitar</button>
+          </div>
+        `;
+      }).join("")
+    : `<div style="font-size:0.83rem;color:#1e40af">Ningún feriado marcado como Hora Normal (×1) en ${currentMonthName}. Todos los feriados cargados se calculan al Doble (×2).</div>`;
+
+  const el1 = document.getElementById("fn-list-cronograma");
+  const el2 = document.getElementById("fn-list-liq");
+  if (el1) el1.innerHTML = html;
+  if (el2) el2.innerHTML = html;
 }
 
 // ============================================================================
@@ -2168,6 +2485,7 @@ function populateSelects() {
   populateBulkDayOptions();
   populateReportSubSelectors();
   populateIndividualSubSelectors();
+  populateFeriadoNormalSelectors();
 }
 
 function getWeeksForMonth(m) {
@@ -2377,6 +2695,7 @@ function syncMonthSelect(val) {
   populateBulkDayOptions();
   populateReportSubSelectors();
   populateIndividualSubSelectors();
+  populateFeriadoNormalSelectors();
   refreshAll();
 }
 
@@ -2465,6 +2784,13 @@ function renderSchedule() {
   const weekVal = document.getElementById("sched-week").value;
   const m = MONTHS.find(x => x.name === mName);
 
+  const fnUnitEl = document.getElementById("fn-unit");
+  if (fnUnitEl && fnUnitEl.value !== uName) {
+    fnUnitEl.value = uName;
+    onFeriadoNormalInputChange("sched");
+  }
+  renderFeriadoNormalLists();
+
   let startDay = 1, endDay = m.days;
   if (weekVal.startsWith("day-")) {
     startDay = parseInt(weekVal.split("-")[1], 10);
@@ -2485,10 +2811,15 @@ function renderSchedule() {
     const dayName = DAYS_ES[dt.getDay()];
     const dbl = isDoubleDay(m.year, m.month, d);
     const ddStr = `${String(d).padStart(2,"0")}/${String(m.month).padStart(2,"0")}`;
+    const dayFnRules = feriadosNormalesLog.filter(r => r.monthName === mName && Number(r.day) === d && r.unit === uName);
+    const fnHeaderHtml = dayFnRules.length > 0
+      ? `<div style="margin-top:4px;font-size:0.7rem;background:#dbeafe;color:#1e3a8a;padding:2px 5px;border-radius:4px;font-weight:800">🏳️ Normal ×1: ${dayFnRules.map(r => `${r.prof} (${r.horas}h)`).join(", ")}</div>`
+      : "";
     thDays += `<th style="background:${dbl?'#7c2d12':'#18181b'}">
       <div>${dayName}</div>
       <div style="font-size:0.95rem;margin:2px 0;color:#fff">${ddStr}</div>
       <span class="${dbl?'badge-double':'badge-normal'}">${dbl?'DOBLE ×2':'NORMAL'}</span>
+      ${fnHeaderHtml}
     </th>`;
   }
 
@@ -2499,7 +2830,10 @@ function renderSchedule() {
       const dbl = isDoubleDay(m.year, m.month, d);
       const assigned = scheduleData[mName][uName][d][sIdx] || [];
       const chipsHtml = assigned.length > 0
-        ? assigned.map(p => renderChip(p)).join(" ")
+        ? assigned.map(p => {
+            const hasFn = dbl && getFeriadoNormalRule(mName, d, uName, p);
+            return renderChip(p) + (hasFn ? `<span style="font-size:0.68rem;background:#dbeafe;color:#1e3a8a;padding:1px 4px;border-radius:4px;font-weight:800;margin-left:2px" title="Feriado no trabajado: se paga Hora Normal ×1">×1</span>` : "");
+          }).join(" ")
         : `<span style="color:#a1a1aa;font-size:0.8rem">+ Asignar</span>`;
       tds += `<td class="sched-cell ${dbl?'double-day':''}" onclick="openCellModal('${mName}','${uName}',${d},${sIdx})">${chipsHtml}</td>`;
     }
@@ -2518,6 +2852,55 @@ function renderSchedule() {
 let editingContext = null;
 let modalSelectedProfs = [];
 
+function renderModalFeriadoNormalBox() {
+  const box = document.getElementById("modal-feriado-normal-box");
+  if (!box || !editingContext) return;
+  const { mName, uName, day } = editingContext;
+  const m = MONTHS.find(x => x.name === mName);
+  if (!m || !isDoubleDay(m.year, m.month, day)) {
+    box.style.display = "none";
+    return;
+  }
+
+  // Reunir todos los profesores asignados en cualquier horario de ese día + los seleccionados en este bloque
+  const dayProfsSet = new Set(modalSelectedProfs);
+  for (let s = 0; s < 32; s++) {
+    const arr = (scheduleData[mName] && scheduleData[mName][uName] && scheduleData[mName][uName][day] && scheduleData[mName][uName][day][s]) || [];
+    arr.forEach(p => dayProfsSet.add(p));
+  }
+  const dayProfs = [...dayProfsSet].filter(pName => {
+    const pObj = profesores.find(x => x.name === pName);
+    return !pObj || !pObj.noLiquida;
+  });
+
+  box.style.display = "block";
+  if (dayProfs.length === 0) {
+    box.innerHTML = `<div style="font-size:0.84rem;color:#1e3a8a;font-weight:700">🏳️ Día Feriado / Doble: Seleccione un profesor arriba para definir si cobra Doble (×2) o Normal (×1 por feriado no trabajado).</div>`;
+    return;
+  }
+
+  const buttonsHtml = dayProfs.map(pName => {
+    const rule = getFeriadoNormalRule(mName, day, uName, pName);
+    const hs = rule ? rule.horas : getSuggestedNormalHoursForProfDay(mName, uName, day, pName);
+    if (rule) {
+      return `<button type="button" class="btn" style="background:#1d4ed8;color:#fff;padding:6px 10px;font-size:0.8rem;min-height:34px" onclick="toggleFeriadoNormalInModal('${mName}','${uName}',${day},'${pName}')">
+        🏳️ ${pName}: Paga NORMAL ×1 (${hs} hs) — Click para volver a Doble ×2
+      </button>`;
+    } else {
+      return `<button type="button" class="btn btn-outline" style="background:#fff;color:#991b1b;border-color:#dc2626;padding:6px 10px;font-size:0.8rem;min-height:34px" onclick="toggleFeriadoNormalInModal('${mName}','${uName}',${day},'${pName}')">
+        🔥 ${pName}: Paga DOBLE ×2 (${hs} hs) — Click si NO fue y cobra Normal ×1
+      </button>`;
+    }
+  }).join(" ");
+
+  box.innerHTML = `
+    <div style="font-size:0.86rem;font-weight:800;color:#1e3a8a;margin-bottom:6px">
+      🏳️ Pago en este Feriado / Domingo (toque un profesor si NO trabajó el feriado pero le corresponden sus horas normales ×1):
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${buttonsHtml}</div>
+  `;
+}
+
 function openCellModal(mName, uName, day, slotIdx) {
   const m = MONTHS.find(x => x.name === mName);
   if (m.status === "LIQUIDADO") {
@@ -2532,6 +2915,7 @@ function openCellModal(mName, uName, day, slotIdx) {
   document.getElementById("modal-subtitle").textContent = `Horario: ${TIME_SLOTS[slotIdx]}`;
 
   renderModalPicker();
+  renderModalFeriadoNormalBox();
 
   const extEl = document.getElementById("modal-extend-end");
   if (extEl) {
@@ -2568,6 +2952,7 @@ function toggleModalProf(name) {
   if (idx === -1) modalSelectedProfs.push(name);
   else modalSelectedProfs.splice(idx, 1);
   renderModalPicker();
+  renderModalFeriadoNormalBox();
 }
 
 function closeCellModal() {
@@ -2613,6 +2998,8 @@ function renderResumenMensual() {
   const m = MONTHS.find(x => x.name === currentMonthName);
   const mode = document.getElementById("res-general-mode").value;
   const subVal = document.getElementById("res-general-sub").value;
+
+  renderFeriadoNormalLists();
 
   let startDay = 1, endDay = m.days;
   let periodLabel = `${currentMonthName} (Mes Completo)`;
@@ -2876,6 +3263,7 @@ function renderIndividualDetail() {
     const dbl = isDoubleDay(m.year, m.month, d);
 
     UNITS.forEach((u, uIdx) => {
+      const fnRule = getFeriadoNormalRule(currentMonthName, d, u, profName);
       const slotsWorked = [];
       for (let s = 0; s < 32; s++) {
         const assigned = scheduleData[currentMonthName][u][d][s] || [];
@@ -2883,7 +3271,27 @@ function renderIndividualDetail() {
           slotsWorked.push(s);
         }
       }
-      if (slotsWorked.length > 0) {
+
+      if (fnRule) {
+        const dayHs = Number(fnRule.horas) || 0;
+        const unitRate = u === "Proteína Gym" ? calc.rateGym : calc.rateBox;
+        const dayPay = p.noLiquida ? 0 : (dayHs * unitRate);
+        const ranges = getGroupedTimeRanges(slotsWorked);
+        const rangesText = ranges.length > 0
+          ? ranges.map(rg => `<span class="chip" style="background:#dbeafe;color:#1e3a8a">${rg.text} (${rg.hs.toFixed(1)}h)</span>`).join(" ")
+          : `<span class="chip" style="background:#dbeafe;color:#1e3a8a">🏳️ Feriado No Trabajado (Reconoce ${dayHs.toFixed(1)}h normales)</span>`;
+
+        coveredRows.push(`
+          <tr style="background:#eff6ff">
+            <td class="center"><strong>${dayName} ${ddStr}</strong></td>
+            <td><strong>${uIdx+1}. ${u}</strong> <span style="font-size:0.75rem;color:var(--muted)">(${formatMoney(unitRate)}/h)</span></td>
+            <td>${rangesText}</td>
+            <td class="center"><span class="badge-normal" style="background:#dbeafe;color:#1e3a8a">🏳️ FERIADO NORMAL ×1</span></td>
+            <td class="num"><strong>${dayHs.toFixed(1)} hs</strong></td>
+            <td class="num"><strong>${p.noLiquida ? '$0 (No suma)' : formatMoney(dayPay)}</strong></td>
+          </tr>
+        `);
+      } else if (slotsWorked.length > 0) {
         const ranges = getGroupedTimeRanges(slotsWorked);
         const dayHs = slotsWorked.length * 0.5;
         const unitRate = u === "Proteína Gym" ? calc.rateGym : calc.rateBox;
@@ -3294,6 +3702,10 @@ function renameProfesor(idx) {
 
   pagosACuentaLog.forEach(p => {
     if (p.prof === oldName) p.prof = newName;
+  });
+
+  feriadosNormalesLog.forEach(fn => {
+    if (fn.prof === oldName) fn.prof = newName;
   });
 
   saveState();
