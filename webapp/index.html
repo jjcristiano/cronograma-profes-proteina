@@ -570,10 +570,10 @@
       <!-- FERIADOS NO TRABAJADOS (PAGAR HORAS NORMALES ×1 EN VEZ DE DOBLES ×2) -->
       <div style="background:#eff6ff;border:2px solid #2563eb;border-radius:10px;padding:14px 16px;margin-bottom:16px">
         <div style="font-size:1.02rem;font-weight:800;color:#1e3a8a;margin-bottom:4px">
-          🏳️ Feriado No Trabajado — Pagar Horas Normales (×1) en vez de Dobles (×2)
+          🏳️ Feriado No Trabajado
         </div>
         <div style="font-size:0.84rem;color:#1e40af;margin-bottom:10px">
-          Si a un profesor le correspondía trabajar un feriado pero no fue por ser feriado (ej: Agustín el Lunes 12/10 con 5 hs), agréguelo acá para que ese día se le liquide como <strong>Hora Normal (×1)</strong> y no doble.
+          Si a un profesor le correspondía trabajar un feriado pero no fue por ser feriado.
         </div>
         <div class="toolbar" style="margin-bottom:8px">
           <label><strong>Profesor:</strong>
@@ -632,8 +632,13 @@
       <!-- Acceso rápido para Feriados No Trabajados (Hora Normal ×1) desde Liquidación -->
       <div class="no-print" style="background:#eff6ff;border:2px solid #2563eb;border-radius:10px;padding:12px 16px;margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
-          <div style="font-size:0.94rem;font-weight:800;color:#1e3a8a">
-            🏳️ Feriados No Trabajados en <span id="fn-liq-month-lbl"></span> (Pagar Horas Normales ×1 en vez de Dobles ×2):
+          <div>
+            <div style="font-size:0.95rem;font-weight:800;color:#1e3a8a">
+              🏳️ Feriado No Trabajado (<span id="fn-liq-month-lbl"></span>)
+            </div>
+            <div style="font-size:0.82rem;color:#1e40af">
+              Si a un profesor le correspondía trabajar un feriado pero no fue por ser feriado.
+            </div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <select id="fn-liq-prof" onchange="onFeriadoNormalProfChange('liq')"></select>
@@ -2376,8 +2381,8 @@ function populateFeriadoNormalSelectors() {
   const m = MONTHS.find(x => x.name === currentMonthName);
   if (!m) return;
 
-  const liquidableProfs = profesores.filter(p => p.status === "Activo" && !p.noLiquida);
-  const profList = liquidableProfs.length > 0 ? liquidableProfs : profesores;
+  // Respetar el mismo orden configurado en la sección Profesores en todas las listas desplegables
+  const profList = profesores;
 
   ["fn-prof", "fn-liq-prof"].forEach(id => {
     const el = document.getElementById(id);
@@ -2386,9 +2391,8 @@ function populateFeriadoNormalSelectors() {
     el.innerHTML = profList.map(p => `<option value="${p.name}" ${p.name === prev ? 'selected' : ''}>${p.name}</option>`).join("");
   });
 
-  // Armar opciones de días priorizando los Feriados Nacionales y Domingos del mes actual
+  // Mostrar ÚNICAMENTE los días feriados del mes actual
   let ferOptions = "";
-  let otherOptions = "";
   let firstFeriadoDay = null;
 
   for (let d = 1; d <= m.days; d++) {
@@ -2399,22 +2403,11 @@ function populateFeriadoNormalSelectors() {
     const ferObj = feriados.find(f => f.date === iso);
     if (ferObj) {
       if (firstFeriadoDay === null) firstFeriadoDay = String(d);
-      ferOptions += `<option value="${d}">⭐ ${dayName} ${ddStr} — FERIADO (${ferObj.desc})</option>`;
-    } else if (dt.getDay() === 0) {
-      ferOptions += `<option value="${d}">☀️ ${dayName} ${ddStr} (Domingo ×2)</option>`;
-    } else {
-      otherOptions += `<option value="${d}">${dayName} ${ddStr}</option>`;
+      ferOptions += `<option value="${d}">⭐ ${dayName} ${ddStr} — ${ferObj.desc}</option>`;
     }
   }
 
-  const dayHtml = `
-    <optgroup label="Feriados y Domingos de ${m.name}">
-      ${ferOptions || '<option value="1">Sin feriados cargados</option>'}
-    </optgroup>
-    <optgroup label="Otros días del mes">
-      ${otherOptions}
-    </optgroup>
-  `;
+  const dayHtml = ferOptions || `<option value="">Sin días feriados en ${m.name}</option>`;
 
   ["fn-day", "fn-liq-day"].forEach(id => {
     const el = document.getElementById(id);
@@ -2450,6 +2443,7 @@ function onFeriadoNormalInputChange(source) {
   const unitEl = document.getElementById(source === "liq" ? "fn-liq-unit" : "fn-unit");
   const hsEl = document.getElementById(source === "liq" ? "fn-liq-hours" : "fn-hours");
   if (!profEl || !dayEl || !unitEl || !hsEl) return;
+  if (!dayEl.value) return;
 
   const suggested = getSuggestedNormalHoursForProfDay(
     currentMonthName,
@@ -2476,7 +2470,7 @@ function saveFeriadoNormalRule(source) {
   const unit = unitEl ? unitEl.value : "Proteína Gym";
   const horas = hsEl ? Number(hsEl.value) : 0;
 
-  if (!prof || !day) { alert("Seleccione el profesor y el día feriado."); return; }
+  if (!prof || !day) { alert("Seleccione el profesor y un día feriado válido."); return; }
   if (!horas || horas <= 0) { alert("Ingrese la cantidad de horas normales a reconocer (ej: 5)."); return; }
 
   const existing = getFeriadoNormalRule(currentMonthName, day, unit, prof);
@@ -2543,7 +2537,7 @@ function renderFeriadoNormalLists() {
           </div>
         `;
       }).join("")
-    : `<div style="font-size:0.83rem;color:#1e40af">Ningún feriado marcado como Hora Normal (×1) en ${currentMonthName}. Todos los feriados cargados se calculan al Doble (×2).</div>`;
+    : `<div style="font-size:0.83rem;color:#1e40af">Ningún feriado no trabajado registrado en ${currentMonthName}.</div>`;
 
   const el1 = document.getElementById("fn-list-cronograma");
   const el2 = document.getElementById("fn-list-liq");
@@ -2552,7 +2546,7 @@ function renderFeriadoNormalLists() {
 }
 
 // ============================================================================
-// RENDERIZADO DE VISTAS Y SELECTORES
+// RENDERIZADO DE VISTAS Y SELECTORES (RESPETA SIEMPRE EL ORDEN DE PROFESORES)
 // ============================================================================
 function populateSelects() {
   const monthSelectors = ["sched-month", "res-month", "rep-month", "pac-month"];
@@ -2563,17 +2557,16 @@ function populateSelects() {
     }
   });
 
-  // Selectores de Pagos a Cuenta
+  // Todas las listas desplegables de profesores usan exactamente el orden de `profesores` manejado desde la sección Profesores
   const pacProfEl = document.getElementById("pac-prof");
   if (pacProfEl) {
     const curPacProf = pacProfEl.value || (profesores[0] ? profesores[0].name : "");
-    pacProfEl.innerHTML = profesores.map(p => `<option value="${p.name}" ${p.name===curPacProf?'selected':''}>${p.name}${p.noLiquida ? ' (No liquida)' : ''}</option>`).join("");
+    pacProfEl.innerHTML = profesores.map(p => `<option value="${p.name}" ${p.name===curPacProf?'selected':''}>${p.name}${p.noLiquida ? ' (No sumar)' : ''}</option>`).join("");
   }
 
-  // Selectores de Adelantos
   const advProfEl = document.getElementById("adv-prof");
   if (advProfEl) {
-    const cur = advProfEl.value;
+    const cur = advProfEl.value || (profesores[0] ? profesores[0].name : "");
     advProfEl.innerHTML = profesores.map(p => `<option value="${p.name}" ${p.name===cur?'selected':''}>${p.name}</option>`).join("");
   }
   const advActualEl = document.getElementById("adv-month-actual");
@@ -2586,14 +2579,21 @@ function populateSelects() {
   }
 
   const profSel = document.getElementById("res-prof-select");
-  const curProf = profSel.value || (profesores[0] ? profesores[0].name : "");
-  profSel.innerHTML = profesores.map(p => `<option value="${p.name}" ${p.name===curProf?'selected':''}>${p.name}${p.noLiquida ? ' (No liquida)' : ''}</option>`).join("");
+  if (profSel) {
+    const curProf = profSel.value || (profesores[0] ? profesores[0].name : "");
+    profSel.innerHTML = profesores.map(p => `<option value="${p.name}" ${p.name===curProf?'selected':''}>${p.name}${p.noLiquida ? ' (No sumar)' : ''}</option>`).join("");
+  }
 
   const bulkProfEl = document.getElementById("bulk-prof");
   if (bulkProfEl) {
-    const curBulkProf = bulkProfEl.value;
-    const activeProfs = profesores.filter(p => p.status === "Activo");
-    bulkProfEl.innerHTML = activeProfs.map(p => `<option value="${p.name}" ${p.name===curBulkProf?'selected':''}>${p.name}</option>`).join("");
+    const curBulkProf = bulkProfEl.value || (profesores[0] ? profesores[0].name : "");
+    bulkProfEl.innerHTML = profesores.map(p => `<option value="${p.name}" ${p.name===curBulkProf?'selected':''}>${p.name}</option>`).join("");
+  }
+
+  const quickVendEl = document.getElementById("quick-vend-existing");
+  if (quickVendEl) {
+    const curQuickVend = quickVendEl.value || (profesores[0] ? profesores[0].name : "");
+    quickVendEl.innerHTML = profesores.map(p => `<option value="${p.name}" ${p.name===curQuickVend?'selected':''}>${p.name}</option>`).join("");
   }
 
   const bulkStartEl = document.getElementById("bulk-start");
@@ -4213,7 +4213,20 @@ function renderProfes() {
            ${p.customRate > 0 ? `<span class="chip" style="background:#fef08a;color:#854d0e;font-size:0.74rem">⭐ ${formatMoney(p.customRate)}/h</span>` : `<span style="font-size:0.75rem;color:var(--muted)">Usa general</span>`}
          </div>`;
 
+    const orderSelectOpts = profesores.map((_, posIdx) =>
+      `<option value="${posIdx}" ${posIdx === idx ? 'selected' : ''}>#${posIdx + 1}</option>`
+    ).join("");
+
     return `<tr>
+      <td class="center" style="white-space:nowrap">
+        <div style="display:inline-flex;align-items:center;gap:4px">
+          <select title="Posición en las listas desplegables" style="min-height:34px;padding:3px 6px;font-weight:800;font-size:0.85rem;width:64px" onchange="setProfesorOrder(${idx}, parseInt(this.value, 10))">
+            ${orderSelectOpts}
+          </select>
+          <button class="btn btn-outline" title="Subir en la lista" style="padding:4px 8px;min-height:34px;font-size:0.85rem" ${idx === 0 ? 'disabled style="padding:4px 8px;min-height:34px;font-size:0.85rem;opacity:0.35;cursor:not-allowed"' : ''} onclick="moveProfesorOrder(${idx}, -1)">⬆️</button>
+          <button class="btn btn-outline" title="Bajar en la lista" style="padding:4px 8px;min-height:34px;font-size:0.85rem" ${idx === profesores.length - 1 ? 'disabled style="padding:4px 8px;min-height:34px;font-size:0.85rem;opacity:0.35;cursor:not-allowed"' : ''} onclick="moveProfesorOrder(${idx}, 1)">⬇️</button>
+        </div>
+      </td>
       <td>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
           <strong>${p.name}</strong>
@@ -4249,10 +4262,29 @@ function renderProfes() {
 
   document.getElementById("profes-table").innerHTML = `
     <table>
-      <thead><tr><th>Nombre</th><th>Color</th><th>Modalidad (Click para cambiar)</th><th>Categoría</th><th>Valor Hora Especial ($) / Config. Vendedor</th><th>¿Sumar a Liquidación?</th><th>Estado</th><th>Horas (${currentMonthName})</th><th>Liquidación (${currentMonthName})</th></tr></thead>
+      <thead><tr><th class="center">Orden en Listas</th><th>Nombre</th><th>Color</th><th>Modalidad (Click para cambiar)</th><th>Categoría</th><th>Valor Hora Especial ($) / Config. Vendedor</th><th>¿Sumar a Liquidación?</th><th>Estado</th><th>Horas (${currentMonthName})</th><th>Liquidación (${currentMonthName})</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
+}
+
+function moveProfesorOrder(idx, delta) {
+  const newIdx = idx + delta;
+  if (newIdx < 0 || newIdx >= profesores.length) return;
+  const item = profesores.splice(idx, 1)[0];
+  profesores.splice(newIdx, 0, item);
+  saveState();
+  populateSelects();
+  refreshAll();
+}
+
+function setProfesorOrder(fromIdx, toIdx) {
+  if (isNaN(toIdx) || toIdx < 0 || toIdx >= profesores.length || fromIdx === toIdx) return;
+  const item = profesores.splice(fromIdx, 1)[0];
+  profesores.splice(toIdx, 0, item);
+  saveState();
+  populateSelects();
+  refreshAll();
 }
 
 function toggleProfCategory(idx) {
