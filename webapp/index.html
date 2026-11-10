@@ -2826,31 +2826,38 @@ function syncMonthSelect(val) {
 function renderHome() {
   const m = MONTHS.find(x => x.name === currentMonthName);
   const calc = calculateMonthData(currentMonthName, 1, m.days);
-  let totNorm = 0, totDob = 0, totCostNorm = 0, totCostDob = 0, totCost = 0, activeWithHours = 0;
+  let totNorm = 0, totDob = 0, totCostNorm = 0, totCostDob = 0, totUnitsCost = 0, activeWithHours = 0;
+  let totVendCost = 0, vendCount = 0;
 
   UNITS.forEach(u => {
     totNorm += calc.byUnit[u].norm;
     totDob += calc.byUnit[u].dob;
     totCostNorm += calc.byUnit[u].costNorm;
     totCostDob += calc.byUnit[u].costDob;
-    totCost += calc.byUnit[u].costTotal;
+    totUnitsCost += calc.byUnit[u].costTotal;
   });
 
   Object.values(calc.byProf).forEach(p => {
-    if (!p.noLiquida && (p.gymNorm + p.gymDob + p.boxNorm + p.boxDob > 0)) {
+    if (p.isVendedor) {
+      if (!p.noLiquida) {
+        vendCount++;
+        totVendCost += p.subHoras;
+      }
+    } else if (!p.noLiquida && (p.gymNorm + p.gymDob + p.boxNorm + p.boxDob > 0)) {
       activeWithHours++;
     }
   });
 
+  const totCost = totUnitsCost + totVendCost;
   const totHs = totNorm + totDob;
   const activeCount = profesores.filter(p => p.status === "Activo" && !p.noLiquida).length;
 
   document.getElementById("home-kpis").innerHTML = `
     <div class="kpi-card"><div class="lbl">Mes Actual</div><div class="val">${currentMonthName}</div><div class="sub">Estado: <strong>${calc.m.status}</strong></div></div>
     <div class="kpi-card"><div class="lbl">Valor Hora Gym / Box</div><div class="val" style="font-size:1.25rem">${formatMoney(calc.rateGym)} / ${formatMoney(calc.rateBox)}</div><div class="sub">Doble ×2: ${formatMoney(calc.rateGym*2)} / ${formatMoney(calc.rateBox*2)}</div></div>
-    <div class="kpi-card"><div class="lbl">Profes Liquidables</div><div class="val">${activeCount}</div><div class="sub">${activeWithHours} con horas este mes</div></div>
+    <div class="kpi-card"><div class="lbl">Personal Liquidable</div><div class="val">${activeCount}</div><div class="sub">${activeWithHours} profes c/horas · ${vendCount} vendedores</div></div>
     <div class="kpi-card"><div class="lbl">Horas Liquidables</div><div class="val">${totHs.toFixed(1)} hs</div><div class="sub">${totNorm.toFixed(1)}h Normales · ${totDob.toFixed(1)}h Dobles</div></div>
-    <div class="kpi-card"><div class="lbl">Total Sueldos ($)</div><div class="val" style="color:#15803d">${formatMoney(totCost)}</div><div class="sub">Suma de las 2 unidades</div></div>
+    <div class="kpi-card"><div class="lbl">Total Sueldos ($)</div><div class="val" style="color:#15803d">${formatMoney(totCost)}</div><div class="sub">Profes (${formatMoney(totUnitsCost)}) + Vend. (${formatMoney(totVendCost)})</div></div>
   `;
 
   let rowsHtml = "";
@@ -2871,12 +2878,25 @@ function renderHome() {
     </tr>`;
   });
 
+  const vendPct = totCost > 0 ? ((totVendCost / totCost) * 100).toFixed(1) + "%" : "0.0%";
+  rowsHtml += `<tr style="background:#fefce8">
+    <td><strong>3. 💼 Vendedores (${vendCount} liquidables)</strong></td>
+    <td class="center">% Venta + Fijo</td>
+    <td class="center">—</td>
+    <td class="center">—</td>
+    <td class="center"><strong>Sin hs</strong></td>
+    <td class="center">—</td>
+    <td class="center">—</td>
+    <td class="num"><strong>${formatMoney(totVendCost)}</strong></td>
+    <td class="center">${vendPct}</td>
+  </tr>`;
+
   document.getElementById("home-unit-summary").innerHTML = `
     <table>
-      <thead><tr><th>Unidad</th><th>Valor Hora</th><th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Importe Normal</th><th>Importe Doble</th><th>Costo Total</th><th>%</th></tr></thead>
+      <thead><tr><th>Unidad / Sector</th><th>Valor Hora / Modalidad</th><th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Importe Normal</th><th>Importe Doble</th><th>Costo Total ($)</th><th>%</th></tr></thead>
       <tbody>${rowsHtml}</tbody>
       <tfoot><tr class="tot-row">
-        <td>TOTAL GENERAL (2 UNIDADES)</td>
+        <td>TOTAL GENERAL (UNIDADES + VENDEDORES)</td>
         <td class="center">—</td>
         <td class="num">${totNorm.toFixed(1)} hs</td>
         <td class="num">${totDob.toFixed(1)} hs</td>
@@ -3594,7 +3614,7 @@ function renderResumenMensual() {
     <div class="kpi-card"><div class="lbl">Saldo Restante a Pagar</div><div class="val" style="color:${grandTotRestante > 0 ? '#991b1b' : '#15803d'}">${formatMoney(grandTotRestante)}</div><div class="sub">Pendiente de abonar</div></div>
   `;
 
-  // Tabla 3: Horas y Costos por Unidad en el rango seleccionado
+  // Tabla 3: Horas y Costos por Unidad + Vendedores en el rango seleccionado
   let unitRowsHtml = "";
   let totUnitCostNorm = 0, totUnitCostDob = 0, totUnitCost = 0;
   UNITS.forEach(u => {
@@ -3602,11 +3622,12 @@ function renderResumenMensual() {
     totUnitCostDob += calc.byUnit[u].costDob;
     totUnitCost += calc.byUnit[u].costTotal;
   });
+  const totUnitsPlusVend = totUnitCost + totVendRedondeado;
 
   UNITS.forEach((u, i) => {
     const uObj = calc.byUnit[u];
     const ut = uObj.norm + uObj.dob;
-    const pct = totUnitCost > 0 ? ((uObj.costTotal / totUnitCost) * 100).toFixed(1) + "%" : "0.0%";
+    const pct = totUnitsPlusVend > 0 ? ((uObj.costTotal / totUnitsPlusVend) * 100).toFixed(1) + "%" : "0.0%";
     unitRowsHtml += `<tr>
       <td><strong>${i+1}. ${u}</strong></td>
       <td class="num">${formatMoney(uObj.rate)}</td>
@@ -3620,19 +3641,32 @@ function renderResumenMensual() {
     </tr>`;
   });
 
+  const vendPctLiq = totUnitsPlusVend > 0 ? ((totVendRedondeado / totUnitsPlusVend) * 100).toFixed(1) + "%" : "0.0%";
+  unitRowsHtml += `<tr style="background:#fefce8">
+    <td><strong>3. 💼 Vendedores (${vendedoresProfs.filter(v => !v.noLiquida).length} liquidables)</strong></td>
+    <td class="center">% Venta + Fijo</td>
+    <td class="center">—</td>
+    <td class="center">—</td>
+    <td class="center"><strong>Sin hs</strong></td>
+    <td class="center">—</td>
+    <td class="center">—</td>
+    <td class="num"><strong>${formatMoney(totVendRedondeado)}</strong></td>
+    <td class="center">${vendPctLiq}</td>
+  </tr>`;
+
   document.getElementById("res-mensual-units").innerHTML = `
     <table>
-      <thead><tr><th>Unidad</th><th>Valor Hora Base</th><th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Importe Normal</th><th>Importe Doble</th><th>Costo Total</th><th>%</th></tr></thead>
+      <thead><tr><th>Unidad / Sector</th><th>Valor Hora Base</th><th>Horas Normales</th><th>Horas Dobles (×2)</th><th>Total Horas</th><th>Importe Normal</th><th>Importe Doble</th><th>Costo Total ($)</th><th>%</th></tr></thead>
       <tbody>${unitRowsHtml}</tbody>
       <tfoot><tr class="tot-row">
-        <td>TOTAL UNIDADES (LIQUIDABLES)</td>
+        <td>TOTAL GENERAL SUELDOS (UNIDADES + VENDEDORES)</td>
         <td class="center">—</td>
         <td class="num">${totNorm.toFixed(1)} hs</td>
         <td class="num">${totDob.toFixed(1)} hs</td>
         <td class="num">${(totNorm+totDob).toFixed(1)} hs</td>
         <td class="num">${formatMoney(totUnitCostNorm)}</td>
         <td class="num">${formatMoney(totUnitCostDob)}</td>
-        <td class="num">${formatMoney(totUnitCost)}</td>
+        <td class="num">${formatMoney(totUnitsPlusVend)}</td>
         <td class="center">100.0%</td>
       </tr></tfoot>
     </table>
@@ -4436,6 +4470,11 @@ function renderConfigAndFeriados() {
       n += c.byUnit[u].norm;
       d += c.byUnit[u].dob;
       cost += c.byUnit[u].costTotal;
+    });
+    Object.values(c.byProf).forEach(bp => {
+      if (bp.isVendedor && !bp.noLiquida) {
+        cost += bp.subHoras;
+      }
     });
     return `<tr>
       <td><strong>${m.name}</strong></td>
